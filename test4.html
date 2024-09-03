@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Dropdown Example</title>
+    <style>
+        .dropdown-container {
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Adjust spacing as needed */
+            flex-wrap: wrap; /* Allows wrapping if necessary */
+        }
+        .dropdown-container label {
+            margin-right: 5px;
+        }
+        .dropdown-container select {
+            margin-right: 20px;
+        }
+    </style>
+    <script>
+        function handleSelection() {
+            var country = document.getElementById("country").value;
+            var cropWaterRequirement = document.getElementById("cropWaterRequirement").value;
+            var waterSource = document.getElementById("waterSource").value;
+            var season = document.getElementById("season").value;
+            var pumpType = document.getElementById("pumpType").value;
+            
+            // Update dropdowns and other UI elements
+            updateSeasonDropdown(country);
+            updatePumpTypeDropdown(waterSource);
+            handlePumpTypeState(waterSource);
+
+            // Example: Build a URL or take some action based on the selections
+            var result = `Country: ${country}, Crop Water Requirement: ${cropWaterRequirement}, Water Source: ${waterSource}, Season: ${season}, Pump Type: ${pumpType}`;
+            document.getElementById("result").textContent = result;
+        }
+
+        function updateSeasonDropdown(country) {
+            var seasonDropdown = document.getElementById("season");
+            var options = seasonDropdown.options;
+            var showWet2 = (country !== "mali");
+            
+            // Loop through options to show/hide "Wet2" based on country
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value === "wet2") {
+                    options[i].style.display = showWet2 ? "block" : "none";
+                }
+            }
+            
+            // Set default value if "Wet2" was hidden and was previously selected
+            if (!showWet2 && seasonDropdown.value === "wet2") {
+                seasonDropdown.value = "";
+            }
+        }
+
+        function updatePumpTypeDropdown(waterSource) {
+            var pumpTypeDropdown = document.getElementById("pumpType");
+            var optionTexts = {
+                'Surface Water': [
+                    { value: 'All', text: 'All' },
+                    { value: 'Manual (max. distance: 50m)', text: 'Manual (max. distance: 50m)' },
+                    { value: 'Solar pump (max. distance: 100m)', text: 'Solar pump (max. distance: 100m)' },
+                    { value: 'Solar pump (max. distance: 250m)', text: 'Solar pump (max. distance: 250m)' },
+                    { value: 'Electric pump (max. distance: 100m)', text: 'Electric pump (max. distance: 100m)' },
+                    { value: 'Electric pump (max. distance: 250m)', text: 'Electric pump (max. distance: 250m)' },
+                    { value: 'Fuel pump (max. distance: 100m)', text: 'Fuel pump (max. distance: 100m)' },
+                    { value: 'Fuel pump (max. distance: 250m)', text: 'Fuel pump (max. distance: 250m)' }
+                ],
+                'Groundwater': [
+                    { value: 'All', text: 'All' },
+                    { value: 'Manual (max. depth: 25m)', text: 'Manual (max. depth: 25m)' },
+                    { value: 'Solar pump (max. depth: 7)', text: 'Solar pump (max. depth: 7m)' },
+                    { value: 'Solar pump (max. depth: 25m)', text: 'Solar pump (max. depth: 25m)' },
+                    { value: 'Electric pump (max. depth: 7m)', text: 'Electric pump (max. depth: 7m)' },
+                    { value: 'Electric pump (max. depth: 25m)', text: 'Electric pump (max. depth: 25m)' },
+                    { value: 'Fuel pump (max. depth: 7m)', text: 'Fuel pump (max. depth: 7m)' },
+                    { value: 'Fuel pump (max. depth: 25m)', text: 'Fuel pump (max. depth: 25m)' }
+                ]
+            };
+
+            // Clear existing options
+            pumpTypeDropdown.innerHTML = '<option value="">Select a pump type</option>';
+            
+            // Add new options based on the selected water source
+            if (waterSource in optionTexts) {
+                optionTexts[waterSource].forEach(function(option) {
+                    var opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.textContent = option.text;
+                    pumpTypeDropdown.appendChild(opt);
+                });
+            }
+        }
+
+        function handlePumpTypeState(waterSource) {
+            var pumpTypeDropdown = document.getElementById("pumpType");
+            if (waterSource === "Rainfed" || waterSource === "All Sustainable Area") {
+                pumpTypeDropdown.disabled = true;
+            } else {
+                pumpTypeDropdown.disabled = false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <form>
+        <div class="dropdown-container">
+            <label for="country">Country:</label>
+            <select id="country" name="country" onchange="handleSelection()">
+                <option value="">Select a country</option>
+                <option value="ethiopia">Ethiopia</option>
+                <option value="mali">Mali</option>
+                <option value="ghana">Ghana</option>
+            </select>
+
+            <label for="cropWaterRequirement">Crop Water Requirement:</label>
+            <select id="cropWaterRequirement" name="cropWaterRequirement" onchange="handleSelection()">
+                <option value="">Select a requirement</option>
+                <option value="Low (400mm)">Low (400mm)</option>
+                <option value="Medium (600mm)">Medium (600mm)</option>
+                <option value="High (800mm)">High (800mm)</option>
+            </select>
+
+            <label for="waterSource">Water Source:</label>
+            <select id="waterSource" name="waterSource" onchange="handleSelection()">
+                <option value="">Select a water source</option>
+                <option value="All Sustainable Area">All Sustainable Area</option>
+                <option value="Rainfed">Rainfed</option>
+                <option value="Surface Water">Surface Water</option>
+                <option value="Groundwater">Groundwater</option>
+            </select>
+
+            <label for="season">Season:</label>
+            <select id="season" name="season" onchange="handleSelection()">
+                <option value="">Select a season</option>
+                <option value="Wet">Wet</option>
+                <option value="Dry">Dry</option>
+                <option value="Wet2">Wet2</option>
+                <option value="Annual">Annual</option>
+            </select>
+
+            <label for="pumpType">Pump Type:</label>
+            <select id="pumpType" name="pumpType" onchange="handleSelection()">
+                <option value="">Select a pump type</option>
+            </select>
+        </div>
+
+        <p id="result"></p>
+    </form>
+</body>
+</html>
