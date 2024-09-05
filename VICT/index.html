@@ -6,8 +6,27 @@
     <title>GeoJSON Polygon Map with Attribute Selector</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map { height: 600px; width: 100%; }
+	            #map { height: 600px; width: 100%; }
         #attribute-selector { position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 4px; }
+            /* Increase text size for dropdowns and labels */
+        label {
+            font-size: 16px;  /* Adjust label font size */
+        }
+        select {
+            font-size: 12px;  /* Adjust dropdown option font size */
+            padding: 5px;
+        }
+        /* Flexbox layout to display dropdowns in two rows */
+        .dropdown-container {
+            display: flex;
+            flex-wrap: wrap;  /* Allow wrapping to create two rows */
+            gap: 10px;        /* Adds spacing between elements */
+        }
+
+        .dropdown-container label, .dropdown-container select {
+            flex: 1 1 20%;    /* Each label and dropdown takes up 20% of the row, 2 per row */
+            min-width: 200px; /* Ensure the dropdown has a minimum width */
+        }
     </style>
 </head>
 <body>
