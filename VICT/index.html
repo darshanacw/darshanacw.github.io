@@ -162,7 +162,7 @@ function onEachFeature(feature, layer) {
     var selectedAttribute = document.getElementById('attdata').textContent.trim().replace(/"/g, '');
     if (feature.properties[selectedAttribute] !== undefined && feature.properties[selectedAttribute] !== null) {
         var formattedValue = formatNumber(feature.properties[selectedAttribute]);
-        popupContent += "<strong>Suitable Area (Technology):</strong> " + formattedValue + "<br>";
+        popupContent += "<strong>Suitable Area (Selected Technology):</strong> " + formattedValue + "<br>";
     }
 
 
