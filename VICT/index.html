@@ -161,7 +161,8 @@ function onEachFeature(feature, layer) {
 	
     // Add the second attribute row with formatting
     if (feature.properties[attribute2]) {
-        popupContent += "<strong>Sustainable Area (Selected Season/Water Source/ Crop W/R:</strong> "+ ":</strong> " + formatNumber(feature.properties[attribute2]) + "<br>";
+        popupContent += "<strong>Sustainable Area (Selected Season/Water Source/ Crop W/R:</strong> "+ ":</strong> " + "####"+ "<br>";
+	//popupContent += "<strong>Sustainable Area (Selected Season/Water Source/ Crop W/R:</strong> "+ ":</strong> " + formatNumber(feature.properties[attribute2]) + "<br>";
     }
     // Add the dynamically selected attribute with formatting
     var selectedAttribute = document.getElementById('attdata').textContent.trim().replace(/"/g, '');
