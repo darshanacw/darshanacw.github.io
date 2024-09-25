@@ -222,7 +222,7 @@ function onEachFeature(feature, layer) {
             if (waterSource === "sw" || waterSource === "gw"|| waterSource === "sgw") {
                 attdata = `${season}_${waterSource}_${pumpType}`;
             }
-            if (pumpType === "all") {
+            if (pumpType === "al") {
                 attdata = `${season}_${waterSource}`;
             }
             document.getElementById("attdata").textContent = attdata;
@@ -255,17 +255,17 @@ function onEachFeature(feature, layer) {
 			pumpTypeDropdown.innerHTML = '<option value="">Select a pump type</option>';
             var optionTexts = {
                 'sw': [
-                    { value: 'all', text: 'All pump' },
+                    { value: 'al', text: 'All pump' },
                     { value: 'ml', text: 'Manual pump (max. distance: 50m)' },
                     { value: 'sl1', text: 'Solar pump (max. distance: 100m)' },
-                    { value: 'sl2', text: 'Solar pump (max. distance: 250m)' },
+                    { value: 'sl2', text: 'Solar pump (max. distance: 200m)' },
                     { value: 'gl1', text: 'Electric pump (max. distance: 100m)' },
-                    { value: 'gl2', text: 'Electric pump (max. distance: 250m)' },
+                    { value: 'gl2', text: 'Electric pump (max. distance: 200m)' },
                     { value: 'fl1', text: 'Fuel pump (max. distance: 100m)' },
-                    { value: 'fl2', text: 'Fuel pump (max. distance: 250m)' }
+                    { value: 'fl2', text: 'Fuel pump (max. distance: 200m)' }
                 ],
                 'gw': [
-                    { value: 'all', text: 'All pump' },
+                    { value: 'al', text: 'All pump' },
                     { value: 'ml', text: 'Manual pump(max. depth: 25m)' },
                     { value: 'sl1', text: 'Solar pump (max. depth: 7m)' },
                     { value: 'sl2', text: 'Solar pump (max. depth: 25m)' },
@@ -273,16 +273,16 @@ function onEachFeature(feature, layer) {
                     { value: 'gl2', text: 'Electric pump (max. depth: 25m)' },
                     { value: 'fl1', text: 'Fuel pump (max. depth: 7m)' },
                     { value: 'fl2', text: 'Fuel pump (max. depth: 25m)' }
-                ]
-				'sgw': [
-                    { value: 'all', text: 'All pump' },
+                ],
+				                'sgw': [
+                    { value: 'al', text: 'All pump' },
                     { value: 'ml', text: 'Manual pump(max. distance: 50m | max. depth: 25m)' },
                     { value: 'sl1', text: 'Solar pump (max. distance: 100m | max. depth: 7m)' },
-                    { value: 'sl2', text: 'Solar pump (max. distance: 250m | max. depth: 25m)' },
+                    { value: 'sl2', text: 'Solar pump (max. distance: 200m | max. depth: 25m)' },
                     { value: 'gl1', text: 'Electric pump (max. distance: 100m | max. depth: 7m)' },
-                    { value: 'gl2', text: 'Electric pump (max. distance: 250m | max. depth: 25m)' },
+                    { value: 'gl2', text: 'Electric pump (max. distance: 200m | max. depth: 25m)' },
                     { value: 'fl1', text: 'Fuel pump (max. distance: 100m | max. depth: 7m)' },
-                    { value: 'fl2', text: 'Fuel pump (max. distance: 250m | max. depth: 25m)' }
+                    { value: 'fl2', text: 'Fuel pump (max. distance: 200m | max. depth: 25m)' }
                 ]
             };
 
