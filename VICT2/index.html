@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VICT-Sustainable Limits-Tech</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+	            #map { height: 600px; width: 100%; }
+        #attribute-selector { position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 4px; }
+            /* Increase text size for dropdowns and labels */
+        label {
+            font-size: 16px;  /* Adjust label font size */
+        }
+        select {
+            font-size: 14px;  /* Adjust dropdown option font size */
+            padding: 5px;
+        }
+        /* Flexbox layout to display dropdowns in two rows */
+        .dropdown-container {
+            display: flex;
+            flex-wrap: wrap;  /* Allow wrapping to create two rows */
+            gap: 10px;        /* Adds spacing between elements */
+        }
+
+        .dropdown-container label, .dropdown-container select {
+            flex: 1 1 20%;    /* Each label and dropdown takes up 20% of the row, 2 per row */
+            min-width: 200px; /* Ensure the dropdown has a minimum width */
+        }
+    </style>
+</head>
+<body>
+    <form>
+        <div class="dropdown-container">
+            <label for="country">Country:</label>
+            <select id="country" name="country" onchange="handleSelection()">
+                <option value="">Select a country</option>
+                <option value="ETH">Ethiopia</option>
+                <option value="MALI">Mali</option>
+                <option value="GHN">Ghana</option>
+            </select>
+			
+            <label for="waterSource">Water Source:</label>
+            <select id="waterSource" name="waterSource" onchange="handleSelection()">
+                <option value="">Select a water source</option>
+                <!-- <option value="all">All Sustainable Area</option>-->
+                <!-- <option value="rf">Rainfed</option>-->
+                <option value="sw">Surface Water</option>
+                <option value="gw">Groundwater</option>
+		<option value="sgw">Surface Water+Groundwater</option> 
+            </select>
+			
+            <label for="season">Season:</label>
+            <select id="season" name="season" onchange="handleSelection()">
+                <option value="">Select a season</option>
+                <option value="s1">Rainy Season</option>
+                <option value="s2">Dry Season</option>
+                <option value="s3">Rainy Season 2</option>
+                <option value="an">Annual</option>
+            </select>
+			
+            <label for="cropWaterRequirement">Crop Water Requirement:</label>
+            <select id="cropWaterRequirement" name="cropWaterRequirement" onchange="handleSelection()">
+                <option value="">Select a requirement</option>
+                <option value="400mm">Low (400mm)</option>
+                <option value="600mm">Medium (600mm)</option>
+                <option value="800mm">High (800mm)</option>
+            </select>
+
+            <label for="pumpType">Technology:</label>
+            <select id="pumpType" name="pumpType" onchange="handleSelection()">
+                <!-- <option value="all">All</option>
+                <option value="ml">Manual (max. distance: 50m)</option>		-->		
+
+            </select>
+        </div>
+
+        <!--<p id="result"></p>-->	
+		<h1>Vegetable Growing Suitable Area -Sustainable Limits under above Condition </h1>		
+
+
+    </form>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([3, 30], 4); // Center at [lat, lon] and zoom level 2
+
+        // Add a base map layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        var geojsonLayer;  // Define the geojsonLayer variable
+
+        // Function to style polygon features based on selected attribute
+        function style(feature) {
+            var selectedAttribute = document.getElementById('attdata').textContent.trim();
+            return {
+                fillColor: getColor(feature.properties[selectedAttribute]),
+                weight: 2,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        }
+
+        // Function to get color based on attribute value
+        function getColor(d) {
+            return d > 100000 ? '#800026' :
+                   d > 50000 ? '#BD0026' :
+                   d > 20000  ? '#E31A1C' :
+                   d > 10000  ? '#FC4E2A' :
+                   d > 5000   ? '#FD8D3C' :
+                   d > 2000   ? '#FEB24C' :
+                   d > 0   ? '#FED976' :
+                              '#FFEDA0';
+        }
+
+        // Function to bind popups with dynamic attributes
+        //function onEachFeature(feature, layer) {
+        //    var selectedAttribute = document.getElementById('attdata').textContent.trim().replace(/"/g, '');
+        //    if (feature.properties) {
+        //        var popupContent = "<strong>" + selectedAttribute + ":</strong> " + feature.properties[selectedAttribute];
+        //        layer.bindPopup(popupContent);
+        //    }
+        //}
+		// Function to format numbers with thousands separator and add 'ha' unit
+		
+		
+// Function to format numbers with thousands separator and add 'ha' unit
+function formatNumber(value) {
+    // Ensure value is a number and format it with no decimal places
+    return Number.isFinite(value) ? Math.round(value).toLocaleString('en-US') + ' ha' : '0 ha';
+}
+
+
+// Function to bind popups with dynamic attributes and formatted numbers
+function onEachFeature(feature, layer) {
+    var attribute1 = 'NAME_3'; // First attribute
+	var attribute3 = 'area'; // First attribute
+    var attribute2 = 'crop';   // Second attribute
+
+    // Start building the popup content
+    var popupContent = "";
+
+    // Add the first attribute row (no formatting)
+    if (feature.properties[attribute1]) {
+        popupContent += "<strong>Name:</strong> " + ":</strong> " + feature.properties[attribute1] + "<br>";
+    }
+    // Add the second attribute row with formatting
+    if (feature.properties[attribute3]) {
+        popupContent += "<strong>Total Area:</strong> "+ ":</strong> " + formatNumber(feature.properties[attribute3]) + "<br>";
+    }
+    // Add the second attribute row with formatting
+    if (feature.properties[attribute2]) {
+        popupContent += "<strong>Vegetable suitable Area:</strong> "+ ":</strong> " + formatNumber(feature.properties[attribute2]) + "<br>";
+    }
+	
+    // Add the second attribute row with formatting
+    if (feature.properties[attribute2]) {
+        popupContent += "<strong>Sustainable Area (Selected Season/Water Source/ Crop W/R:</strong> "+ ":</strong> " + "####"+ "<br>";
+	//popupContent += "<strong>Sustainable Area (Selected Season/Water Source/ Crop W/R:</strong> "+ ":</strong> " + formatNumber(feature.properties[attribute2]) + "<br>";
+    }
+    // Add the dynamically selected attribute with formatting
+    var selectedAttribute = document.getElementById('attdata').textContent.trim().replace(/"/g, '');
+    if (feature.properties[selectedAttribute] !== undefined && feature.properties[selectedAttribute] !== null) {
+        var formattedValue = formatNumber(feature.properties[selectedAttribute]);
+        popupContent += "<strong>Suitable Area (Selected Technology):</strong> " + formattedValue + "<br>";
+    }
+
+
+    // Bind the popup content to the layer
+    layer.bindPopup(popupContent);
+}
+
+
+        // Function to update the map based on the selected attribute
+        function updateMap() {
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+            geojsonLayer = L.geoJson(geojsonData, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+        }
+
+        // Function to dynamically load the GeoJSON data
+        function loadGeoJSONData(file) {
+            var script = document.createElement('script');
+            script.src = file;
+            script.onload = function() {
+                // Update the map after the script is loaded
+                updateMap();
+            };
+            document.head.appendChild(script);
+        }
+
+        // Handle selection change and update the attribute
+        function handleSelection() {
+            var country = document.getElementById("country").value;
+            var cropWaterRequirement = document.getElementById("cropWaterRequirement").value;
+            var waterSource = document.getElementById("waterSource").value;
+            var season = document.getElementById("season").value;
+            var pumpType = document.getElementById("pumpType").value;
+
+            updateSeasonDropdown(country);
+            updatePumpTypeDropdown(waterSource);
+            handlePumpTypeState(waterSource);
+
+            //var result = `Total sustainable vegetable growing area crop WaterRequirement: ${cropWaterRequirement} using ${waterSource} source during ${season} season incoparatinge ${pumpType} technologies  `;
+            //document.getElementById("result").textContent = result;
+
+
+            var datagis = `${country}_${cropWaterRequirement}.js`;
+            document.getElementById("datagis").textContent = datagis;
+
+            var attdata = `${season}_${waterSource}`;
+            if (waterSource === "sw" || waterSource === "gw"|| waterSource === "sgw") {
+                attdata = `${season}_${waterSource}_${pumpType}`;
+            }
+            if (pumpType === "all") {
+                attdata = `${season}_${waterSource}`;
+            }
+            document.getElementById("attdata").textContent = attdata;
+
+            loadGeoJSONData(datagis);
+        }
+
+        function updateSeasonDropdown(country) {
+            var seasonDropdown = document.getElementById("season");
+            var options = seasonDropdown.options;
+            var showWet2 = (country !== "MALI");
+
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value === "s3") {
+                    options[i].style.display = showWet2 ? "block" : "none";
+                }
+            }
+
+            if (!showWet2 && seasonDropdown.value === "s3") {
+                seasonDropdown.value = "";
+            }
+        }
+
+        function updatePumpTypeDropdown(waterSource) {
+            var pumpTypeDropdown = document.getElementById("pumpType");
+			
+			    // Save the current selection
+			var currentSelection = pumpTypeDropdown.value;
+	
+			pumpTypeDropdown.innerHTML = '<option value="">Select a pump type</option>';
+            var optionTexts = {
+                'sw': [
+                    { value: 'all', text: 'All pump' },
+                    { value: 'ml', text: 'Manual pump (max. distance: 50m)' },
+                    { value: 'sl1', text: 'Solar pump (max. distance: 100m)' },
+                    { value: 'sl2', text: 'Solar pump (max. distance: 250m)' },
+                    { value: 'gl1', text: 'Electric pump (max. distance: 100m)' },
+                    { value: 'gl2', text: 'Electric pump (max. distance: 250m)' },
+                    { value: 'fl1', text: 'Fuel pump (max. distance: 100m)' },
+                    { value: 'fl2', text: 'Fuel pump (max. distance: 250m)' }
+                ],
+                'gw': [
+                    { value: 'all', text: 'All pump' },
+                    { value: 'ml', text: 'Manual pump(max. depth: 25m)' },
+                    { value: 'sl1', text: 'Solar pump (max. depth: 7m)' },
+                    { value: 'sl2', text: 'Solar pump (max. depth: 25m)' },
+                    { value: 'gl1', text: 'Electric pump (max. depth: 7m)' },
+                    { value: 'gl2', text: 'Electric pump (max. depth: 25m)' },
+                    { value: 'fl1', text: 'Fuel pump (max. depth: 7m)' },
+                    { value: 'fl2', text: 'Fuel pump (max. depth: 25m)' }
+                ]
+				'sgw': [
+                    { value: 'all', text: 'All pump' },
+                    { value: 'ml', text: 'Manual pump(max. distance: 50m | max. depth: 25m)' },
+                    { value: 'sl1', text: 'Solar pump (max. distance: 100m | max. depth: 7m)' },
+                    { value: 'sl2', text: 'Solar pump (max. distance: 250m | max. depth: 25m)' },
+                    { value: 'gl1', text: 'Electric pump (max. distance: 100m | max. depth: 7m)' },
+                    { value: 'gl2', text: 'Electric pump (max. distance: 250m | max. depth: 25m)' },
+                    { value: 'fl1', text: 'Fuel pump (max. distance: 100m | max. depth: 7m)' },
+                    { value: 'fl2', text: 'Fuel pump (max. distance: 250m | max. depth: 25m)' }
+                ]
+            };
+
+			//pumpTypeDropdown.innerHTML = '<option value="">1Select a pump type</option>';
+            if (optionTexts[waterSource]) {
+                optionTexts[waterSource].forEach(function(option) {
+                    var opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.textContent = option.text;
+                    pumpTypeDropdown.appendChild(opt);
+                });
+            }
+			    // Restore the previous selection if it exists in the new options
+    if (pumpTypeDropdown.querySelector(`option[value="${currentSelection}"]`)) {
+        pumpTypeDropdown.value = currentSelection;
+    } else {
+        pumpTypeDropdown.value = ''; // If the previous selection is not valid, reset to default
+    }
+			            
+        }
+
+        function handlePumpTypeState(waterSource) {
+            var pumpTypeDropdown = document.getElementById("pumpType");
+            pumpTypeDropdown.disabled = (waterSource === "");
+        }
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', function() {
+            handleSelection(); // Load initial data based on default selection
+        });
+    </script>
+	     <p id="datagis"></p>
+        <p id="attdata"></p>
+</body>
+</html>
