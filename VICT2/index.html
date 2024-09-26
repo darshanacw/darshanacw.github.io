@@ -224,7 +224,7 @@ function onEachFeature(feature, layer) {
             if (waterSource === "sw" || waterSource === "gw"|| waterSource === "sgw") {
                 attdata = `${season}_${waterSource}_${pumpType}`;
             }
-	    if (pumpType === "al") {
+	    if (pumpType === "") {
                 attdata = `${season}_${waterSource}`;
 
             }
