@@ -220,11 +220,12 @@ function onEachFeature(feature, layer) {
             document.getElementById("datagis").textContent = datagis;
 
             var attdata = `${season}_${waterSource}`;
-	    if (pumpType === "al") {
-                attdata = `${season}_${waterSource}`;
+
             if (waterSource === "sw" || waterSource === "gw"|| waterSource === "sgw") {
                 attdata = `${season}_${waterSource}_${pumpType}`;
             }
+	    if (pumpType === "al") {
+                attdata = `${season}_${waterSource}`;
 
             }
             document.getElementById("attdata").textContent = attdata;
