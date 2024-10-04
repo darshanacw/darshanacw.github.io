@@ -91,7 +91,13 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
         }).addTo(map);
+	// Define the bounds for the PNG overlay in geographic coordinates
+        var bounds = [[1.957752003,32.2511145883485], [ 16.2612688037521,48.73736459]];
 
+        // Add the PNG overlay
+        var imageUrl = 'DistanceRoad5.png'; // Replace with your PNG file path
+        L.imageOverlay(imageUrl, bounds).addTo(map);
+	    
         var geojsonLayer;  // Define the geojsonLayer variable
 
         // Function to style polygon features based on selected attribute
