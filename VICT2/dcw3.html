@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with GeoJSON and Image Overlays</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Set the size of the map */
+        #map {
+            height: 600px; /* Set the height of the map */
+        }
+        /* Style for the toggle button */
+        .toggle-button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+        }
+        /* Style for the dropdown menu */
+        .dropdown {
+            margin: 10px 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>List of drivers in Ethiopia</h1>
+    
+    <!-- Dropdown for selecting PNG overlay -->
+    <select id="pngSelect" class="dropdown">
+        <option value="">Select a Divers</option>
+        <option value="DistanceRoad1.png">Distance Road </option>
+        <option value="TraveltimetoCity.png">Travel time to City</option>
+    </select>
+    
+    <button id="toggleGeoJson" class="toggle-button">Admin Boundary</button>
+    <div id="map"></div> <!-- Placeholder for the Leaflet map -->
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Leaflet JS -->
+    <script src="ETH_400mm.js"></script> <!-- Load the JS file with GeoJSON data -->
+
+    <script>
+        // Initialize the Leaflet map
+        var map = L.map('map').setView([9.03, 38.76], 8); // Set the initial view (latitude, longitude, zoom level)
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Create a GeoJSON layer and add it to the map
+        var geoJsonLayer = L.geoJSON(geojsonData, {
+		            style: function(feature) {
+                return {
+                    color: '#ADD8E6', // Change the line color (red)
+                    weight: 1, // Change the line width
+                    opacity: 0.9 // Change the opacity (optional)
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                // Popup for each feature
+                layer.bindPopup(`
+                    <strong>Country:</strong> ${feature.properties.NAME_0} <br>
+                    <strong>Region:</strong> ${feature.properties.NAME_1} <br>
+                    <strong>Wereda:</strong> ${feature.properties.NAME_3} <br>
+                    <strong>Area:</strong> ${feature.properties.area} sq km
+                `);
+            }
+        }).addTo(map); // Add to map initially
+
+        // Define the bounds for the image overlay using the provided coordinates
+        var bounds = [[1.957752003, 32.2511145883485], [16.2612688037521, 48.73736459]];
+
+        // Initialize variable to hold the current PNG overlay
+        var currentOverlay = null;
+
+        // Function to update the image overlay based on selected dropdown value
+        document.getElementById('pngSelect').onchange = function() {
+            var selectedImage = this.value;
+
+            // Remove the current overlay if it exists
+            if (currentOverlay) {
+                map.removeLayer(currentOverlay);
+            }
+
+            // Check if a valid image is selected
+            if (selectedImage) {
+                // Add the new PNG overlay
+                currentOverlay = L.imageOverlay(selectedImage, bounds).addTo(map);
+            }
+        };
+
+        // Toggle GeoJSON Layer visibility
+        var isGeoJsonVisible = true; // Track visibility state
+
+        document.getElementById('toggleGeoJson').onclick = function() {
+            if (isGeoJsonVisible) {
+                map.removeLayer(geoJsonLayer); // Remove layer from map
+                this.innerHTML = 'Show GeoJSON Layer'; // Change button text
+            } else {
+                geoJsonLayer.addTo(map); // Add layer back to map
+                this.innerHTML = 'Hide GeoJSON Layer'; // Change button text
+            }
+            isGeoJsonVisible = !isGeoJsonVisible; // Toggle the state
+        };
+    </script>
+</body>
+</html>
