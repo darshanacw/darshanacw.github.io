@@ -26,19 +26,24 @@
         var bounds = [[1.957752003, 32.2511145883485], [16.2612688037521, 48.73736459]];
         
         // Add the PNG image overlay
-        L.imageOverlay('DistanceRoad5.png', bounds).addTo(map); // Replace with your PNG file path
+        var imageOverlay = L.imageOverlay('DistanceRoad5.png', bounds).addTo(map); // Replace with your PNG file path
 
-        // Optionally, load GeoJSON data
+        // Function to dynamically load the GeoJSON data
         function loadGeoJSONData(file) {
             fetch(file)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     L.geoJson(data).addTo(map); // Add GeoJSON layer to the map
                 })
                 .catch(error => console.error('Error loading GeoJSON:', error));
         }
 
-        // Load the GeoJSON file (if needed)
+        // Load the GeoJSON file
         loadGeoJSONData('ETH_400mm.js');  // Replace with the correct path to your GeoJSON file
     </script>
 </body>
