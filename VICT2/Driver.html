@@ -1,9 +1,61 @@
-<style>
-  .svg-background {
-    background-image: url("RoadMap.svg");
-    width: 200px;
-    height: 200px;
-  }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VICT-Sustainable Limits-Tech</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; }
+        #attribute-selector { position: absolute; top: 10px; right: 10px; z-index: 1000; background: white; padding: 10px; border-radius: 4px; }
+        /* Additional styles for dropdowns */
+    </style>
+</head>
+<body>
+    <!-- Existing form and map div -->
+    <form>
+        <div class="dropdown-container">
+            <label for="country">Country:</label>
+            <select id="country" name="country" onchange="handleSelection()">
+                <option value="">Select a country</option>
+                <option value="ETH">Ethiopia</option>
+                <option value="MALI">Mali</option>
+                <option value="GHN">Ghana</option>
+            </select>
+            <!-- Other dropdowns -->
+        </div>
+    </form>
+    
+    <h1>Vegetable Growing Suitable Area - Sustainable Limits under above Condition</h1>
+    <div id="map"></div>
 
-<div class="svg-background"></div>
+    <!-- Adding Leaflet library -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([3, 30], 4);
+
+        // Add base map layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Function to style features and handle selection (kept as in your example)
+
+        // Example SVG file path
+        var svgUrl = 'RoadMap.svg'; // Replace with the path to your SVG file
+
+        // Define the bounds for the SVG overlay (adjust based on the region you want to cover)
+        var svgBounds = [[3.5, 32], [10, 42]]; // Replace with actual coordinates
+
+        // Add the SVG overlay
+        var svgOverlay = L.svgOverlay(svgUrl, svgBounds).addTo(map);
+
+        // Function to handle selections and update the map (remains unchanged)
+
+        function handleSelection() {
+            // Your logic here to update layers and selections
+        }
+    </script>
+</body>
+</html>
