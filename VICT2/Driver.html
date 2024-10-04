@@ -49,8 +49,8 @@
         var svgBounds = [[1.957752003,32.2511145883485], [ 16.2612688037521,48.73736459]]; // Replace with actual coordinates
 
         // Add the SVG overlay
-        var svgOverlay = L.svgOverlay(svgUrl, svgBounds).addTo(map);
-
+        //var svgOverlay = L.svgOverlay(svgUrl, svgBounds).addTo(map);
+        L.imageOverlay(svgUrl, svgBounds).addTo(map);
         // Function to handle selections and update the map (remains unchanged)
 
         function handleSelection() {
