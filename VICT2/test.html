@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Overlay Example</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map { height: 600px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([10, 40], 5); // Center the map at an approximate location
+
+        // Add a base map layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Define the bounds for the PNG overlay
+        var bounds = [[1.957752003, 32.2511145883485], [16.2612688037521, 48.73736459]];
+        
+        // Add the PNG image overlay
+        L.imageOverlay('DistanceRoad5.png', bounds).addTo(map); // Replace with your PNG file path
+
+        // Optionally, load GeoJSON data
+        function loadGeoJSONData(file) {
+            fetch(file)
+                .then(response => response.json())
+                .then(data => {
+                    L.geoJson(data).addTo(map); // Add GeoJSON layer to the map
+                })
+                .catch(error => console.error('Error loading GeoJSON:', error));
+        }
+
+        // Load the GeoJSON file (if needed)
+        loadGeoJSONData('ETH_400mm.js');  // Replace with the correct path to your GeoJSON file
+    </script>
+</body>
+</html>
