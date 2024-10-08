@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoJSON Map with Layer Selection and Feature Attributes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+	
+    <style>
+        /* Flexbox container for the layout */
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100vh; /* Full viewport height */
+        }
+
+        /* Style for the map */
+        #map {
+            width: 50%;
+            height: 100%; /* Full height of the container */
+        }
+
+        /* Style for the table section */
+        .tables-container {
+            width: 50%;
+            padding: 10px;
+            overflow-y: auto; /* Allow scrolling if content overflows */
+        }
+
+        /* Style for the tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px; /* Reduced font size */
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+        }
+
+        /* Optional: Scrollbar styling for overflow content */
+        .tables-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tables-container::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 4px;
+        }
+    </style>
+	
+	
+</head>
+<body>
+    <div style="padding: 10px;">
+        <label for="layerSelect">Choose a layer:</label>
+        <select id="layerSelect">
+            <option value="400mm_s1_rf">400mm-s1-Rainfed</option>
+            <option value="400mm_s1_sw_al">400mm-s1-sw</option>
+            <option value="400mm_s1_gw_al">400mm-s1-gw</option>
+            <option value="400mm_s1_sgw_al">400mm-s1-sw+gw</option>
+
+            <option value="400mm_s2_rf">400mm-s2-Rainfed</option>
+            <option value="400mm_s2_sw_al">400mm-s2-sw</option>
+            <option value="400mm_s2_gw_al">400mm-s2-gw</option>
+            <option value="400mm_s2_sgw_al">400mm-s2-sw+gw</option>
+
+            <option value="400mm_s3_rf">400mm-s3-Rainfed</option>
+            <option value="400mm_s3_sw_al">400mm-s3-sw</option>
+            <option value="400mm_s3_gw_al">400mm-s3-gw</option>
+            <option value="400mm_s3_sgw_al">400mm-s3-sw+gw</option>
+
+            <option value="600mm_s1_rf">600mm-s1-Rainfed</option>
+            <option value="600mm_s1_sw_al">600mm-s1-sw</option>
+            <option value="600mm_s1_gw_al">600mm-s1-gw</option>
+            <option value="600mm_s1_sgw_al">600mm-s1-sw+gw</option>
+
+            <option value="600mm_s2_rf">600mm-s2-Rainfed</option>
+            <option value="600mm_s2_sw_al">600mm-s2-sw</option>
+            <option value="600mm_s2_gw_al">600mm-s2-gw</option>
+            <option value="600mm_s2_sgw_al">600mm-s2-sw+gw</option>
+
+            <option value="600mm_s3_rf">600mm-s3-Rainfed</option>
+            <option value="600mm_s3_sw_al">600mm-s3-sw</option>
+            <option value="600mm_s3_gw_al">600mm-s3-gw</option>
+            <option value="600mm_s3_sgw_al">600mm-s3-sw+gw</option>
+
+            <option value="800mm_s1_rf">800mm-s1-Rainfed</option>
+            <option value="800mm_s1_sw_al">800mm-s1-sw</option>
+            <option value="800mm_s1_gw_al">800mm-s1-gw</option>
+            <option value="800mm_s1_sgw_al">800mm-s1-sw+gw</option>
+
+            <option value="800mm_s2_rf">800mm-s2-Rainfed</option>
+            <option value="800mm_s2_sw_al">800mm-s2-sw</option>
+            <option value="800mm_s2_gw_al">800mm-s2-gw</option>
+            <option value="800mm_s2_sgw_al">800mm-s2-sw+gw</option>
+
+            <option value="800mm_s3_rf">800mm-s3-Rainfed</option>
+            <option value="800mm_s3_sw_al">800mm-s3-sw</option>
+            <option value="800mm_s3_gw_al">800mm-s3-gw</option>
+            <option value="800mm_s3_sgw_al">800mm-s3-sw+gw</option>
+        </select>
+    </div>
+    
+
+	
+    <div class="container">
+        <!-- Map container -->
+        <div id="map"></div>
+
+        <!-- Tables container -->
+        <div class="tables-container">
+            <!-- Table for feature attributes -->
+            <h3>All pump- Suitability:</h3>
+            <table id="attributesTable" border="1">
+                <thead>
+                    <tr>
+                        <th rowspan="2">NAME_3</th>
+                        <th colspan="4">400mm</th>
+                        <th colspan="4">600mm</th>
+                        <th colspan="4">800mm</th>
+                    </tr>
+                    <tr>
+                        <th>rf</th>
+                        <th>sw_al</th>
+                        <th>gw_al</th>
+                        <th>swgw_al</th>
+                        <th>rf</th>
+                        <th>sw_al</th>
+                        <th>gw_al</th>
+                        <th>sgw_al</th>
+                        <th>rf</th>
+                        <th>sw_al</th>
+                        <th>gw_al</th>
+                        <th>swgw_al</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <!-- Simpler attributes table -->
+            <h3>Sustainable Area:</h3>
+            <table id="simpleAttributesTable" border="1">
+                <thead>
+                    <tr>
+                        <th rowspan="2">NAME_3</th>
+                        <th colspan="4">400mm</th>
+                        <th colspan="4">600mm</th>
+                        <th colspan="4">800mm</th>
+                    </tr>
+                    <tr>
+                        <th>rf</th>
+                        <th>sw</th>
+                        <th>gw</th>
+                        <th>sgw</th>
+                        <th>rf</th>
+                        <th>sw</th>
+                        <th>gw</th>
+                        <th>sgw</th>
+                        <th>rf</th>
+                        <th>sw</th>
+                        <th>gw</th>
+                        <th>sgw</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>    </div>
+
+    <!-- Include your GeoJSON files here -->
+    <script src="ETH_400mm.js"></script>
+    <script src="ETH_600mm.js"></script>
+    <script src="ETH_800mm.js"></script>
+    
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([9.145, 40.489673], 6); // Ethiopia coordinates
+
+        // Add base tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+			        // Helper function to color cells based on value ranges
+        function colorCell(value) {
+            if (value < 0) {
+                return `style="background-color: #FF0000; color: white;"`;  // Red for negative values
+            } else if (value >= 0 && value <= 50) {
+                return `style="background-color: #FFFF00; color: black;"`;  // Yellow for 0 to 5
+            } else if (value > 50 && value <= 250) {
+                return `style="background-color: #00FF00; color: black;"`;  // Green for 6 to 10
+            } else if (value > 250 && value <= 500) {
+                return `style="background-color: #0000FF; color: white;"`;  // Blue for 11 to 20
+			} else if (value > 500 && value <= 1000) {
+                return `style="background-color: #0000FF; color: white;"`;  // Blue for 11 to 20	
+            } else if (value > 1000 && value <= 2500) {
+                return `style="background-color: #0000FF; color: white;"`;  // Blue for 11 to 20				
+            } else if (value > 2500) {
+                return `style="background-color: #800080; color: white;"`;  // Purple for above 20
+            }
+            return '';  // No style for undefined or null values
+        }
+
+
+function getColor(area) {
+    return area > 2500 ? '#0066cc' :  // Dark navy blue
+           area > 1000 ? '#0099ff' :  // Navy blue
+           area > 500  ? '#66b3ff' :  // Darker blue
+           area > 250  ? '#99ccff' :  // Medium blue
+           area > 50   ? '#e6f7ff' :  // Lighter blue
+           area > 0    ? '#e6f7ff' :  // Lightest blue
+                         '#808080';   // Gray for areas <= 0
+}
+
+		
+		function colorCell(value) {
+    return `style="background-color: ${getColor(value)}; color: black;"`;
+}
+
+
+
+
+        // Style for the GeoJSON layers
+// Style for the GeoJSON layers
+function style400_s1_rf(feature) {
+    return { color: getColor(feature.properties.s1_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s1_sw_al(feature) {
+    return { color: getColor(feature.properties.s1_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s1_gw_al(feature) {
+    return { color: getColor(feature.properties.s1_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s1_sgw_al(feature) {
+    return { color: getColor(feature.properties.s1_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style400_s2_rf(feature) {
+    return { color: getColor(feature.properties.s2_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s2_sw_al(feature) {
+    return { color: getColor(feature.properties.s2_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s2_gw_al(feature) {
+    return { color: getColor(feature.properties.s2_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s2_sgw_al(feature) {
+    return { color: getColor(feature.properties.s2_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style400_s3_rf(feature) {
+    return { color: getColor(feature.properties.s3_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s3_sw_al(feature) {
+    return { color: getColor(feature.properties.s3_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s3_gw_al(feature) {
+    return { color: getColor(feature.properties.s3_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style400_s3_sgw_al(feature) {
+    return { color: getColor(feature.properties.s3_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style600_s1_rf(feature) {
+    return { color: getColor(feature.properties.s1_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s1_sw_al(feature) {
+    return { color: getColor(feature.properties.s1_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s1_gw_al(feature) {
+    return { color: getColor(feature.properties.s1_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s1_sgw_al(feature) {
+    return { color: getColor(feature.properties.s1_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style600_s2_rf(feature) {
+    return { color: getColor(feature.properties.s2_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s2_sw_al(feature) {
+    return { color: getColor(feature.properties.s2_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s2_gw_al(feature) {
+    return { color: getColor(feature.properties.s2_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s2_sgw_al(feature) {
+    return { color: getColor(feature.properties.s2_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style600_s3_rf(feature) {
+    return { color: getColor(feature.properties.s3_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s3_sw_al(feature) {
+    return { color: getColor(feature.properties.s3_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s3_gw_al(feature) {
+    return { color: getColor(feature.properties.s3_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style600_s3_sgw_al(feature) {
+    return { color: getColor(feature.properties.s3_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style800_s1_rf(feature) {
+    return { color: getColor(feature.properties.s1_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s1_sw_al(feature) {
+    return { color: getColor(feature.properties.s1_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s1_gw_al(feature) {
+    return { color: getColor(feature.properties.s1_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s1_sgw_al(feature) {
+    return { color: getColor(feature.properties.s1_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style800_s2_rf(feature) {
+    return { color: getColor(feature.properties.s2_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s2_sw_al(feature) {
+    return { color: getColor(feature.properties.s2_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s2_gw_al(feature) {
+    return { color: getColor(feature.properties.s2_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s2_sgw_al(feature) {
+    return { color: getColor(feature.properties.s2_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+function style800_s3_rf(feature) {
+    return { color: getColor(feature.properties.s3_rf), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s3_sw_al(feature) {
+    return { color: getColor(feature.properties.s3_sw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s3_gw_al(feature) {
+    return { color: getColor(feature.properties.s3_gw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+function style800_s3_sgw_al(feature) {
+    return { color: getColor(feature.properties.s3_sgw_al), weight: 1, opacity: 1 }; // Orange color for 400mm layer
+}
+
+        
+        // Create layers for ETH_400mm, ETH_600mm, and ETH_800mm using their respective GeoJSON data
+// Initialize GeoJSON layers for 400mm data
+var geojsonLayer400_s1_rf = L.geoJSON(ETH_400mm_data, { style: style400_s1_rf, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s1_sw_al = L.geoJSON(ETH_400mm_data, { style: style400_s1_sw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s1_gw_al = L.geoJSON(ETH_400mm_data, { style: style400_s1_gw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s1_sgw_al = L.geoJSON(ETH_400mm_data, { style: style400_s1_sgw_al, onEachFeature: onFeatureClick400 });
+
+var geojsonLayer400_s2_rf = L.geoJSON(ETH_400mm_data, { style: style400_s2_rf, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s2_sw_al = L.geoJSON(ETH_400mm_data, { style: style400_s2_sw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s2_gw_al = L.geoJSON(ETH_400mm_data, { style: style400_s2_gw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s2_sgw_al = L.geoJSON(ETH_400mm_data, { style: style400_s2_sgw_al, onEachFeature: onFeatureClick400 });
+
+var geojsonLayer400_s3_rf = L.geoJSON(ETH_400mm_data, { style: style400_s3_rf, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s3_sw_al = L.geoJSON(ETH_400mm_data, { style: style400_s3_sw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s3_gw_al = L.geoJSON(ETH_400mm_data, { style: style400_s3_gw_al, onEachFeature: onFeatureClick400 });
+var geojsonLayer400_s3_sgw_al = L.geoJSON(ETH_400mm_data, { style: style400_s3_sgw_al, onEachFeature: onFeatureClick400 });
+
+// Initialize GeoJSON layers for 600mm data
+var geojsonLayer600_s1_rf = L.geoJSON(ETH_600mm_data, { style: style600_s1_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s1_sw_al = L.geoJSON(ETH_600mm_data, { style: style600_s1_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s1_gw_al = L.geoJSON(ETH_600mm_data, { style: style600_s1_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s1_sgw_al = L.geoJSON(ETH_600mm_data, { style: style600_s1_sgw_al, onEachFeature: onFeatureClick600 });
+
+var geojsonLayer600_s2_rf = L.geoJSON(ETH_600mm_data, { style: style600_s2_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s2_sw_al = L.geoJSON(ETH_600mm_data, { style: style600_s2_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s2_gw_al = L.geoJSON(ETH_600mm_data, { style: style600_s2_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s2_sgw_al = L.geoJSON(ETH_600mm_data, { style: style600_s2_sgw_al, onEachFeature: onFeatureClick600 });
+
+var geojsonLayer600_s3_rf = L.geoJSON(ETH_600mm_data, { style: style600_s3_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s3_sw_al = L.geoJSON(ETH_600mm_data, { style: style600_s3_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s3_gw_al = L.geoJSON(ETH_600mm_data, { style: style600_s3_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer600_s3_sgw_al = L.geoJSON(ETH_600mm_data, { style: style600_s3_sgw_al, onEachFeature: onFeatureClick600 });
+
+		
+// Initialize GeoJSON layers for 800mm data
+var geojsonLayer800_s1_rf = L.geoJSON(ETH_800mm_data, { style: style800_s1_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s1_sw_al = L.geoJSON(ETH_800mm_data, { style: style800_s1_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s1_gw_al = L.geoJSON(ETH_800mm_data, { style: style800_s1_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s1_sgw_al = L.geoJSON(ETH_800mm_data, { style: style800_s1_sgw_al, onEachFeature: onFeatureClick600 });
+
+var geojsonLayer800_s2_rf = L.geoJSON(ETH_800mm_data, { style: style800_s2_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s2_sw_al = L.geoJSON(ETH_800mm_data, { style: style800_s2_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s2_gw_al = L.geoJSON(ETH_800mm_data, { style: style800_s2_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s2_sgw_al = L.geoJSON(ETH_800mm_data, { style: style800_s2_sgw_al, onEachFeature: onFeatureClick600 });
+
+var geojsonLayer800_s3_rf = L.geoJSON(ETH_800mm_data, { style: style800_s3_rf, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s3_sw_al = L.geoJSON(ETH_800mm_data, { style: style800_s3_sw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s3_gw_al = L.geoJSON(ETH_800mm_data, { style: style800_s3_gw_al, onEachFeature: onFeatureClick600 });
+var geojsonLayer800_s3_sgw_al = L.geoJSON(ETH_800mm_data, { style: style800_s3_sgw_al, onEachFeature: onFeatureClick600 });
+
+
+        // Function to update the attribute table with specified properties
+        function updateTable(name3Value) {
+            var tableBody = document.getElementById('attributesTable').querySelector('tbody');
+            var simpleTableBody = document.getElementById('simpleAttributesTable').querySelector('tbody');
+            tableBody.innerHTML = '';  // Clear previous content
+            simpleTableBody.innerHTML = '';  // Clear previous content
+
+            // Find the properties for matching NAME_3 from all layers
+            var props400 = ETH_400mm_data.features.find(feature => feature.properties.NAME_3 === name3Value)?.properties || {};
+            var props600 = ETH_600mm_data.features.find(feature => feature.properties.NAME_3 === name3Value)?.properties || {};
+            var props800 = ETH_800mm_data.features.find(feature => feature.properties.NAME_3 === name3Value)?.properties || {};
+           
+		   
+
+			
+			
+
+
+
+            // Create and append rows for S1, S2, and S3 with the desired attributes
+            for (let i = 1; i <= 3; i++) {
+                var row = document.createElement('tr');
+                var simpleRow = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>Season${i}</td>
+
+					<td ${colorCell(props400[`s${i}_rf`])}>${props400[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_sw_al`])}>${props400[`s${i}_sw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_gw_al`])}>${props400[`s${i}_gw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_sgw_al`])}>${props400[`s${i}_sgw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_rf`])}>${props600[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_sw_al`])}>${props600[`s${i}_sw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_gw_al`])}>${props600[`s${i}_gw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_sgw_al`])}>${props600[`s${i}_sgw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_rf`])}>${props800[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_sw_al`])}>${props800[`s${i}_sw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_gw_al`])}>${props800[`s${i}_gw_al`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_sgw_al`])}>${props800[`s${i}_sgw_al`] || 'N/A'}</td>
+                `;
+
+                simpleRow.innerHTML = `
+                    <td>Season${i}</td>
+                    <td ${colorCell(props400[`s${i}_rf`])}>${props400[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_sw`])}>${props400[`s${i}_sw`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_gw`])}>${props400[`s${i}_gw`] || 'N/A'}</td>
+                    <td ${colorCell(props400[`s${i}_sgw`])}>${props400[`s${i}_sgw`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_rf`])}>${props600[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_sw`])}>${props600[`s${i}_sw`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_gw`])}>${props600[`s${i}_gw`] || 'N/A'}</td>
+                    <td ${colorCell(props600[`s${i}_sgw`])}>${props600[`s${i}_sgw`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_rf`])}>${props800[`s${i}_rf`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_sw`])}>${props800[`s${i}_sw`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_gw`])}>${props800[`s${i}_gw`] || 'N/A'}</td>
+                    <td ${colorCell(props800[`s${i}_sgw`])}>${props800[`s${i}_sgw`] || 'N/A'}</td>
+                `;
+
+                tableBody.appendChild(row);
+                simpleTableBody.appendChild(simpleRow);
+            }
+        }
+
+        // Function to handle feature clicks for each layer
+        function onFeatureClick(feature, layer, name3) {
+            layer.on('click', function () {
+                updateTable(name3);
+            });
+        }
+
+        // Function for each layer's click behavior
+        function onFeatureClick400(feature, layer) {
+            onFeatureClick(feature, layer, feature.properties.NAME_3);
+        }
+
+        function onFeatureClick600(feature, layer) {
+            onFeatureClick(feature, layer, feature.properties.NAME_3);
+        }
+
+        function onFeatureClick800(feature, layer) {
+            onFeatureClick(feature, layer, feature.properties.NAME_3);
+        }
+
+        // Display selected layer based on dropdown selection
+        document.getElementById('layerSelect').addEventListener('change', function () {
+            var selectedLayer = this.value;
+            map.eachLayer(function (layer) {
+                map.removeLayer(layer); // Clear existing layers
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map); // Add base tile layer again
+
+    if (selectedLayer === "400mm_s1_rf") {
+        geojsonLayer400_s1_rf.addTo(map);
+    } else if (selectedLayer === "400mm_s1_sw_al") {
+        geojsonLayer400_s1_sw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s1_gw_al") {
+        geojsonLayer400_s1_gw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s1_sgw_al") {
+        geojsonLayer400_s1_sgw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s2_rf") {	
+        geojsonLayer400_s2_rf.addTo(map);
+    } else if (selectedLayer === "400mm_s2_sw_al") {
+        geojsonLayer400_s2_sw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s2_gw_al") {
+        geojsonLayer400_s2_gw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s2_sgw_al") {
+        geojsonLayer400_s2_sgw_al.addTo(map);		
+    } else if (selectedLayer === "400mm_s3_rf") {
+        geojsonLayer400_s3_rf.addTo(map);
+    } else if (selectedLayer === "400mm_s3_sw_al") {
+        geojsonLayer400_s3_sw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s3_gw_al") {
+        geojsonLayer400_s3_gw_al.addTo(map);
+    } else if (selectedLayer === "400mm_s3_sgw_al") {
+        geojsonLayer400_s3_sgw_al.addTo(map);
+		
+    } else if (selectedLayer === "600mm_s1_rf") {
+        geojsonLayer600_s1_rf.addTo(map);
+    } else if (selectedLayer === "600mm_s1_sw_al") {
+        geojsonLayer600_s1_sw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s1_gw_al") {
+        geojsonLayer600_s1_gw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s1_sgw_al") {
+        geojsonLayer600_s1_sgw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s2_rf") {	
+        geojsonLayer600_s2_rf.addTo(map);
+    } else if (selectedLayer === "600mm_s2_sw_al") {
+        geojsonLayer600_s2_sw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s2_gw_al") {
+        geojsonLayer600_s2_gw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s2_sgw_al") {
+        geojsonLayer600_s2_sgw_al.addTo(map);		
+    } else if (selectedLayer === "600mm_s3_rf") {
+        geojsonLayer600_s3_rf.addTo(map);
+    } else if (selectedLayer === "600mm_s3_sw_al") {
+        geojsonLayer600_s3_sw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s3_gw_al") {
+        geojsonLayer600_s3_gw_al.addTo(map);
+    } else if (selectedLayer === "600mm_s3_sgw_al") {
+        geojsonLayer600_s3_sgw_al.addTo(map);
+		
+    } else if (selectedLayer === "800mm_s1_rf") {
+        geojsonLayer800_s1_rf.addTo(map);
+    } else if (selectedLayer === "800mm_s1_sw_al") {
+        geojsonLayer800_s1_sw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s1_gw_al") {
+        geojsonLayer800_s1_gw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s1_sgw_al") {
+        geojsonLayer800_s1_sgw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s2_rf") {	
+        geojsonLayer800_s2_rf.addTo(map);
+    } else if (selectedLayer === "800mm_s2_sw_al") {
+        geojsonLayer800_s2_sw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s2_gw_al") {
+        geojsonLayer800_s2_gw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s2_sgw_al") {
+        geojsonLayer800_s2_sgw_al.addTo(map);		
+    } else if (selectedLayer === "800mm_s3_rf") {
+        geojsonLayer800_s3_rf.addTo(map);
+    } else if (selectedLayer === "800mm_s3_sw_al") {
+        geojsonLayer800_s3_sw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s3_gw_al") {
+        geojsonLayer800_s3_gw_al.addTo(map);
+    } else if (selectedLayer === "800mm_s3_sgw_al") {
+        geojsonLayer800_s3_sgw_al.addTo(map);		
+		
+    } else if (selectedLayer === "800mm") {
+        geojsonLayer800.addTo(map);
+            }
+        });
+
+        // Add initial layer to the map
+        geojsonLayer400_s1_rf.addTo(map);
+    </script>
+</body>
+</html>
