@@ -120,18 +120,28 @@
                               //'#FFEDA0';
        // }
 // Function to get color based on attribute value
+//function getColor(d) {
+    //return d > 5000 ? '#001f4d' :       // More (dark blue)
+           //d > 2000 ? '#003366' :       // 5000
+           //d > 1000 ? '#004080' :       // 2000
+           //d > 500  ? '#00509e' :       // 1000
+           //d > 200  ? '#0066cc' :       // 500
+          // d > 100  ? '#0099ff' :       // 200
+           //d > 50   ? '#66b3ff' :       // 100
+           //d > 20   ? '#99ccff' :       // 50
+           //d > 10   ? '#cce5ff' :       // 20
+           //d > 0    ? '#e6f7ff' :       // 10
+                      //'#808080';        // 0
+//}
+
 function getColor(d) {
-    return d > 5000 ? '#001f4d' :       // More (dark blue)
-           d > 2000 ? '#003366' :       // 5000
-           d > 1000 ? '#004080' :       // 2000
-           d > 500  ? '#00509e' :       // 1000
-           d > 200  ? '#0066cc' :       // 500
-           d > 100  ? '#0099ff' :       // 200
-           d > 50   ? '#66b3ff' :       // 100
-           d > 20   ? '#99ccff' :       // 50
-           d > 10   ? '#cce5ff' :       // 20
-           d > 0    ? '#e6f7ff' :       // 10
-                      '#808080';        // 0
+    return d > 2500 ? '#0066cc' :  // Dark navy blue
+           d > 1000 ? '#0099ff' :  // Navy blue
+           d > 500  ? '#66b3ff' :  // Darker blue
+           d > 250  ? '#99ccff' :  // Medium blue
+           d > 50   ? '#e6f7ff' :  // Lighter blue
+           d > 0    ? '#e6f7ff' :  // Lightest blue
+                         '#808080';   // Gray for areas <= 0
 }
 
 	    
