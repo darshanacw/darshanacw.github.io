@@ -1,1 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water sources</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Set the size of the map */
+        #map {
+            height: 600px; /* Set the height of the map */
+        }
+        /* Style for the toggle button */
+        .toggle-button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+        }
+        /* Style for the dropdown menu */
+        .dropdown {
+            margin: 10px 2px;
+        }
+        /* Style for the fixed photo */
+        .fixed-photo {
+            position: absolute; /* Position it relative to the viewport */
+            bottom: 10px; /* Adjust as needed */
+            left: 10px; /* Adjust as needed */
+            width: 200px; /* Set the width */
+            height: auto; /* Maintain aspect ratio */
+            border: 2px solid #ccc; /* Optional border */
+            border-radius: 5px; /* Optional rounded corners */
+            background-color: #fff; /* Optional background */
+            padding: 5px; /* Optional padding */
+            z-index: 1000; /* Ensure it appears above the map */
+        }
+    </style>
+</head>
+<body>
+    <h1> Sustainable Rainfed and Irrigated Area in Ethiopia</h1>
+    
+    <!-- Dropdown for selecting PNG overlay -->
+    <select id="pngSelect" class="dropdown">
+        <option value="">Select a Season and Crop Water</option>
+        <option value="ETH_waterSource_400_s1.png">400mm-Season-1</option>
+        <option value="ETH_waterSource_400_s2.png">400mm-Season-2</option>
+		<option value="ETH_waterSource_400_s3.png">400mm-Season-3</option>
+		
+        <option value="ETH_waterSource_600_s1.png">600mm-Season-1</option>
+        <option value="ETH_waterSource_600_s2.png">600mm-Season-2</option>
+		<option value="ETH_waterSource_600_s3.png">600mm-Season-3</option>
+		
+		<option value="ETH_waterSource_800_s1.png">800mm-Season-1</option>
+        <option value="ETH_waterSource_800_s2.png">800mm-Season-2</option>
+		<option value="ETH_waterSource_800_s3.png">800mm-Season-3</option>
+    </select>
+    
+    <button id="toggleGeoJson" class="toggle-button">Admin Boundary</button>
+    <div id="map"></div> <!-- Placeholder for the Leaflet map -->
 
+    <!-- Fixed photo in the bottom left -->
+    <img src="default_photo.jpg" alt="Fixed Photo" class="fixed-photo" id="fixedPhoto"> <!-- Fixed Photo Image -->
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Leaflet JS -->
+    <script src="ETH_400mm.js"></script> <!-- Load the JS file with GeoJSON data -->
+
+    <script>
+        // Initialize the Leaflet map
+        var map = L.map('map').setView([9.03, 38.76], 8); // Set the initial view (latitude, longitude, zoom level)
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Create a GeoJSON layer and add it to the map
+        var geoJsonLayer = L.geoJSON(ETH_400mm_data, {
+            style: function(feature) {
+                return {
+                    color: '#800080', // Change the line color (light blue)
+                    weight: 2, // Change the line width
+                    opacity: 0.5 // Change the opacity (optional)
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                // Popup for each feature
+                layer.bindPopup(`
+                    <strong>Country:</strong> ${feature.properties.NAME_0} <br>
+                    <strong>Region:</strong> ${feature.properties.NAME_1} <br>
+                    <strong>Wereda:</strong> ${feature.properties.NAME_3} <br>
+                    <strong>Area:</strong> ${feature.properties.area} sq km
+                `);
+            }
+        }).addTo(map); // Add to map initially
+
+        // Define the bounds for the image overlay using the provided coordinates
+        var bounds = [[3.196163995, 32.7736117632106], [15.2124420739972, 48.28769752]];
+
+        // Initialize variable to hold the current PNG overlay
+        var currentOverlay = null;
+
+        // Map dropdown options to corresponding image paths and fixed photo paths
+        var imagePaths = {
+            "ETH_waterSource_400_s1.png": "ETH_waterSource_400_s1.png", // Replace with actual path
+            "ETH_waterSource_400_s2.png": "ETH_waterSource_400_s2.png", // Replace with actual path
+			"ETH_waterSource_400_s3.png": "ETH_waterSource_400_s3.png", // Replace with actual path
+			
+            "ETH_waterSource_600_s1.png": "ETH_waterSource_600_s1.png", // Replace with actual path
+            "ETH_waterSource_600_s2.png": "ETH_waterSource_600_s2.png", // Replace with actual path
+			"ETH_waterSource_600_s3.png": "ETH_waterSource_600_s3.png", // Replace with actual path
+			
+			"ETH_waterSource_800_s1.png": "ETH_waterSource_800_s1.png", // Replace with actual path
+            "ETH_waterSource_800_s2.png": "ETH_waterSource_800_s2.png", // Replace with actual path
+			"ETH_waterSource_800_s3.png": "ETH_waterSource_800_s3.png", // Replace with actual path
+			
+        };
+
+        var fixedPhotoPaths = {
+            "DistanceRoad1.png": "default_photo.jpg", // Replace with actual fixed photo path
+            "Map_ETH_ind_1.png": "default_photo.jpg" // Replace with actual fixed photo path
+        };
+
+        // Function to update the image overlay based on selected dropdown value
+        document.getElementById('pngSelect').onchange = function() {
+            var selectedImage = this.value;
+
+            // Remove the current overlay if it exists
+            if (currentOverlay) {
+                map.removeLayer(currentOverlay);
+            }
+
+            // Check if a valid image is selected
+            if (selectedImage) {
+                // Add the new PNG overlay
+                currentOverlay = L.imageOverlay(imagePaths[selectedImage], bounds).addTo(map);
+
+                // Update the fixed photo based on the selected image
+                var fixedPhoto = document.getElementById('fixedPhoto');
+                fixedPhoto.src = fixedPhotoPaths[selectedImage] || "default_photo.jpg"; // Default image if not found
+            }
+        };
+
+        // Toggle GeoJSON Layer visibility
+        var isGeoJsonVisible = true; // Track visibility state
+
+        document.getElementById('toggleGeoJson').onclick = function() {
+            if (isGeoJsonVisible) {
+                map.removeLayer(geoJsonLayer); // Remove layer from map
+                this.innerHTML = 'Show Admin Boundary'; // Change button text
+            } else {
+                geoJsonLayer.addTo(map); // Add layer back to map
+                this.innerHTML = 'Hide Admin Boundary'; // Change button text
+            }
+            isGeoJsonVisible = !isGeoJsonVisible; // Toggle the state
+        };
+    </script>
+</body>
+</html>
