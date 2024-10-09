@@ -28,6 +28,37 @@
             min-width: 200px; /* Ensure the dropdown has a minimum width */
         }
     </style>
+	    <style>
+        /* Style for the blue button */
+        .blue-button {
+            background-color: blue;
+            color: white;
+            font-size: 12px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px; /* Adds space between buttons */
+        }
+
+        /* Style for the red button */
+        .red-button {
+            background-color: red;
+            color: white;
+            font-size: 12px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Hover effect for the buttons */
+        .blue-button:hover {
+            background-color: darkblue;
+        }
+
+        .red-button:hover {
+            background-color: darkred;
+        }
+    </style>
 </head>
 <body>
     <form>
@@ -74,7 +105,23 @@
 
             </select>
         </div>
+    <!-- Blue button -->
+    <button class="Ethiopia Driver" onclick="openBluePage()">Ethiopia Driver</button>
 
+    <!-- Red button -->
+    <button class="red-button" onclick="openRedPage()">Ethiopia Comparison</button>
+
+    <script>
+        // Function to open the blue page in a new window
+        function openBluePage() {
+            window.open('bluepage.html', '_blank');
+        }
+
+        // Function to open the red page in a new window
+        function openRedPage() {
+            window.open('https://darshanacw.github.io/VICT5/ETH_WS/Combine.html', '_blank');
+        }
+    </script>
         <!--<p id="result"></p>-->	
 		<h1>Vegetable Growing Suitable Area -Sustainable Limits under above Condition </h1>		
 
