@@ -39,7 +39,15 @@
             cursor: pointer;
             margin-right: 10px; /* Adds space between buttons */
         }
-
+        .blue-mali-button {
+            background-color: blue;
+            color: white;
+            font-size: 12px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px; /* Adds space between buttons */
+        }
         /* Style for the red button */
         .red-button {
             background-color: red;
@@ -49,15 +57,27 @@
             border: none;
             cursor: pointer;
         }
-
+        .red-mali-button {
+            background-color: red;
+            color: white;
+            font-size: 12px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+        }
         /* Hover effect for the buttons */
         .blue-button:hover {
             background-color: darkblue;
         }
-
+        .blue-mali-button:hover {
+            background-color: darkblue;
+        }
         .red-button:hover {
             background-color: darkred;
         }
+        .red-mali-button:hover {
+            background-color: darkred;
+        }		    
     </style>
 </head>
 <body>
@@ -107,18 +127,26 @@
         </div>
     <!-- Blue button -->
     <button class="blue-button" onclick="openBluePage()">Ethiopia Driver</button>
+    <!-- Blue-mali button -->
+    <button class="blue-mali-button" onclick="openBlueMaliPage()">Ethiopia Driver</button>
 
     <!-- Red button -->
     <button class="red-button" onclick="openRedPage()">Ethiopia Comparison</button>
-
+    <!-- Red-mali button -->
+    <button class="red-button" onclick="openRedMaliPage()">Ethiopia Comparison</button>
     <script>
         // Function to open the blue page in a new window
         function openBluePage() {
             window.open('https://darshanacw.github.io/VICT5/Driv/driver.html', '_blank');
         }
-
+        function openBlueMaliPage() {
+            window.open('https://darshanacw.github.io/VICT5/Driv/driver_mali.html', '_blank');
+        }
         // Function to open the red page in a new window
         function openRedPage() {
+            window.open('https://darshanacw.github.io/VICT5/ETH_WS/Combine.html', '_blank');
+        }
+	function openRedMaliPage() {
             window.open('https://darshanacw.github.io/VICT5/ETH_WS/Combine.html', '_blank');
         }
     </script>
