@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with GeoJSON from Google Drive</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        /* Set the size of the map */
+        #map {
+            height: 600px; /* Adjust height as needed */
+            width: 100%; /* Full width */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Leaflet Map with GeoJSON Data</h1>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet AJAX for GeoJSON -->
+    <script src="https://unpkg.com/leaflet-ajax"></script>
+
+    <script>
+        // Initialize the map
+        var map = L.map('map').setView([7, 81], 6); // Set initial view with desired coordinates and zoom level
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Load GeoJSON from Google Drive
+        var geojsonLayer = new L.GeoJSON.AJAX('https://drive.google.com/uc?id=15DzdLW0G-wfYRFQgRmr9i9BUMX9rZ4Sv', {
+            onEachFeature: function (feature, layer) {
+                // Optional: Add popups or custom styling
+                if (feature.properties && feature.properties.name) {
+                    layer.bindPopup(feature.properties.name); // Adjust property as needed
+                }
+            }
+        }).addTo(map);
+    </script>
+</body>
+</html>
