@@ -3,8 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaflet Map with External GeoJSON</title>
+  <title>Leaflet Map with GeoJSON Overlay</title>
+  
+  <!-- Include Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
   <style>
     #map {
       height: 600px;
@@ -13,37 +19,44 @@
   </style>
 </head>
 <body>
-  <h3>Leaflet Map with GeoJSON Overlay</h3>
+
+  <!-- Map container -->
   <div id="map"></div>
 
-  <!-- Leaflet JS library -->
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-
   <script>
-    // Initialize the map
-    const map = L.map('map').setView([7.8731, 80.7718], 8); // Center the map at specific coordinates
+    // Initialize the map and set the view to a given geographical coordinates and zoom level
+    const map = L.map('map').setView([7.8731, 80.7718], 8);
 
-    // Add base tile layer from OpenStreetMap
+    // Add a tile layer (the map background) from OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Load external GeoJSON file (Replace 'sample-data.geojson' with the path to your actual GeoJSON file)
+    // Fetch the GeoJSON file from the local directory or server
     fetch('sample-data.geojson')
-      .then(response => response.json())
+      .then(response => {
+        // Check if the response is OK (status 200)
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();  // Parse the GeoJSON data
+      })
       .then(data => {
-        // Add the GeoJSON layer to the map
+        // Create a GeoJSON layer and add it to the map
         L.geoJSON(data, {
+          // Optional: bind popups to features with popupContent property
           onEachFeature: function (feature, layer) {
             if (feature.properties && feature.properties.popupContent) {
-              layer.bindPopup(feature.properties.popupContent); // Display popup for each feature
+              layer.bindPopup(feature.properties.popupContent);
             }
           }
         }).addTo(map);
       })
       .catch(error => {
+        // Log errors to the console for debugging
         console.error('Error loading GeoJSON:', error);
       });
   </script>
+
 </body>
 </html>
