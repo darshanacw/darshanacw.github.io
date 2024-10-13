@@ -1,0 +1,46 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Location 1",
+        "popupContent": "This is the first sample location."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [80.6350, 7.8731]  // Longitude, Latitude
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Location 2",
+        "popupContent": "This is the second sample location."
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [80.7718, 7.2906]  // Longitude, Latitude
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Polygon Area",
+        "popupContent": "This is a sample polygon area."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.6350, 7.8731],
+            [80.6450, 7.8731],
+            [80.6450, 7.8831],
+            [80.6350, 7.8831],
+            [80.6350, 7.8731]
+          ]
+        ]
+      }
+    }
+  ]
+}
