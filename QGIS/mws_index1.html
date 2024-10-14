@@ -31,7 +31,8 @@
         }).addTo(map);
 
         // Fetch the GeoJSON data from the external file
-        fetch('mws_4326.geojson')
+        fetch('https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/mws_4326.geojson
+')
             .then(response => response.json())
             .then(data => {
                 // Add the GeoJSON layer to the map
