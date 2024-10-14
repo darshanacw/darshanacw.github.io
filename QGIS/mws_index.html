@@ -31,7 +31,7 @@
         }).addTo(map);
 
         // Fetch the GeoJSON data from the external file
-        fetch('mws4326.geojson')
+        fetch('mws_4326.geojson')
             .then(response => response.json())
             .then(data => {
                 // Add the GeoJSON layer to the map
