@@ -1,0 +1,80 @@
+Database,,Code,Database,Code,Data provider
+1,Administration,ADM,Country boundary,CNT,SD
+,,,Provincial boundary,PRV,SD
+,,,District boundary,DIS,SD
+,,,DS boundary,DSD,SD
+,,,GN boundary,GND,SD
+,,,,,
+2,Hydrology,HYD,Stream network,DRN,IWMI
+,,,Mini watershed,MWS,IWMI
+,,,Irrigation scheme,IRS,
+,,,water features -point,,SD
+,,,water features -line,,SD
+,,,water features polygon,,SD
+3,Reservation,RSV,Forest cover,FRC,FD
+,,,National Park,NTP,DWC
+,,,Environmental protection area,EPA,CEA
+,,,,,
+4,Land cover,LND,Land Use Land Cover,LULC,LUPPD
+,,,,,
+5,Soil related data,SOL,Soil type,SLT,NRMC
+,,,,,
+6,Topography,TPG,Spot height,SPH,MASL
+,,,Contour,CTR,MASL
+,,,,,
+7,Socio-economic data,SED,Population,PPL,RP
+,,,Economics,ECN,
+,,,Household,HHD,
+,,,,,
+8,Transportation,TRP,Road type,RDT,SD
+,,,,,
+9,Places,PLC,Town,TWN,SD
+,,,Village,VLG,SD
+,,,,,
+10,Meteorology,MET,Climatic zone,CLZ,
+,,,Agro-ecological zone,AEZ,NRMC
+,,,,,
+11,Hazard and risk,HZR,Landslide,LDS,NBRO
+,,,Flood,FLD,
+,,,Forest fire,FRF,
+,,,,,
+Expert Knowledge (Field data),,FLD,,,
+1,Soil,SOL,Field data,FLD1,
+,,,Proposal,PPR,
+,,,Images,IMG,
+2,Forestry,FRT,Field data,FLD2,
+,,,Proposal,PPR,
+,,,Images,IMG,
+3,Wildlife,WLD,Field data,FLD3,
+,,,Proposal,PPR,
+,,,Images,IMG,
+4,Hydrology,HYD,Field data,FLD4,
+,,,Proposal,PPR,
+,,,Images,IMG,
+5,Water Resources Development,WRD,Field data,FLD5,
+,,,Proposal,PPR,
+,,,Images,IMG,
+6,Water quality,WTQ,Field data,FLD6,
+,,,Proposal,PPR,
+,,,Images,IMG,
+7,Tea,TEA,Field data,FLD7,
+,,,Proposal,PPR,
+,,,Images,IMG,
+8,Product Development and Marketing,PDM,Field data,FLD8,
+,,,Proposal,PPR,
+,,,Images,IMG,
+9,Eco-Tourism,ECT,Field data,FLD9,
+,,,Proposal,PPR,
+,,,Images,IMG,
+10,Livelihood,LVD,Field data,FLD10,
+,,,Proposal,PPR,
+,,,Images,IMG,
+11,Capacity Development,CPD,Field data,FLD11,
+,,,Proposal,PPR,
+,,,Images,IMG,
+Non spatial data,,NSD,,,
+1,Reports,RPT,,,
+2,Maps,MPS,Map 1,MP1,
+,,,Map 2,MP2,
+,,,Map 3,MP3,
+,,,Map 4,MP4,
