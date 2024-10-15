@@ -5,7 +5,7 @@ ID,Database,Layer,Data provider,Download-SHP,Download-KML,Code,Code,geojson
 4,Administration,DS boundary,SD,,,,DSD,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
 5,Administration,GN boundary,SD,,,,GND,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
 6,Hydrology,Stream network,IWMI,,,HYD,DRN,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
-7,Hydrology,Mini watershed,IWMI,,,,MWS,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
+7,Hydrology,Mini watershed,IWMI,,,,MWS,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/mws_4326.geojson
 8,Hydrology,Irrigation scheme,ID,,,,IRS,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
 9,Hydrology,water features -point,SD,,,,,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
 10,Hydrology,water features -line,SD,,,,,https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/QGIS/lulc_4326.geojson
