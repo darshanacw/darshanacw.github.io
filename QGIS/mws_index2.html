@@ -31,7 +31,7 @@
         }).addTo(map);
 
         // Fetch the GeoJSON data from the external file
-        fetch('https://drive.google.com/uc?export=download&id=1ZPRHtd2Mosz0V-0ziqPykvv85-UMSTSl', { mode: 'no-cors' })
+        fetch('https://drive.google.com/uc?id=1ZPRHtd2Mosz0V-0ziqPykvv85-UMSTSl&export?format=geojson')
     
             .then(response => response.json())
             .then(data => {
