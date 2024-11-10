@@ -91,7 +91,7 @@ async function loadAdminData() {
     if (selectedCountry === 'KHM') {
         admin0GeoJSON = await fetch("https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/KHM/khm_admbnda_adm0_gov_20181004_FLID.geojson").then(res => res.json());
     } else if (selectedCountry === 'LAO') {
-        admin0GeoJSON = await fetch("https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm0_ngd_20191112.geojson").then(res => res.json());
+        admin0GeoJSON = await fetch("https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm0_ngd_20191112_FLID.geojson").then(res => res.json());
     }
 
     // Add admin0 layer to the map
@@ -315,7 +315,7 @@ document.getElementById("admin0Dropdown").addEventListener("change", async funct
     const selectedValue = this.value;
     let admin1Url = selectedCountry === 'KHM' 
         ? "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/KHM/khm_admbnda_adm1_gov_20181004_FLID.geojson"
-        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm1_ngd_20191112.geojson";
+        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm1_ngd_20191112_FLID.geojson";
     admin1Layer = await updateDropdown("admin1Dropdown", "ADM0_EN", admin1Url, admin1Layer, selectedValue);
 });
 
@@ -324,7 +324,7 @@ document.getElementById("admin1Dropdown").addEventListener("change", async funct
     const selectedValue = this.value;
     let admin2Url = selectedCountry === 'KHM' 
         ? "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/KHM/khm_admbnda_adm2_gov_20181004_FLID.geojson"
-        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm2_ngd_20191112.geojson";
+        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm2_ngd_20191112_FLID.geojson";
     admin2Layer = await updateDropdown("admin2Dropdown", "ADM1_EN", admin2Url, admin2Layer, selectedValue);
 });
 
@@ -333,7 +333,7 @@ document.getElementById("admin2Dropdown").addEventListener("change", async funct
     const selectedValue = this.value;
     let admin3Url = selectedCountry === 'KHM' 
         ? "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/KHM/khm_admbnda_adm3_gov_20181004_FLID.geojson"
-        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm2_ngd_20191112.geojson";
+        : "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/LAO/lao_admbnda_adm2_ngd_20191112_FLID.geojson";
     admin3Layer = await updateDropdown("admin3Dropdown", "ADM2_EN", admin3Url, admin3Layer, selectedValue);
 });
 
