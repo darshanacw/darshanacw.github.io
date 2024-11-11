@@ -115,8 +115,61 @@ const overlays = {
     "FLID Suitable Area": tileServerLayer
 };
 
+// URLs and names for GeoJSON files
+const geojsonUrls = [
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/IRRI_AREA_2014_lao.geojson', name: 'IRRI Area 2014 (Lao)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/IRRI_HEADWROK_2014_lao.geojson', name: 'IRRI Headwork 2014 (Lao)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/IRRI_PROJECT_2014_lao.geojson', name: 'IRRI Project 2014 (Lao)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/IRR_RESERVOIR_DB_lao.geojson', name: 'IRR Reservoir DB (Lao)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/Irrigation_Data09_khm.geojson', name: 'Irrigation Data 09 (KHM)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/Irrigation_Data09_lao.geojson', name: 'Irrigation Data 09 (Lao)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/Irrigation_Prj04_khm.geojson', name: 'Irrigation Project 04 (KHM)' },
+  { url: 'https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/GT/Irrigation_Prj04_lao.geojson', name: 'Irrigation Project 04 (Lao)' }
+];
+
+// Function to add GeoJSON layers to the map and layer control
+function addGeoJSONLayer(url, name) {
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      let layer = L.geoJson(data, {
+        pointToLayer: function(feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 3,             // Set radius to 3
+            fillColor: "blue",     // Set fill color to blue
+            color: "blue",         // Set outline color to blue
+            weight: 1,             // Set weight of the outline
+            opacity: 1,            // Set opacity
+            fillOpacity: 0.8       // Set fill opacity to 0.8	
+          });
+        },
+        style: function(feature) {
+          return {
+            color: "blue",       // Set outline color to purple for polygons
+            weight: 2,             // Set weight of the outline
+            fillColor: "popal",    // Set fill color to popal (light pinkish)
+            fillOpacity: 0.2       // Set fill opacity to 0.6 for a light fill
+          };
+        },
+        onEachFeature: function(feature, layer) {
+          if (feature.properties) {
+            layer.bindPopup(Object.keys(feature.properties).map(key => `<strong>${key}:</strong> ${feature.properties[key]}`).join("<br />"));
+          }
+        }
+      });
+      overlays[name] = layer;               // Add each layer to overlays object
+      layerControl.addOverlay(layer, name); // Add layer to control with its name
+    })
+    .catch(error => console.error('Error loading GeoJSON:', error));
+}
+
+// Load each GeoJSON layer with its name
+geojsonUrls.forEach(item => addGeoJSONLayer(item.url, item.name));
+
+// Initialize the layer control and add it to the map
+let layerControl = L.control.layers(baseLayers, overlays, { position: 'topleft' }).addTo(map);
 // Add layer control to map
-L.control.layers(baseLayers, overlays).addTo(map);
+//L.control.layers(baseLayers, overlays).addTo(map);
 
 
 
