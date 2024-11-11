@@ -6,28 +6,50 @@
     <title>Farmer-Led Irrigated Area Mapping – ASEAN</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; }
-        #map { height: 75%; width: 100%; }
-        .header, .footer { padding: 10px; text-align: center; background: #333; color: #fff; }
-        .dropdown { margin: 0 5px; }
-        #layerCheckbox { margin-right: 5px; }
-		 .legend {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background-color: white;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-        #sliderContainer {
-            position: absolute;
-            bottom: 220px;
-            right: 50px;
-            z-index: 1000;
-            background: white;
-            padding: 4px;
-            border-radius: 8px;
-        }		
+/* Ensure the body and html take up the full screen height */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;  /* Stack elements vertically */
+}
+
+/* Header and footer styles */
+.header, .footer {
+    padding: 10px;
+    text-align: center;
+    background: #333;
+    color: #fff;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Map style */
+#map {
+    flex-grow: 1; /* Take remaining space */
+    width: 100%;
+}
+
+/* Legend style */
+.legend {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+/* Slider container style */
+#sliderContainer {
+    position: absolute;
+    bottom: 220px;
+    right: 50px;
+    z-index: 1000;
+    background: white;
+    padding: 4px;
+    border-radius: 8px;
+}		
     </style>
 </head>
 <body>
