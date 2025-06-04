@@ -174,7 +174,7 @@ function addGeoJSONLayer(url, name) {
 geojsonUrls.forEach(item => addGeoJSONLayer(item.url, item.name));
 
 // Initialize the layer control and add it to the map
-let layerControl = L.control.layers(baseLayers, overlays, { position: 'topleft' }).addTo(map);
+let layerControl = L.control.layers(baseLayers, overlays,cropoverlays, { position: 'topleft' }).addTo(map);
 // Add layer control to map
 //L.control.layers(cropoverlays).addTo(map);
 
