@@ -183,13 +183,12 @@ let layerControl = L.control.layers(baseLayers, overlays, { position: 'topleft' 
 // Check the checkbox by default
 document.getElementById("layerCheckbox").checked = true;
 
-// Check the checkbox by default
-document.getElementById("croplayerCheckbox").checked = true;
+
 
 
 // Add the FLID Suitable Area layer to the map by default
 tileServerLayer.addTo(map);
-croptileServerLayer.addTo(map);
+//croptileServerLayer.addTo(map);
 // Toggle FLID Suitable Area layer on checkbox toggle
 document.getElementById("layerCheckbox").addEventListener("change", function () {
     if (this.checked) {
@@ -198,14 +197,7 @@ document.getElementById("layerCheckbox").addEventListener("change", function () 
         map.removeLayer(tileServerLayer);
     }
 });
-// Toggle FLID Suitable Area layer on checkbox toggle
-document.getElementById("croplayerCheckbox").addEventListener("change", function () {
-    if (this.checked) {
-        croptileServerLayer.addTo(map);
-    } else {
-        map.removeLayer(croptileServerLayer);
-    }
-});
+
 // Change basemap
 function changeBaseMap(layer) {
     if (layer === "osm") {
