@@ -176,7 +176,7 @@ geojsonUrls.forEach(item => addGeoJSONLayer(item.url, item.name));
 // Initialize the layer control and add it to the map
 let layerControl = L.control.layers(baseLayers, overlays, { position: 'topleft' }).addTo(map);
 // Add layer control to map
-//L.control.layers(baseLayers, overlays).addTo(map);
+L.control.layers(cropoverlays).addTo(map);
 
 
 
@@ -187,6 +187,7 @@ document.getElementById("layerCheckbox").checked = true;
 
 // Add the FLID Suitable Area layer to the map by default
 tileServerLayer.addTo(map);
+croptileServerLayer.addTo(map);
 // Toggle FLID Suitable Area layer on checkbox toggle
 document.getElementById("layerCheckbox").addEventListener("change", function () {
     if (this.checked) {
