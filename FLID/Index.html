@@ -164,7 +164,7 @@ function addGeoJSONLayer(url, name) {
         }
       });
       overlays[name] = layer;               // Add each layer to overlays object
-	  cropoverlays[name] = layer;               // Add each layer to overlays object
+	  //cropoverlays[name] = layer;               // Add each layer to overlays object
       layerControl.addOverlay(layer, name); // Add layer to control with its name
     })
     .catch(error => console.error('Error loading GeoJSON:', error));
@@ -174,15 +174,17 @@ function addGeoJSONLayer(url, name) {
 geojsonUrls.forEach(item => addGeoJSONLayer(item.url, item.name));
 
 // Initialize the layer control and add it to the map
-let layerControl = L.control.layers(baseLayers, overlays,cropoverlays, { position: 'topleft' }).addTo(map);
+let layerControl = L.control.layers(baseLayers, overlays, { position: 'topleft' }).addTo(map);
 // Add layer control to map
-//L.control.layers(cropoverlays).addTo(map);
+L.control.layers(cropoverlays).addTo(map);
 
 
 
 // Check the checkbox by default
 document.getElementById("layerCheckbox").checked = true;
 
+// Check the checkbox by default
+document.getElementById("croplayerCheckbox").checked = true;
 
 
 // Add the FLID Suitable Area layer to the map by default
@@ -196,7 +198,14 @@ document.getElementById("layerCheckbox").addEventListener("change", function () 
         map.removeLayer(tileServerLayer);
     }
 });
-
+// Toggle FLID Suitable Area layer on checkbox toggle
+document.getElementById("croplayerCheckbox").addEventListener("change", function () {
+    if (this.checked) {
+        croptileServerLayer.addTo(map);
+    } else {
+        map.removeLayer(croptileServerLayer);
+    }
+});
 // Change basemap
 function changeBaseMap(layer) {
     if (layer === "osm") {
