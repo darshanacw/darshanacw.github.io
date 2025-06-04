@@ -40,6 +40,17 @@ body, html {
     border: 1px solid #ccc;
 }
 
+
+/* Legend2 style */
+.legend2 {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
 /* Slider container style */
 #sliderContainer {
     position: absolute;
@@ -563,6 +574,14 @@ document.getElementById("admin3Dropdown").addEventListener("change", function ()
     };
     legend.addTo(map);
 
+
+    const legend2 = L.control({ position: 'bottomleft' });
+    legend2.onAdd = function() {
+        const div = L.DomUtil.create('div', 'legend2');
+        div.innerHTML = `<img src="https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/FLID/Legend.jpg" alt="Legend2" style="width: 250px;">`;
+        return div;
+    };
+    legend.addTo(map);
 </script>
 
 </body>
