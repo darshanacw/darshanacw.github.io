@@ -1,1 +1,143 @@
-ho
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seasonal Peak Viewer</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js + Annotation Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <style>
+        #map {
+            height: 100vh;
+        }
+        .chart-container {
+            width: 420px;
+            height: 320px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        Chart.register(window['chartjs-plugin-annotation']);
+
+        const map = L.map('map').setView([20.0, 78.0], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        function createChartPopup(props) {
+            const canvasId = 'chart_' + Math.floor(Math.random() * 100000);
+            const container = document.createElement('div');
+            container.className = 'chart-container';
+            const canvas = document.createElement('canvas');
+            canvas.id = canvasId;
+            container.appendChild(canvas);
+
+            // Prepare mean values
+            const mean = [];
+            for (let i = 1; i <= 12; i++) {
+                mean.push(props[`Month_${i}`]);
+            }
+
+            // Create annotation lines from start_1 ... start_4
+            const annotations = {};
+            ['start_1', 'end_1', 'start_2', 'end_2'].forEach((key, i) => {
+                const val = props[key];
+                if (val && val > 0 && val <= 12) {
+                    annotations[key] = {
+                        type: 'line',
+                        xMin: val - 1,
+                        xMax: val - 1,
+                        borderColor: ['red', 'blue', 'green', 'purple'][i],
+                        borderWidth: 2,
+                        label: {
+                            content: key,
+                            enabled: true,
+                            position: 'start'
+                        }
+                    };
+                }
+            });
+
+            setTimeout(() => {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Monthly Mean',
+                            data: mean,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            annotation: {
+                                annotations: annotations
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Month'
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Mean Value'
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }, 100);
+
+            return container;
+        }
+
+        fetch("https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_multipart_mean_land_india.geojson")
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    onEachFeature: function (feature, layer) {
+layer.on('click', function () {
+    const popupContent = createChartPopup(feature.properties);
+    layer.bindPopup(popupContent, {
+        maxWidth: 600,
+        minWidth: 500
+    }).openPopup();
+});
+
+                    },
+                    style: {
+                        color: "orange",
+                        weight: 1,
+                        fillOpacity: 0.5
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error("GeoJSON load failed", err));
+    </script>
+</body>
+</html>
