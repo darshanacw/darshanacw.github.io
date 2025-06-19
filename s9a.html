@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DataPlotter: Upload & Submit Job</title>
+</head>
+<body>
+  <h2>DataPlotter - Upload File & Submit Job</h2>
+
+  <!-- Step 1: Choose file -->
+  <label for="file">Choose spatial file (KML, CSV, etc.):</label><br>
+  <input type="file" id="file" required><br><br>
+
+  <!-- Step 2: CRS -->
+  <label for="crs">CRS (e.g., 4326):</label><br>
+  <input type="text" id="crs" placeholder="4326"><br><br>
+
+  <button onclick="uploadAndSubmit()">Upload & Submit</button>
+
+  <hr>
+  <pre id="output" style="white-space: pre-wrap;"></pre>
+
+  <script>
+    async function uploadAndSubmit() {
+      const output = document.getElementById('output');
+      const fileInput = document.getElementById('file');
+      const crs = document.getElementById('crs').value.trim();
+
+      if (fileInput.files.length === 0) {
+        output.textContent = "Please select a file.";
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const uploadForm = new FormData();
+      uploadForm.append("file", file);
+
+      output.textContent = "Uploading file...";
+
+      try {
+        // Step 1: Upload file
+        const uploadRes = await fetch(
+          "https://lis.survey.gov.lk/server/rest/services/DataPlotter/DataPlotter_V1/GPServer/uploads/upload?f=json",
+          {
+            method: "POST",
+            body: uploadForm
+          }
+        );
+
+        const uploadData = await uploadRes.json();
+        console.log(uploadData);
+        if (!uploadData.item || !uploadData.item.itemID) {
+          output.textContent = "Upload failed: " + JSON.stringify(uploadData);
+          return;
+        }
+
+        const serverFilePath = `/arcgisjobs/dataplotter/dataplotter_v1_gpserver/uploads/${uploadData.item.itemID}/${file.name}`;
+
+        output.textContent += `\nUpload successful.\nFile reference: ${serverFilePath}\nSubmitting job...`;
+
+        // Step 2: Submit job
+        const jobForm = new FormData();
+        jobForm.append("input_file", serverFilePath);
+        if (crs !== "") {
+          jobForm.append("CRS", crs);
+        }
+        jobForm.append("f", "json");
+
+        const submitRes = await fetch(
+          "https://lis.survey.gov.lk/server/rest/services/DataPlotter/DataPlotter_V1/GPServer/Script/submitJob",
+          {
+            method: "POST",
+            body: jobForm
+          }
+        );
+
+        const submitData = await submitRes.json();
+        console.log(submitData);
+        if (submitData.jobId) {
+          output.textContent += `\n\n✅ Job submitted!\nJob ID: ${submitData.jobId}\n` +
+            `View job status here:\nhttps://lis.survey.gov.lk/server/rest/services/DataPlotter/DataPlotter_V1/GPServer/jobs/${submitData.jobId}`;
+        } else {
+          output.textContent += `\n❌ Job submission failed:\n${JSON.stringify(submitData, null, 2)}`;
+        }
+
+      } catch (err) {
+        output.textContent = "Error: " + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
