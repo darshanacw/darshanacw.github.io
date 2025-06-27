@@ -60,7 +60,8 @@ body, html {
     background: white;
     padding: 4px;
     border-radius: 8px;
-}		
+}	
+	    
     #contactBtn {
       position: fixed;
       top: 30px;
@@ -74,7 +75,9 @@ body, html {
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       z-index: 1000;
     }
-
+    #overlay.active {
+      display: block;
+    }
     #contactPanel {
       position: fixed;
       right: -360px;
@@ -694,21 +697,27 @@ document.getElementById("admin3Dropdown").addEventListener("change", function ()
     </form>
   </div>
 
-<script>
-  const contactBtn = document.getElementById("contactBtn");
-  const contactPanel = document.getElementById("contactPanel");
-  const closeBtn = document.getElementById("closeBtn");
+  <script>
+    const contactBtn = document.getElementById("contactBtn");
+    const contactPanel = document.getElementById("contactPanel");
+    const closeBtn = document.getElementById("closeBtn");
+    const overlay = document.getElementById("overlay");
 
-  contactBtn.onclick = () => {
-    contactPanel.classList.add("open");
-    contactBtn.style.display = "none";  // hide button
-  };
+    contactBtn.onclick = () => {
+      contactPanel.classList.add("open");
+      overlay.classList.add("active");
+    };
 
-  closeBtn.onclick = () => {
-    contactPanel.classList.remove("open");
-    contactBtn.style.display = "block"; // show button
-  };
-</script>
+    closeBtn.onclick = () => {
+      contactPanel.classList.remove("open");
+      overlay.classList.remove("active");
+    };
+
+    overlay.onclick = () => {
+      contactPanel.classList.remove("open");
+      overlay.classList.remove("active");
+    };
+  </script>
 
 </body>
 </html>
