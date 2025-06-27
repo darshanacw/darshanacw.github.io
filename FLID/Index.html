@@ -694,13 +694,21 @@ document.getElementById("admin3Dropdown").addEventListener("change", function ()
     </form>
   </div>
 
-  <script>
-    const contactBtn = document.getElementById("contactBtn");
-    const contactPanel = document.getElementById("contactPanel");
-    const closeBtn = document.getElementById("closeBtn");
+<script>
+  const contactBtn = document.getElementById("contactBtn");
+  const contactPanel = document.getElementById("contactPanel");
+  const closeBtn = document.getElementById("closeBtn");
 
-    contactBtn.onclick = () => contactPanel.classList.add("open");
-    closeBtn.onclick = () => contactPanel.classList.remove("open");
-  </script>
+  contactBtn.onclick = () => {
+    contactPanel.classList.add("open");
+    contactBtn.style.display = "none";  // hide button
+  };
+
+  closeBtn.onclick = () => {
+    contactPanel.classList.remove("open");
+    contactBtn.style.display = "block"; // show button
+  };
+</script>
+
 </body>
 </html>
