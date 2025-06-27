@@ -62,9 +62,26 @@ body, html {
     border-radius: 8px;
 }	
 	    
+    /* Overlay behind the panel */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1999;
+      display: none;
+    }
+
+    #overlay.active {
+      display: block;
+    }
+
+    /* Contact Button */
     #contactBtn {
       position: fixed;
-      top: 30px;
+      bottom: 30px;
       right: 30px;
       background-color: #1E90FF;
       color: white;
@@ -75,20 +92,19 @@ body, html {
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       z-index: 1000;
     }
-    #overlay.active {
-      display: block;
-    }
+
+    /* Contact Panel */
     #contactPanel {
       position: fixed;
       right: -360px;
       top: 0;
-      height: 70%;
+      height: 100%;
       width: 340px;
       background-color: #ffffff;
-      box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+      box-shadow: -2px 0 8px rgba(0,0,0,0.3);
       padding: 20px;
       transition: right 0.3s ease;
-      z-index: 999;
+      z-index: 2000;
       overflow-y: auto;
     }
 
@@ -146,7 +162,7 @@ body, html {
       margin: 20px 0;
       border: none;
       border-top: 1px solid #ddd;
-    }      
+    }     
     </style>
 </head>
 <body>
