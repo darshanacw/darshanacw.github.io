@@ -190,77 +190,94 @@ Promise.all(geojsonUrls.map(url => fetch(url).then(res => res.json())))
     let currentAttribute = 'p_number';
 
     function onEachFeature(feature, layer) {
-      layer.on('click', function () {
-        const props = feature.properties;
-        const months = Array.from({ length: 12 }, (_, i) => props[`Month_${i + 1}`] || 0);
-        const peakAttributes = ['Wet1', 'Dry1', 'Wet2', 'Dry2'];
-        const peakAnnotations = peakAttributes
-          .filter(attr => props[attr] >= 1 && props[attr] <= 12)
-          .map(attr => ({
-            value: props[attr],
-            label: attr
-          }));
+layer.on('click', function () {
+  const props = feature.properties;
+  const months = Array.from({ length: 12 }, (_, i) => props[`Month_${i + 1}`] || 0);
+  const etValues = Array.from({ length: 12 }, (_, i) => props[`et_${i + 1}`] || 0);
 
-        const popupContent = document.createElement('div');
-        popupContent.className = 'chart-container';
-        popupContent.innerHTML = `<canvas id="barChart" width="500" height="300"></canvas>`;
+  const peakAttributes = ['Wet1', 'Dry1', 'Wet2', 'Dry2'];
+  const peakAnnotations = peakAttributes
+    .filter(attr => props[attr] >= 1 && props[attr] <= 12)
+    .map(attr => ({
+      value: props[attr],
+      label: attr
+    }));
 
-        layer.bindPopup(popupContent, {
-          maxWidth: 600,
-          minWidth: 500
-        }).openPopup();
+  const popupContent = document.createElement('div');
+  popupContent.className = 'chart-container';
+  popupContent.innerHTML = `<canvas id="barChart" width="500" height="300"></canvas>`;
 
-        setTimeout(() => {
-          const ctx = document.getElementById('barChart').getContext('2d');
-          new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-              datasets: [{
-                label: 'Monthly Mean Rainfall',
-                data: months,
-                backgroundColor: 'rgba(54, 162, 235, 0.7)'
-              }]
-            },
-            options: {
-              responsive: false,
-              scales: {
-                x: { title: { display: true, text: 'Month' }},
-                //y: { title: { display: true, text: 'Value' }}
-				y: {
-  title: { display: true, text: 'Rainfall (mm)' },
-  min: 0,
-  max: 400,
-  ticks: {
-    stepSize: 100
-  }
-}
+  layer.bindPopup(popupContent, {
+    maxWidth: 600,
+    minWidth: 500
+  }).openPopup();
 
-              },
-              plugins: {
-                annotation: {
-                  annotations: peakAnnotations.map(p => ({
-                    type: 'line',
-                    xMin: p.value - 1,
-                    xMax: p.value - 1,
-                    borderColor: 'red',
-                    borderWidth: 2,
-                    label: {
-                      content: p.label,
-                      enabled: true,
-                      position: 'start',
-                      backgroundColor: 'rgba(255,255,255,0.8)',
-                      color: 'black',
-                      font: { weight: 'bold' }
-                    }
-                  }))
-                }
+  setTimeout(() => {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [
+          {
+            label: 'Monthly Mean Rainfall',
+            data: months,
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            yAxisID: 'y',
+            type: 'bar'
+          },
+          {
+            label: 'ET₀ (Evapotranspiration)',
+            data: etValues,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            type: 'line',
+            fill: false,
+            yAxisID: 'y',
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: false,
+        scales: {
+          x: { title: { display: true, text: 'Month' }},
+          y: {
+            title: { display: true, text: 'Rainfall / ET (mm)' },
+            min: 0,
+            max: 400,
+            ticks: {
+              stepSize: 100
+            }
+          }
+        },
+        plugins: {
+          annotation: {
+            annotations: peakAnnotations.map(p => ({
+              type: 'line',
+              xMin: p.value - 1,
+              xMax: p.value - 1,
+              borderColor: 'red',
+              borderWidth: 2,
+              label: {
+                content: p.label,
+                enabled: true,
+                position: 'start',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                color: 'black',
+                font: { weight: 'bold' }
               }
-            },
-            plugins: [Chart.registry.getPlugin('annotation')]
-          });
-        }, 200);
-      });
+            }))
+          }
+        }
+      },
+      plugins: [Chart.registry.getPlugin('annotation')]
+    });
+  }, 200);
+});
+
     }
 
     // Create a GeoJSON layer with style and popup
