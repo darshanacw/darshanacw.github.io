@@ -193,7 +193,7 @@ Promise.all(geojsonUrls.map(url => fetch(url).then(res => res.json())))
 layer.on('click', function () {
   const props = feature.properties;
   const months = Array.from({ length: 12 }, (_, i) => props[`Month_${i + 1}`] || 0);
-  const etValues = Array.from({ length: 12 }, (_, i) => props[`et_${i + 1}`] || 0);
+  const etValues = Array.from({ length: 12 }, (_, i) => props[`Month_${i + 1}`] || 0);
 
   const peakAttributes = ['Wet1', 'Dry1', 'Wet2', 'Dry2'];
   const peakAnnotations = peakAttributes
