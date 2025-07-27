@@ -102,7 +102,7 @@
         else if (value === 2) return 'blue';		
         else if (value === 3) return 'yellow';
 	else if (value === 0) return 'beige';
-	else if (value === 6) return 'pink';
+	else if (value === 5) return 'pink';
         else return 'gray';
       } else {
         if (value >= 1 && value <= 12) return monthColors[value - 1];
@@ -137,9 +137,11 @@
         div.innerHTML += `<strong>${attribute}</strong><br>`;
 
         if (attribute === 'p_number') {	
+	  div.innerHTML += `<i style="background: beige"></i> 0 <br>`;		
           div.innerHTML += `<i style="background: red"></i> 1 <br>`;		
           div.innerHTML += `<i style="background: blue"></i> 2<br>`;
           div.innerHTML += `<i style="background: yellow"></i> 3<br>`;
+	  div.innerHTML += `<i style="background: pink"></i> 5 <br>`;	
         } else {
           for (let i = 1; i <= 12; i++) {
             div.innerHTML += `<i style="background: ${monthColors[i - 1]}"></i> ${i}<br>`;
