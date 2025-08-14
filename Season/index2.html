@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Season Attribute Map - Multi GeoJSON</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+  <style>
+    body { margin: 0; }
+    #map { height: 100vh; }
+
+    #attributeSelector {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+
+    .legend {
+      background: white;
+      padding: 8px;
+      line-height: 18px;
+      color: #333;
+      font: 14px Arial, sans-serif;
+      border-radius: 5px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+
+    .chart-container {
+      width: 500px;
+      height: 300px;
+    }
+	
+  </style>
+</head>
+<body>
+
+  <select id="attributeSelector">
+    <option value="p_number">Number of rainy seasons</option>
+    <option value="Wet1">Starting month of first rainy season</option>
+    <option value="Wet2">Starting month of second rainy season</option>
+    <option value="Dry1">Starting month of first dry season</option>
+    <option value="Dry2">Starting month of second dry season</option>
+  </select>
+<div id="layerControls" style="position: absolute; top: 50px; right: 10px; z-index: 1000;">
+  <button id="hideLayersBtn" style="
+    background: white;
+    padding: 6px 12px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);">
+    Hide All Layers
+  </button>
+  <br>
+  <button id="showLayersBtn" style="
+    background: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);">
+    Show All Layers
+  </button>
+</div>
+
+  <div id="map"></div>
+
+  <script>
+    const map = L.map('map').setView([20, 78], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const monthColors = [
+      '#ffffcc', '#ffeda0', '#fed976', '#feb24c',
+      '#fd8d3c', '#fc4e2a', '#e31a1c', '#bd0026',
+      '#800026', '#4d004b', '#2a115e', '#542788'
+    ];
+
+    function getColor(attribute, value) {
+      if (attribute === 'zone') {
+        if (value === 'one rainy season') return 'red';
+        else if (value === 'Two rainy seasons') return 'blue';		
+        else if (value === 'Three rainy seasons') return 'yellow';
+	else if (value === 'Semi-arid') return 'beige';
+	else if (value === 'Arid') return 'green';    
+	else if (value === 'Hyper-arid') return 'pink';
+        else return 'gray';
+      } else {
+        if (value >= 1 && value <= 12) return monthColors[value - 1];
+        else return '#ccc';
+      }
+    }
+
+    function styleFeature(attribute) {
+      return function (feature) {
+        const value = feature.properties[attribute];
+        return {
+          color: 'black',
+          weight: 0.5,
+          fillColor: getColor(attribute, value),
+          fillOpacity: 0.7
+        };
+      };
+    }
+
+    let allGeojsonLayers = [];  // store all L.geoJSON layers
+    let featureGroup = L.featureGroup().addTo(map);
+    let geojsonDataLoaded = []; // optional to keep raw GeoJSON if needed
+
+    // Legend control
+    let legend = L.control({ position: 'bottomright' });
+
+    function updateLegend(attribute) {
+      legend.remove();
+
+      legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += `<strong>${attribute}</strong><br>`;
+
+        if (attribute === 'p_number') {	
+	  div.innerHTML += `<i style="background: beige"></i> 0 <br>`;		
+          div.innerHTML += `<i style="background: red"></i> 1 <br>`;		
+          div.innerHTML += `<i style="background: blue"></i> 2<br>`;
+          div.innerHTML += `<i style="background: yellow"></i> 3<br>`;
+	  div.innerHTML += `<i style="background: pink"></i> 5 <br>`;	
+        } else {
+          for (let i = 1; i <= 12; i++) {
+            div.innerHTML += `<i style="background: ${monthColors[i - 1]}"></i> ${i}<br>`;
+          }
+        }
+
+        return div;
+      };
+
+      legend.addTo(map);
+    }
+
+    // URLs of your multiple GeoJSON grid files
+    const geojsonUrls = [
+      //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_multipart_mean_land_india.geojson",
+	  //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_multipart_mean_land_eth.geojson",
+      //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_months_multi_land_mean_wet_dry_elem25_25_AMRC.geojson",
+      //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_months_multi_land_mean_wet_dry_elem25_25_AFRC.geojson",
+      //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_months_multi_land_mean_wet_dry_elem25_25_OCNA.geojson",
+      //"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/P30_union_n_peak_start_end_months_multi_land_mean_wet_dry_elem25_25_URASA.geojson",
+	//"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/Union_n_peak_start_end_multy_shp_10000ele_mean_lk.geojson",   
+	"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/set1a.geojson",
+  "https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/set1b.geojson",
+	"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/set2.geojson",	    
+	"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/set3.geojson",
+	"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/set4.geojson",
+	    
+	    
+//"https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/union_P_number_of_peaks_season_start_end_month_multi_mean.geojson",
+
+	  
+      // add more URLs here for your grid GeoJSONs, e.g.
+      // "https://yourdomain.com/geojson/grid1.geojson",
+      // "https://yourdomain.com/geojson/grid2.geojson",
+      // ... up to 100+
+    ];
+//const geojsonUrls = [];
+
+//// Generate URLs from 01 to 081
+//for (let i = 1; i <= 240; i++) {
+//  const num = i.toString().padStart( '0',2); // pad with leading zero
+//  const url = `https://raw.githubusercontent.com/darshanacw/darshanacw.github.io/main/Season/grid/0${num}.geojson`;
+//  geojsonUrls.push(url);
+//}
+
+let geojsonData = [];
+
+// Load all GeoJSON files and merge
+Promise.all(geojsonUrls.map(url => fetch(url).then(res => res.json())))
+  .then(allData => {
+    geojsonData = {
+      type: "FeatureCollection",
+      features: allData.flatMap(d => d.features)
+    };
+    updateMap('p_number', geojsonData);
+  });
+
+    let currentAttribute = 'p_number';
+
+    function onEachFeature(feature, layer) {
+layer.on('click', function () {
+  const props = feature.properties;
+  const months = Array.from({ length: 12 }, (_, i) => props[`Month_${i + 1}`] || 0);
+  const etValues = Array.from({ length: 12 }, (_, i) => props[`et_${i + 1}`] || 0);
+
+  const peakAttributes = ['Wet1', 'Dry1', 'Wet2', 'Dry2'];
+  const peakAnnotations = peakAttributes
+    .filter(attr => props[attr] >= 1 && props[attr] <= 12)
+    .map(attr => ({
+      value: props[attr],
+      label: attr
+    }));
+
+  const popupContent = document.createElement('div');
+  popupContent.className = 'chart-container';
+  popupContent.innerHTML = `<canvas id="barChart" width="500" height="300"></canvas>`;
+
+  layer.bindPopup(popupContent, {
+    maxWidth: 600,
+    minWidth: 500
+  }).openPopup();
+
+  setTimeout(() => {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [
+          {
+            label: 'Monthly Mean Rainfall',
+            data: months,
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            yAxisID: 'y',
+            type: 'bar'
+          },
+          {
+            label: 'ET (Evapotranspiration)',
+            data: etValues,
+            //borderColor: 'rgba(255, 99, 132, 1)',
+            //backgroundColor: 'rgba(255, 99, 132, 0.2)',
+	    borderColor: 'rgba(75, 192, 192, 1)',       // solid greenish-teal
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',  // light transparent greenish-teal
+            type: 'line',
+            fill: false,
+            yAxisID: 'y',
+            tension: 0.4,
+            pointRadius: 3,
+            pointHoverRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: false,
+        scales: {
+          x: { title: { display: true, text: 'Month' }},
+          y: {
+            title: { display: true, text: 'Rainfall / ET (mm)' },
+            min: 0,
+            max: 400,
+            ticks: {
+              stepSize: 100
+            }
+          }
+        },
+        plugins: {
+          annotation: {
+            annotations: peakAnnotations.map(p => ({
+              type: 'line',
+              xMin: p.value - 1,
+              xMax: p.value - 1,
+              borderColor: 'red',
+              borderWidth: 2,
+              label: {
+                content: p.label,
+                enabled: true,
+                position: 'start',
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                color: 'black',
+                font: { weight: 'bold' }
+              }
+            }))
+          }
+        }
+      },
+      plugins: [Chart.registry.getPlugin('annotation')]
+    });
+  }, 200);
+});
+
+    }
+
+    // Create a GeoJSON layer with style and popup
+    function createGeojsonLayer(data, attribute) {
+      return L.geoJSON(data, {
+        style: styleFeature(attribute),
+        onEachFeature: onEachFeature
+      });
+    }
+
+    // Load all GeoJSONs and add to map
+    async function loadAllGeojsons() {
+      const promises = geojsonUrls.map(url => fetch(url).then(r => r.json()));
+      const datasets = await Promise.all(promises);
+
+      // Remove existing layers if any
+      featureGroup.clearLayers();
+      allGeojsonLayers = [];
+
+      datasets.forEach(data => {
+        geojsonDataLoaded.push(data);
+        const layer = createGeojsonLayer(data, currentAttribute);
+        allGeojsonLayers.push(layer);
+        featureGroup.addLayer(layer);
+      });
+
+      // Fit map to all features
+      const allFeatures = allGeojsonLayers.flatMap(layer => layer.getLayers());
+      if (allFeatures.length) {
+        const group = L.featureGroup(allFeatures);
+        map.fitBounds(group.getBounds());
+      }
+
+      updateLegend(currentAttribute);
+    }
+
+    // Update colors for all layers on attribute change
+    function updateColors(attribute) {
+      allGeojsonLayers.forEach(layer => {
+        layer.setStyle(styleFeature(attribute));
+      });
+      updateLegend(attribute);
+    }
+
+    // Initial load
+    loadAllGeojsons();
+
+    // Dropdown event
+    document.getElementById('attributeSelector').addEventListener('change', e => {
+      currentAttribute = e.target.value;
+      updateColors(currentAttribute);
+    });
+
+let geojsonCache = []; // store references to original layers for toggling
+
+// Load all GeoJSONs and add to map
+async function loadAllGeojsons() {
+  const promises = geojsonUrls.map(url => fetch(url).then(r => r.json()));
+  const datasets = await Promise.all(promises);
+
+  // Clear previous data
+  featureGroup.clearLayers();
+  allGeojsonLayers = [];
+  geojsonCache = [];
+
+  datasets.forEach(data => {
+    geojsonDataLoaded.push(data);
+    const layer = createGeojsonLayer(data, currentAttribute);
+    allGeojsonLayers.push(layer);
+    geojsonCache.push(layer);  // store for toggling
+    featureGroup.addLayer(layer);
+  });
+
+  const allFeatures = allGeojsonLayers.flatMap(layer => layer.getLayers());
+  if (allFeatures.length) {
+    const group = L.featureGroup(allFeatures);
+    map.fitBounds(group.getBounds());
+  }
+
+  updateLegend(currentAttribute);
+}
+
+// Button listeners for toggle
+document.getElementById("hideLayersBtn").addEventListener("click", () => {
+  featureGroup.clearLayers();
+});
+
+document.getElementById("showLayersBtn").addEventListener("click", () => {
+  featureGroup.clearLayers(); // clear any existing to avoid duplication
+  geojsonCache.forEach(layer => featureGroup.addLayer(layer));
+});
+
+  </script>
+
+</body>
+</html>
