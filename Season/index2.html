@@ -198,10 +198,10 @@ Promise.all(geojsonUrls.map(url => fetch(url).then(res => res.json())))
       type: "FeatureCollection",
       features: allData.flatMap(d => d.features)
     };
-    updateMap('p_number', geojsonData);
+    updateMap('zone', geojsonData);
   });
 
-    let currentAttribute = 'p_number';
+    let currentAttribute = 'zone';
 
     function onEachFeature(feature, layer) {
 layer.on('click', function () {
