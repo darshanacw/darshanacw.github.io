@@ -121,6 +121,21 @@ var lyr_Drainages_7 = new ol.layer.Vector({
     <img src="styles/legend/Drainages_7_3.png" /> 6 - 7<br />\
     <img src="styles/legend/Drainages_7_4.png" /> 7 - 8<br />\
     <img src="styles/legend/Drainages_7_5.png" /> 8 - 9<br />' });
+var format_Places_8 = new ol.format.GeoJSON();
+var features_Places_8 = format_Places_8.readFeatures(json_Places_8, 
+            {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
+var jsonSource_Places_8 = new ol.source.Vector({
+    attributions: ' ',
+});
+jsonSource_Places_8.addFeatures(features_Places_8);
+var lyr_Places_8 = new ol.layer.Vector({
+                declutter: false,
+                source:jsonSource_Places_8, 
+                style: style_Places_8,
+                popuplayertitle: 'Places',
+                interactive: true,
+                title: '<img src="styles/legend/Places_8.png" /> Places'
+            });
 var group_group1 = new ol.layer.Group({
                                 layers: [],
                                 fold: 'open',
@@ -134,8 +149,8 @@ var group_group2 = new ol.layer.Group({
                                 fold: 'close',
                                 title: 'group2'});
 
-lyr_OpenStreetMap_0.setVisible(true);lyr_Level4_1.setVisible(true);lyr_Level5_2.setVisible(true);lyr_Level6_3.setVisible(true);lyr_Level7_4.setVisible(true);lyr_Level8_5.setVisible(true);lyr_Level9_6.setVisible(true);lyr_Drainages_7.setVisible(true);
-var layersList = [lyr_OpenStreetMap_0,lyr_Level4_1,lyr_Level5_2,lyr_Level6_3,lyr_Level7_4,lyr_Level8_5,lyr_Level9_6,lyr_Drainages_7];
+lyr_OpenStreetMap_0.setVisible(true);lyr_Level4_1.setVisible(true);lyr_Level5_2.setVisible(true);lyr_Level6_3.setVisible(true);lyr_Level7_4.setVisible(true);lyr_Level8_5.setVisible(true);lyr_Level9_6.setVisible(true);lyr_Drainages_7.setVisible(true);lyr_Places_8.setVisible(true);
+var layersList = [lyr_OpenStreetMap_0,lyr_Level4_1,lyr_Level5_2,lyr_Level6_3,lyr_Level7_4,lyr_Level8_5,lyr_Level9_6,lyr_Drainages_7,lyr_Places_8];
 lyr_Level4_1.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
 lyr_Level5_2.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
 lyr_Level6_3.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
@@ -143,6 +158,7 @@ lyr_Level7_4.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
 lyr_Level8_5.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
 lyr_Level9_6.set('fieldAliases', {'Id': 'Id', 'gridcode': 'gridcode', });
 lyr_Drainages_7.set('fieldAliases', {'grid_code': 'grid_code', 'merge_id': 'merge_id', });
+lyr_Places_8.set('fieldAliases', {'name': 'name', 'description': 'description', });
 lyr_Level4_1.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
 lyr_Level5_2.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
 lyr_Level6_3.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
@@ -150,6 +166,7 @@ lyr_Level7_4.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
 lyr_Level8_5.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
 lyr_Level9_6.set('fieldImages', {'Id': 'Range', 'gridcode': 'Range', });
 lyr_Drainages_7.set('fieldImages', {'grid_code': 'Range', 'merge_id': 'Range', });
+lyr_Places_8.set('fieldImages', {'name': '', 'description': '', });
 lyr_Level4_1.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
 lyr_Level5_2.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
 lyr_Level6_3.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
@@ -157,6 +174,7 @@ lyr_Level7_4.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
 lyr_Level8_5.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
 lyr_Level9_6.set('fieldLabels', {'Id': 'no label', 'gridcode': 'no label', });
 lyr_Drainages_7.set('fieldLabels', {'grid_code': 'no label', 'merge_id': 'no label', });
-lyr_Drainages_7.on('precompose', function(evt) {
+lyr_Places_8.set('fieldLabels', {'name': 'no label', 'description': 'no label', });
+lyr_Places_8.on('precompose', function(evt) {
     evt.context.globalCompositeOperation = 'normal';
 });
