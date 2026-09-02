@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Zambia AgWaterDS Dashboard</title>
+
+
+<!-- =====================================================
+     LEAFLET
+====================================================== -->
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+
+<!-- =====================================================
+     CHART.JS
+====================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<style>
+
+/* =====================================================
+   PAGE
+===================================================== */
+
+html, body {
+
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+
+}
+
+
+/* =====================================================
+   LEFT PANEL
+===================================================== */
+
+#sidePanel {
+
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 1000px;
+
+    background: #fff;
+
+    z-index: 1000;
+
+    box-shadow: 2px 0 10px rgba(0,0,0,.20);
+
+    padding: 15px;
+
+    box-sizing: border-box;
+
+    overflow-y: auto;
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.panel-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    margin-bottom: 12px;
+
+}
+
+#sidePanel h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+    font-weight: 600;
+
+}
+
+#sidePanel h4 {
+
+    margin: 4px 0;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    color: #444;
+
+}
+
+#areaName {
+
+    margin-top: 6px;
+
+    font-size: 13px;
+
+    color: #666;
+
+}
+
+
+/* =====================================================
+   CLOSE BUTTON
+===================================================== */
+
+#closePanel {
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 26px;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    color: #555;
+
+}
+
+#closePanel:hover {
+
+    color: #000;
+
+}
+
+
+/* =====================================================
+   CHART GRID
+===================================================== */
+
+.chart-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 10px;
+
+}
+
+
+/* =====================================================
+   CHART CARD
+===================================================== */
+
+.chart-card {
+
+    background: #fafafa;
+
+    border: 1px solid #e2e2e2;
+
+    border-radius: 8px;
+
+    padding: 8px;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =====================================================
+   CHART TITLE
+===================================================== */
+
+.chart-title {
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #333;
+
+    margin-bottom: 5px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+}
+
+
+/* =====================================================
+   CHART CONTAINER
+===================================================== */
+
+.chart-container {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 130px;
+
+}
+
+
+/* =====================================================
+   MAP
+===================================================== */
+
+#map {
+
+    position: absolute;
+
+    left: 1000px;
+
+    right: 0;
+
+    top: 0;
+
+    bottom: 0;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     LEFT PANEL
+====================================================== -->
+
+<div id="sidePanel">
+
+
+    <!-- =================================================
+         HEADER
+    ================================================== -->
+
+    <div class="panel-header">
+
+        <div>
+
+            <h2>AgWaterDS</h2>
+
+            <h4>Crop: Tomato</h4>
+
+            <h4>Season: Dry</h4>
+
+            <div id="areaName">
+
+                Click an administrative area
+
+            </div>
+
+        </div>
+
+
+        <button id="closePanel">
+
+            &times;
+
+        </button>
+
+    </div>
+
+
+    <!-- =================================================
+         CHART GRID
+    ================================================== -->
+
+    <div class="chart-grid">
+
+
+        <!-- CWR -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Crop Water Requirement
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="cwrChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- S_IP -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Rainfall
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_ipChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- RAINFALL SURPLUS -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Rainfall Surplus
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_rf_sChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- RAINFALL DEFICIT -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Rainfall Deficit
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_rf_dChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- IWR -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Irrigation Water Requirement
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_iwrChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- SURFACE WATER SURPLUS -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Surface Water Surplus
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_usw_sChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- SURFACE WATER DEFICIT -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Surface Water Deficit
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_usw_d_iwrChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- GROUNDWATER SURPLUS -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Groundwater Surplus
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_ugw_sChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- GROUNDWATER DEFICIT -->
+
+        <div class="chart-card">
+
+            <div class="chart-title">
+
+                Groundwater Deficit
+
+            </div>
+
+            <div class="chart-container">
+
+                <canvas id="s_ugw_d_iwrChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     MAP
+====================================================== -->
+
+<div id="map"></div>
+
+
+<!-- =====================================================
+     LEAFLET JS
+====================================================== -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+<!-- =====================================================
+     DATA FILES
+     
+     IMPORTANT:
+     
+     admin.js contains geometry.
+     
+     The other JS files contain ONLY attribute data.
+     
+     Therefore, there is NO need for .features.forEach()
+====================================================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="admin.js"></script>
+
+<script src="cwr.js"></script>
+
+<script src="s_ip.js"></script>
+
+<script src="s_rf_s.js"></script>
+
+<script src="s_rf_d.js"></script>
+
+<script src="s_iwr.js"></script>
+
+<script src="s_usw_s.js"></script>
+
+<script src="s_usw_d_iwr.js"></script>
+
+<script src="s_ugw_s.js"></script>
+
+<script src="s_ugw_d_iwr.js"></script>
+
+
+<script>
+
+
+// =======================================================
+// 1. CREATE MAP
+// =======================================================
+
+const map = L.map('map');
+
+
+L.tileLayer(
+
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+    {
+
+        attribution:
+        '&copy; OpenStreetMap contributors'
+
+    }
+
+).addTo(map);
+
+
+// =======================================================
+// 2. MONTH LABELS
+// =======================================================
+
+const months = [
+
+    'Month 1',
+    'Month 2',
+    'Month 3',
+    'Month 4',
+    'Month 5'
+
+];
+
+
+// =======================================================
+// 3. CHART VARIABLES
+// =======================================================
+
+let cwrChart = null;
+
+let s_ipChart = null;
+
+let s_rf_sChart = null;
+
+let s_rf_dChart = null;
+
+let s_iwrChart = null;
+
+let s_usw_sChart = null;
+
+let s_usw_d_iwrChart = null;
+
+let s_ugw_sChart = null;
+
+let s_ugw_d_iwrChart = null;
+
+
+// =======================================================
+// 4. DATA LOOKUP TABLES
+//
+// IMPORTANT:
+//
+// DO NOT CREATE:
+//
+// const cwrData = {};
+// const s_ipData = {};
+//
+// etc.
+//
+// These variables are already created in the
+// corresponding JS files.
+//
+// Example:
+//
+// cwr.js
+//      const cwrData = {...};
+//
+// s_ip.js
+//      const s_ipData = {...};
+//
+// =======================================================
+
+
+// =======================================================
+// 5. CREATE CHART FUNCTION
+// =======================================================
+
+function createBarChart(
+
+    canvasId,
+    oldChart,
+    values,
+    label
+
+) {
+
+    // -----------------------------------------------
+    // Remove previous chart
+    // -----------------------------------------------
+
+    if (oldChart) {
+
+        oldChart.destroy();
+
+    }
+
+
+    // -----------------------------------------------
+    // Canvas
+    // -----------------------------------------------
+
+    const ctx =
+        document
+        .getElementById(canvasId)
+        .getContext('2d');
+
+
+    // -----------------------------------------------
+    // Create chart
+    // -----------------------------------------------
+
+    return new Chart(
+
+        ctx,
+
+        {
+
+            type: 'bar',
+
+            data: {
+
+                labels: months,
+
+                datasets: [
+
+                    {
+
+                        label: label,
+
+                        data: values,
+
+                        borderWidth: 1
+
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        display: false
+
+                    }
+
+                },
+
+                scales: {
+
+                    x: {
+
+                        ticks: {
+
+                            font: {
+
+                                size: 9
+
+                            }
+
+                        }
+
+                    },
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            font: {
+
+                                size: 9
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    );
+
+}
+
+
+// =======================================================
+// 6. SHOW DATA WHEN POLYGON IS CLICKED
+// =======================================================
+
+function showData(properties) {
+
+
+    // ---------------------------------------------------
+    // Administrative name
+    // ---------------------------------------------------
+
+    const id = properties.adm4_name;
+
+
+    console.log("Selected area:", id);
+console.log("Selected area:", id);
+
+console.log("CWR data:", cwrData[id]);
+console.log("Rainfall data:", s_ipData[id]);
+console.log("Rainfall surplus:", s_rf_sData[id]);
+console.log("Rainfall deficit:", s_rf_dData[id]);
+console.log("IWR:", s_iwrData[id]);
+console.log("Surface water surplus:", s_usw_sData[id]);
+console.log("Surface water deficit:", s_usw_d_iwrData[id]);
+console.log("Groundwater surplus:", s_ugw_sData[id]);
+console.log("Groundwater deficit:", s_ugw_d_iwrData[id]);
+
+    // ---------------------------------------------------
+    // Get corresponding records
+    //
+    // These are directly obtained from the lightweight
+    // JS attribute files.
+    // ---------------------------------------------------
+
+    const cwr =
+        cwrData[id];
+
+    const s_ip =
+        s_ipData[id];
+
+    const s_rf_s =
+        s_rf_sData[id];
+
+    const s_rf_d =
+        s_rf_dData[id];
+
+    const s_iwr =
+        s_iwrData[id];
+
+    const s_usw_s =
+        s_usw_sData[id];
+
+    const s_usw_d_iwr =
+        s_usw_d_iwrData[id];
+
+    const s_ugw_s =
+        s_ugw_sData[id];
+
+    const s_ugw_d_iwr =
+        s_ugw_d_iwrData[id];
+
+
+    // ---------------------------------------------------
+    // Area name
+    // ---------------------------------------------------
+
+    document
+        .getElementById('areaName')
+        .innerHTML =
+        '<strong>' +
+        id +
+        '</strong>';
+
+
+    // ===================================================
+    // CWR
+    // ===================================================
+
+    if (cwr) {
+
+        cwrChart = createBarChart(
+
+            'cwrChart',
+
+            cwrChart,
+
+            [
+
+                Number(cwr.Month_1) || 0,
+
+                Number(cwr.Month_2) || 0,
+
+                Number(cwr.Month_3) || 0,
+
+                Number(cwr.Month_4) || 0,
+
+                Number(cwr.Month_5) || 0
+
+            ],
+
+            'CWR'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // S_IP
+    // ===================================================
+
+    if (s_ip) {
+
+        s_ipChart = createBarChart(
+
+            's_ipChart',
+
+            s_ipChart,
+
+            [
+
+                Number(s_ip.Month_1) || 0,
+
+                Number(s_ip.Month_2) || 0,
+
+                Number(s_ip.Month_3) || 0,
+
+                Number(s_ip.Month_4) || 0,
+
+                Number(s_ip.Month_5) || 0
+
+            ],
+
+            'Rainfall'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // RAINFALL SURPLUS
+    // ===================================================
+
+    if (s_rf_s) {
+
+        s_rf_sChart = createBarChart(
+
+            's_rf_sChart',
+
+            s_rf_sChart,
+
+            [
+
+                Number(s_rf_s.Month_1) || 0,
+
+                Number(s_rf_s.Month_2) || 0,
+
+                Number(s_rf_s.Month_3) || 0,
+
+                Number(s_rf_s.Month_4) || 0,
+
+                Number(s_rf_s.Month_5) || 0
+
+            ],
+
+            'Rainfall Surplus'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // RAINFALL DEFICIT
+    // ===================================================
+
+    if (s_rf_d) {
+
+        s_rf_dChart = createBarChart(
+
+            's_rf_dChart',
+
+            s_rf_dChart,
+
+            [
+
+                Number(s_rf_d.Month_1) || 0,
+
+                Number(s_rf_d.Month_2) || 0,
+
+                Number(s_rf_d.Month_3) || 0,
+
+                Number(s_rf_d.Month_4) || 0,
+
+                Number(s_rf_d.Month_5) || 0
+
+            ],
+
+            'Rainfall Deficit'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // IWR
+    // ===================================================
+
+    if (s_iwr) {
+
+        s_iwrChart = createBarChart(
+
+            's_iwrChart',
+
+            s_iwrChart,
+
+            [
+
+                Number(s_iwr.Month_1) || 0,
+
+                Number(s_iwr.Month_2) || 0,
+
+                Number(s_iwr.Month_3) || 0,
+
+                Number(s_iwr.Month_4) || 0,
+
+                Number(s_iwr.Month_5) || 0
+
+            ],
+
+            'Irrigation Water Requirement'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // SURFACE WATER SURPLUS
+    // ===================================================
+
+    if (s_usw_s) {
+
+        s_usw_sChart = createBarChart(
+
+            's_usw_sChart',
+
+            s_usw_sChart,
+
+            [
+
+                Number(s_usw_s.Month_1) || 0,
+
+                Number(s_usw_s.Month_2) || 0,
+
+                Number(s_usw_s.Month_3) || 0,
+
+                Number(s_usw_s.Month_4) || 0,
+
+                Number(s_usw_s.Month_5) || 0
+
+            ],
+
+            'Surface Water Surplus'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // SURFACE WATER DEFICIT
+    // ===================================================
+
+    if (s_usw_d_iwr) {
+
+        s_usw_d_iwrChart = createBarChart(
+
+            's_usw_d_iwrChart',
+
+            s_usw_d_iwrChart,
+
+            [
+
+                Number(s_usw_d_iwr.Month_1) || 0,
+
+                Number(s_usw_d_iwr.Month_2) || 0,
+
+                Number(s_usw_d_iwr.Month_3) || 0,
+
+                Number(s_usw_d_iwr.Month_4) || 0,
+
+                Number(s_usw_d_iwr.Month_5) || 0
+
+            ],
+
+            'Surface Water Deficit'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // GROUNDWATER SURPLUS
+    // ===================================================
+
+    if (s_ugw_s) {
+
+        s_ugw_sChart = createBarChart(
+
+            's_ugw_sChart',
+
+            s_ugw_sChart,
+
+            [
+
+                Number(s_ugw_s.Month_1) || 0,
+
+                Number(s_ugw_s.Month_2) || 0,
+
+                Number(s_ugw_s.Month_3) || 0,
+
+                Number(s_ugw_s.Month_4) || 0,
+
+                Number(s_ugw_s.Month_5) || 0
+
+            ],
+
+            'Groundwater Surplus'
+
+        );
+
+    }
+
+
+    // ===================================================
+    // GROUNDWATER DEFICIT
+    // ===================================================
+
+    if (s_ugw_d_iwr) {
+
+        s_ugw_d_iwrChart = createBarChart(
+
+            's_ugw_d_iwrChart',
+
+            s_ugw_d_iwrChart,
+
+            [
+
+                Number(s_ugw_d_iwr.Month_1) || 0,
+
+                Number(s_ugw_d_iwr.Month_2) || 0,
+
+                Number(s_ugw_d_iwr.Month_3) || 0,
+
+                Number(s_ugw_d_iwr.Month_4) || 0,
+
+                Number(s_ugw_d_iwr.Month_5) || 0
+
+            ],
+
+            'Groundwater Deficit'
+
+        );
+
+    }
+
+}
+
+
+// =======================================================
+// 7. ADMINISTRATIVE BOUNDARY
+// =======================================================
+
+const adminLayer =
+
+    L.geoJSON(
+
+        adminGeoJSON,
+
+        {
+
+            // ------------------------------------------------
+            // Polygon style
+            // ------------------------------------------------
+
+            style: {
+
+                color: '#333333',
+
+                weight: 1,
+
+                fillColor: '#3388ff',
+
+                fillOpacity: 0.25
+
+            },
+
+
+            // ------------------------------------------------
+            // Feature events
+            // ------------------------------------------------
+
+            onEachFeature:
+
+                function(feature, layer) {
+
+
+                    layer.on({
+
+                        // ------------------------------------
+                        // Mouse over
+                        // ------------------------------------
+
+                        mouseover:
+
+                            function(e) {
+
+                                e.target.setStyle({
+
+                                    weight: 3,
+
+                                    fillOpacity: 0.5
+
+                                });
+
+                            },
+
+
+                        // ------------------------------------
+                        // Mouse out
+                        // ------------------------------------
+
+                        mouseout:
+
+                            function(e) {
+
+                                adminLayer.resetStyle(
+
+                                    e.target
+
+                                );
+
+                            },
+
+
+                        // ------------------------------------
+                        // CLICK
+                        // ------------------------------------
+
+                        click:
+
+                            function(e) {
+
+                                showData(
+
+                                    feature.properties
+
+                                );
+
+                            }
+
+                    });
+
+                }
+
+        }
+
+    )
+
+    .addTo(map);
+
+
+// =======================================================
+// 8. ZOOM TO ADMINISTRATIVE BOUNDARY
+// =======================================================
+
+map.fitBounds(
+
+    adminLayer.getBounds()
+
+);
+
+
+// =======================================================
+// 9. CLOSE PANEL
+// =======================================================
+
+document
+
+    .getElementById('closePanel')
+
+    .addEventListener(
+
+        'click',
+
+        function() {
+
+            document
+                .getElementById('sidePanel')
+                .style.display = 'none';
+
+        }
+
+    );
+
+
+</script>
+
+
+</body>
+
+</html>
+
