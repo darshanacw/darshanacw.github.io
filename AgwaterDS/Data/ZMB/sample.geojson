@@ -1,0 +1,145 @@
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 1",
+        "rainfall": 1850,
+        "pet": 1450,
+        "aet": 1120,
+        "ndvi": 0.65,
+        "water_demand": 450
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.60, 7.50],
+            [80.70, 7.50],
+            [80.70, 7.60],
+            [80.60, 7.60],
+            [80.60, 7.50]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 2",
+        "rainfall": 2100,
+        "pet": 1520,
+        "aet": 1280,
+        "ndvi": 0.72,
+        "water_demand": 520
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.70, 7.50],
+            [80.80, 7.50],
+            [80.80, 7.60],
+            [80.70, 7.60],
+            [80.70, 7.50]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 3",
+        "rainfall": 1650,
+        "pet": 1480,
+        "aet": 980,
+        "ndvi": 0.54,
+        "water_demand": 380
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.60, 7.60],
+            [80.70, 7.60],
+            [80.70, 7.70],
+            [80.60, 7.70],
+            [80.60, 7.60]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 4",
+        "rainfall": 2350,
+        "pet": 1600,
+        "aet": 1390,
+        "ndvi": 0.81,
+        "water_demand": 610
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.70, 7.60],
+            [80.80, 7.60],
+            [80.80, 7.70],
+            [80.70, 7.70],
+            [80.70, 7.60]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 5",
+        "rainfall": 1450,
+        "pet": 1420,
+        "aet": 870,
+        "ndvi": 0.43,
+        "water_demand": 310
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.60, 7.70],
+            [80.70, 7.70],
+            [80.70, 7.80],
+            [80.60, 7.80],
+            [80.60, 7.70]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Area 6",
+        "rainfall": 1950,
+        "pet": 1500,
+        "aet": 1210,
+        "ndvi": 0.68,
+        "water_demand": 480
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [80.70, 7.70],
+            [80.80, 7.70],
+            [80.80, 7.80],
+            [80.70, 7.80],
+            [80.70, 7.70]
+          ]
+        ]
+      }
+    }
+  ]
+}
+```
