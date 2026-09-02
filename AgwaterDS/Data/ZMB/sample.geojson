@@ -1,4 +1,3 @@
-```json
 {
   "type": "FeatureCollection",
   "features": [
@@ -142,4 +141,4 @@
     }
   ]
 }
-```
+
