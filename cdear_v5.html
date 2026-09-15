@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>CDEAR Time Series Explorer</title>
+
+<link
+rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Chart.js Error Bars plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars@4.0.0/build/index.umd.min.js"></script>
+
+<style>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+#map {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+}
+
+#panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background: white;
+    box-sizing: border-box;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+#info {
+    background: #f1f1f1;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    line-height: 1.6;
+}
+
+#chartBox {
+    width: 100%;
+    height: 500px;
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#averageChartBox {
+
+    width: 100%;
+
+    height: 300px;
+
+    margin-top: 30px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div id="map"></div>
+
+
+<div id="panel">
+
+    <h2>Future AET Projection</h2>
+
+    <div id="info">
+        Click a polygon on the map
+    </div>
+
+    <div id="chartBox">
+        <canvas id="chart"></canvas>
+    </div>
+	<div id="averageChartBox">
+
+    <h3>Average P.PET.AET</h3>
+
+    <canvas id="averageChart"></canvas>
+
+</div>
+
+</div>
+
+
+
+<!-- =====================================================
+     LEAFLET
+===================================================== -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+
+<!-- =====================================================
+     YOUR DATA FILES
+===================================================== -->
+
+
+
+<script src="https://mws003-gis.github.io/AET_crop.js"></script>
+
+<script src="HPData.js"></script>
+
+<script src="HPETData.js"></script>
+
+<script src="HAETData.js"></script>
+<script src="HGETData.js"></script>
+<script src="HBETData.js"></script>
+
+<script src="FPData.js"></script>
+
+<script src="FPETData.js"></script>
+
+<script src="FAETData.js"></script>
+
+<script src="FGETData.js"></script>
+
+<script src="FBETData.js"></script>
+
+<script src="FGETEData.js"></script>
+
+<script>
+
+/* =====================================================
+   CHECK WHICH DATASETS EXIST
+===================================================== */
+
+const datasets = {};
+
+
+/* P */
+
+if (typeof HPData !== "undefined") {
+
+    datasets["P(hist)"] = HPData;
+
+}
+
+
+/* PET */
+
+if (typeof HPETData !== "undefined") {
+
+    datasets["PET(hist)"] = HPETData;
+
+}
+
+
+/* AET */
+
+if (typeof HAETData !== "undefined") {
+
+    datasets["AET(hist)"] = HAETData;
+
+}
+/* GET */
+
+if (typeof HGETData !== "undefined") {
+
+    datasets["GET(hist)"] = HGETData;
+
+}
+/* BET */
+
+if (typeof HBETData !== "undefined") {
+
+    datasets["BET(hist)"] = HBETData;
+
+}
+
+/* FP */
+
+if (typeof FPData !== "undefined") {
+
+    datasets["P(proj)"] = FPData;
+
+}
+
+/* FPET */
+
+if (typeof FPETData !== "undefined") {
+
+    datasets["PET(proj)"] = FPETData;
+
+}
+
+/* FAET */
+
+if (typeof FAETData !== "undefined") {
+
+    datasets["AET(proj)"] = FAETData;
+
+}
+
+/* FBET */
+
+if (typeof FBETData !== "undefined") {
+
+    datasets["BlueET(proj)"] = FBETData;
+
+}
+/* FGET */
+
+if (typeof FGETData !== "undefined") {
+
+    datasets["GreenET(proj)"] = FGETData;
+
+}
+
+
+
+/* FGETE */
+
+if (typeof FGETEData !== "undefined") {
+
+    datasets["UGreenET(proj)"] = FGETEData;
+
+}
+
+console.log(
+    "Available datasets:",
+    Object.keys(datasets)
+);
+
+
+
+/* =====================================================
+   MAP
+===================================================== */
+
+const map = L.map("map").setView(
+    [-15, 30],
+    7
+);
+
+
+
+/* =====================================================
+   BASEMAP
+===================================================== */
+
+L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+
+        attribution:
+            "&copy; OpenStreetMap contributors"
+
+    }
+).addTo(map);
+
+
+
+/* =====================================================
+   CHART VARIABLE
+===================================================== */
+
+let timeSeriesChart = null;
+
+
+// ============================================================
+// AVERAGE PRECIPITATION + STANDARD DEVIATION ERROR BARS
+// ============================================================
+
+let averageChart = null;
+
+
+// ------------------------------------------------------------
+// Calculate mean
+// ------------------------------------------------------------
+function calculateMean(values) {
+
+    const valid = values.filter(v =>
+        v !== null &&
+        v !== undefined &&
+        !isNaN(v)
+    );
+
+    if (valid.length === 0)
+        return null;
+
+    return valid.reduce((sum, v) => sum + Number(v), 0) / valid.length;
+}
+
+
+// ------------------------------------------------------------
+// Calculate standard deviation
+// Population SD
+// ------------------------------------------------------------
+function calculateSD(values) {
+
+    const valid = values.filter(v =>
+        v !== null &&
+        v !== undefined &&
+        !isNaN(v)
+    ).map(Number);
+
+    if (valid.length === 0)
+        return null;
+
+    const mean = calculateMean(valid);
+
+    const variance =
+        valid.reduce((sum, v) => {
+            return sum + Math.pow(v - mean, 2);
+        }, 0) / valid.length;
+
+    return Math.sqrt(variance);
+}
+
+
+// ------------------------------------------------------------
+// Get yearly values from a record
+// ------------------------------------------------------------
+function getPeriodValues(record, startYear, endYear) {
+
+    if (!record)
+        return [];
+
+    const values = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+
+        const key = "year_" + year;
+
+        if (
+            record[key] !== undefined &&
+            record[key] !== null &&
+            !isNaN(record[key])
+        ) {
+            values.push(Number(record[key]));
+        }
+    }
+
+    return values;
+}
+
+
+// ------------------------------------------------------------
+// Draw Average P + SD
+// ------------------------------------------------------------
+
+
+function plotAverageWaterBalance(records) {
+
+    // --------------------------------------------------------
+    // Check data
+    // --------------------------------------------------------
+    if (
+        !records["P(hist)"] &&
+        !records["P(proj)"] &&
+        !records["PET(hist)"] &&
+        !records["PET(proj)"] &&
+        !records["AET(hist)"] &&
+        !records["AET(proj)"]
+    ) {
+        return;
+    }
+
+
+    // --------------------------------------------------------
+    // Define periods
+    // --------------------------------------------------------
+    const periods = [
+
+        {
+            label: "2001–2020",
+            start: 2001,
+            end: 2020
+        },
+
+        {
+            label: "2021–2045",
+            start: 2021,
+            end: 2045
+        },
+
+        {
+            label: "2046–2075",
+            start: 2046,
+            end: 2075
+        },
+
+        {
+            label: "2076–2100",
+            start: 2076,
+            end: 2100
+        }
+
+    ];
+
+
+    // --------------------------------------------------------
+    // Dataset selector
+    // Historical = hist
+    // Future = proj
+    // --------------------------------------------------------
+    function getDataset(variable, period) {
+
+        if (period.start <= 2020) {
+
+            return records[variable + "(hist)"];
+
+        } else {
+
+            return records[variable + "(proj)"];
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // Calculate mean and SD for each variable
+    // --------------------------------------------------------
+
+    const P_mean = [];
+    const P_sd = [];
+
+    const PET_mean = [];
+    const PET_sd = [];
+
+    const AET_mean = [];
+    const AET_sd = [];
+
+
+    periods.forEach(period => {
+
+        // -------------------------
+        // P
+        // -------------------------
+        const pRecord =
+            getDataset("P", period);
+
+        const pValues =
+            pRecord
+                ? getPeriodValues(
+                    pRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        P_mean.push(
+            calculateMean(pValues)
+        );
+
+        P_sd.push(
+            calculateSD(pValues)
+        );
+
+
+        // -------------------------
+        // PET
+        // -------------------------
+        const petRecord =
+            getDataset("PET", period);
+
+        const petValues =
+            petRecord
+                ? getPeriodValues(
+                    petRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        PET_mean.push(
+            calculateMean(petValues)
+        );
+
+        PET_sd.push(
+            calculateSD(petValues)
+        );
+
+
+        // -------------------------
+        // AET
+        // -------------------------
+        const aetRecord =
+            getDataset("AET", period);
+
+        const aetValues =
+            aetRecord
+                ? getPeriodValues(
+                    aetRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        AET_mean.push(
+            calculateMean(aetValues)
+        );
+
+        AET_sd.push(
+            calculateSD(aetValues)
+        );
+
+    });
+
+
+    // --------------------------------------------------------
+    // Console check
+    // --------------------------------------------------------
+
+    console.log("Average P:", P_mean);
+    console.log("SD P:", P_sd);
+
+    console.log("Average PET:", PET_mean);
+    console.log("SD PET:", PET_sd);
+
+    console.log("Average AET:", AET_mean);
+    console.log("SD AET:", AET_sd);
+
+
+    // --------------------------------------------------------
+    // Destroy previous chart
+    // --------------------------------------------------------
+
+    if (averageChart) {
+        averageChart.destroy();
+    }
+
+
+    // --------------------------------------------------------
+    // Create chart
+    // --------------------------------------------------------
+
+    const ctx =
+        document
+            .getElementById("averageChart")
+            .getContext("2d");
+
+
+    averageChart = new Chart(ctx, {
+
+        type: "bar",
+
+        data: {
+
+            labels:
+                periods.map(
+                    p => p.label
+                ),
+
+            datasets: [
+
+                // ==================================================
+                // P
+                // ==================================================
+                {
+                    label: "P",
+
+                    data: P_mean,
+
+                    backgroundColor: "#3498DB",
+
+                    borderColor: "#21618C",
+
+                    borderWidth: 1,
+
+                    borderRadius: 4,
+
+                    errorBarColor: "#222222",
+
+                    errorBarLineWidth: 2,
+
+                    errorBarWhiskerLineWidth: 2,
+
+                    errorBarWhiskerRatio: 0.5,
+
+                    errorBars: {
+
+                        y: {
+
+                            plus: P_sd,
+
+                            minus: P_sd
+
+                        }
+
+                    }
+
+                },
+
+
+                // ==================================================
+                // PET
+                // ==================================================
+                {
+                    label: "PET",
+
+                    data: PET_mean,
+
+                    backgroundColor: "#F39C12",
+
+                    borderColor: "#B9770E",
+
+                    borderWidth: 1,
+
+                    borderRadius: 4,
+
+                    errorBarColor: "#222222",
+
+                    errorBarLineWidth: 2,
+
+                    errorBarWhiskerLineWidth: 2,
+
+                    errorBarWhiskerRatio: 0.5,
+
+                    errorBars: {
+
+                        y: {
+
+                            plus: PET_sd,
+
+                            minus: PET_sd
+
+                        }
+
+                    }
+
+                },
+
+
+                // ==================================================
+                // AET
+                // ==================================================
+                {
+                    label: "AET",
+
+                    data: AET_mean,
+
+                    backgroundColor: "#27AE60",
+
+                    borderColor: "#196F3D",
+
+                    borderWidth: 1,
+
+                    borderRadius: 4,
+
+                    errorBarColor: "#222222",
+
+                    errorBarLineWidth: 2,
+
+                    errorBarWhiskerLineWidth: 2,
+
+                    errorBarWhiskerRatio: 0.5,
+
+                    errorBars: {
+
+                        y: {
+
+                            plus: AET_sd,
+
+                            minus: AET_sd
+
+                        }
+
+                    }
+
+                }
+
+            ]
+
+        },
+
+
+        // --------------------------------------------------------
+        // OPTIONS
+        // --------------------------------------------------------
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+
+            plugins: {
+
+                legend: {
+
+                    display: true
+
+                },
+
+
+                tooltip: {
+
+                    callbacks: {
+
+                        label: function(context) {
+
+                            const index =
+                                context.dataIndex;
+
+                            const dataset =
+                                context.dataset;
+
+
+                            let mean;
+                            let sd;
+
+
+                            if (dataset.label === "P") {
+
+                                mean =
+                                    P_mean[index];
+
+                                sd =
+                                    P_sd[index];
+
+                            }
+
+                            else if (
+                                dataset.label === "PET"
+                            ) {
+
+                                mean =
+                                    PET_mean[index];
+
+                                sd =
+                                    PET_sd[index];
+
+                            }
+
+                            else if (
+                                dataset.label === "AET"
+                            ) {
+
+                                mean =
+                                    AET_mean[index];
+
+                                sd =
+                                    AET_sd[index];
+
+                            }
+
+
+                            if (
+                                mean === null ||
+                                mean === undefined ||
+                                isNaN(mean)
+                            ) {
+
+                                return "No data";
+
+                            }
+
+
+                            return [
+
+                                dataset.label +
+                                ": " +
+                                mean.toFixed(1),
+
+                                "SD: ±" +
+                                (
+                                    sd ?? 0
+                                ).toFixed(1),
+
+                                "Range: " +
+                                (
+                                    mean - sd
+                                ).toFixed(1) +
+                                " – " +
+                                (
+                                    mean + sd
+                                ).toFixed(1)
+
+                            ];
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+
+            scales: {
+
+                x: {
+
+                    title: {
+
+                        display: true,
+
+                        text: "Period"
+
+                    }
+
+                },
+
+
+                y: {
+
+                    beginAtZero: true,
+
+                    title: {
+
+                        display: true,
+
+                        text: "Water flux (mm/year)"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+/* =====================================================
+   NORMAL POLYGON STYLE
+===================================================== */
+
+function polygonStyle() {
+
+    return {
+
+        color: "#333333",
+
+        weight: 1,
+
+        fillColor: "#3388ff",
+
+        fillOpacity: 0.35
+
+    };
+
+}
+
+
+
+/* =====================================================
+   SELECTED POLYGON STYLE
+===================================================== */
+
+function selectedStyle() {
+
+    return {
+
+        color: "#ff0000",
+
+        weight: 3,
+
+        fillColor: "#ffff00",
+
+        fillOpacity: 0.6
+
+    };
+
+}
+
+
+
+/* =====================================================
+   CURRENT SELECTED LAYER
+===================================================== */
+
+let selectedLayer = null;
+
+
+
+/* =====================================================
+   FIND RECORD BY ID
+===================================================== */
+
+function findRecord(data, id) {
+
+    if (!data) {
+
+        return null;
+
+    }
+
+
+    /*
+
+       Case 1:
+
+       {
+          "1": {...},
+          "2": {...}
+       }
+
+    */
+
+    if (data[String(id)]) {
+
+        return data[String(id)];
+
+    }
+
+
+    /*
+
+       Case 2:
+
+       Search inside object
+
+    */
+
+    for (const key in data) {
+
+        if (
+            data[key] &&
+            String(data[key].id) === String(id)
+        ) {
+
+            return data[key];
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+
+/* =====================================================
+   GET YEAR FIELDS
+===================================================== */
+
+function findYears(record) {
+
+    if (!record) {
+
+        return [];
+
+    }
+
+
+    return Object.keys(record)
+
+        .filter(function(key) {
+
+            return /^year_\d{4}$/.test(key);
+
+        })
+
+        .sort(function(a, b) {
+
+            return (
+                Number(a.replace("year_", "")) -
+                Number(b.replace("year_", ""))
+            );
+
+        });
+
+}
+
+
+
+/* =====================================================
+   LOAD GEOJSON
+===================================================== */
+
+
+function getColor(value) {
+
+    if (value == null || isNaN(value))
+        return "#cccccc";
+
+    if (value < 500)
+        return "#ff0000";   // Bright red
+
+    if (value < 650)
+        return "#ffff00";   // Yellow
+
+    if (value < 850)
+        return "#00ff00";   // Bright green
+
+    if (value < 1250)
+        return "#00ffff";   // Cyan
+
+    return "#0000ff";       // Bright blue
+}
+
+
+function polygonStyle(feature) {
+
+    const value =
+        Number(feature.properties.year_2020);
+
+    return {
+
+        fillColor: getColor(value),
+
+        color: "#555",
+
+        weight: 0.1,
+
+        fillOpacity: 1
+
+    };
+
+}
+
+
+const layer = L.geoJSON(
+    AET_crop,
+    {
+        style: polygonStyle,
+
+        onEachFeature: function(feature, polygon) {
+
+            const id =
+                feature.properties.id;
+
+            polygon.bindTooltip(
+                "ID: " + id
+            );
+
+            polygon.on("click", function() {
+
+                plotTimeSeries(id);
+
+            });
+
+        }
+
+    }
+).addTo(map);
+
+
+
+/* =====================================================
+   ZOOM TO DATA
+===================================================== */
+
+try {
+
+    map.fitBounds(
+        layer.getBounds()
+    );
+
+}
+catch (error) {
+
+    console.log(
+        "Could not fit map bounds:",
+        error
+    );
+
+}
+
+
+
+/* =====================================================
+   PLOT TIME SERIES
+===================================================== */
+
+function plotTimeSeries(id) {
+
+
+    console.log(
+        "================================="
+    );
+
+    console.log(
+        "Plotting ID:",
+        id
+    );
+
+    console.log(
+        "================================="
+    );
+
+
+    /* =================================================
+       FIND RECORDS
+    ================================================= */
+
+    const records = {};
+
+
+    for (
+        const name in datasets
+    ) {
+
+
+        const record =
+            findRecord(
+                datasets[name],
+                id
+            );
+
+
+        if (record) {
+
+            records[name] =
+                record;
+
+            console.log(
+                name +
+                " record found:",
+                record
+            );
+
+        }
+        else {
+
+            console.log(
+                name +
+                " record NOT found for ID:",
+                id
+            );
+
+        }
+
+    }
+
+
+
+    /* =================================================
+       CHECK DATA
+    ================================================= */
+
+    const datasetNames =
+        Object.keys(records);
+
+
+    if (
+        datasetNames.length === 0
+    ) {
+
+        document.getElementById(
+            "info"
+        ).innerHTML =
+
+            "<b>Selected ID:</b> " +
+            id +
+
+            "<br><br>" +
+
+            "<b style='color:red'>" +
+            "No attribute data found." +
+            "</b>";
+
+        return;
+
+    }
+
+
+
+    /* =================================================
+       COLLECT ALL YEARS
+    ================================================= */
+
+    const yearSet =
+        new Set();
+
+
+    for (
+        const name of datasetNames
+    ) {
+
+
+        const record =
+            records[name];
+
+
+        const fields =
+            findYears(record);
+
+
+        fields.forEach(
+            function(field) {
+
+                const year =
+                    Number(
+                        field.replace(
+                            "year_",
+                            ""
+                        )
+                    );
+
+                yearSet.add(year);
+
+            }
+        );
+
+    }
+
+
+
+    /* =================================================
+       SORT YEARS
+    ================================================= */
+
+    const years =
+        Array.from(yearSet)
+
+            .sort(function(a, b) {
+
+                return a - b;
+
+            });
+
+
+
+    console.log(
+        "Years:",
+        years
+    );
+
+
+
+    /* =================================================
+       UPDATE INFORMATION PANEL
+    ================================================= */
+
+    let infoHTML =
+
+        "<b>Selected ID:</b> " +
+        id;
+
+
+    /* Area */
+
+    if (
+        records["AET"] &&
+        records["AET"].area_ha !== undefined
+    ) {
+
+        infoHTML +=
+
+            "<br><b>Area:</b> " +
+
+            Number(
+                records["AET"].area_ha
+            ).toFixed(2) +
+
+            " ha";
+
+    }
+
+
+    infoHTML +=
+
+        "<br><b>Period:</b> " +
+
+        years[0] +
+
+        " - " +
+
+        years[years.length - 1];
+
+
+    infoHTML +=
+
+        "<br><b>Years:</b> " +
+
+        years.length;
+
+
+    infoHTML +=
+
+        "<br><b>Variables:</b> " +
+
+        datasetNames.join(", ");
+
+
+    document.getElementById(
+        "info"
+    ).innerHTML =
+        infoHTML;
+
+
+
+    /* =================================================
+       CREATE CHART DATASETS
+    ================================================= */
+
+    const chartData = [];
+
+
+const styles = {
+
+    /* ==============================
+       HISTORICAL
+       ============================== */
+
+    "P(hist)": {
+        color: "#2F80ED",       // Blue
+        dash: []
+    },
+
+    "PET(hist)": {
+        color: "#E67E22",       // Orange
+        dash: []
+    },
+
+    "AET(hist)": {
+        color: "Red",       // Green "#27AE60"
+        dash: []
+    },
+
+    "GET(hist)": {
+        color: "#16A085",       // Green "#27AE60"
+        dash: []
+    },
+    "BET(hist)": {
+        color: "#3498DB",       // Green "#27AE60"
+        dash: []
+    },	
+    /* ==============================
+       PROJECTED
+       ============================== */
+
+    "P(proj)": {
+        color: "#2F80ED",       // Same blue as P(hist)
+        dash: [8, 5]
+    },
+
+    "PET(proj)": {
+        color: "#E67E22",       // Same orange as PET(hist)
+        dash: [8, 5]
+    },
+
+    "AET(proj)": {
+        color: "Red",       // Same green as AET(hist) "#27AE60"
+        dash: [8, 5]
+    },
+
+
+    /* ==============================
+       ET COMPONENTS
+       ============================== */
+
+    "GreenET(proj)": {
+        color: "#16A085",       // Teal green
+        dash: []
+    },
+
+    "BlueET(proj)": {
+        color: "#3498DB",       // Light blue
+        dash: []
+    },
+
+    "UGreenET(proj)": {
+        color: "#8E44AD",       // Purple
+        dash: [8, 5]
+    }
+
+};
+
+
+for (const name of datasetNames) {
+
+    const record = records[name];
+
+    const values = years.map(function(year) {
+
+        const field = "year_" + year;
+
+        let value = record[field];
+
+        if (
+            value === undefined ||
+            value === null ||
+            value === ""
+        ) {
+            return null;
+        }
+
+        value = Number(value);
+
+        return isNaN(value) ? null : value;
+
+    });
+
+
+chartData.push({
+
+    label: name,
+
+    data: values,
+
+    type:
+        (name === "BlueET(proj)" ||
+         name === "GreenET(proj)")
+        ? "bar"
+        : "line",
+
+    backgroundColor:
+        styles[name]?.color || "#000000",
+
+    borderColor:
+        styles[name]?.color || "#000000",
+
+    borderDash:
+        styles[name]?.dash || [],
+
+    borderWidth: 2,
+
+    pointRadius:
+        (name === "GreenET(proj)" ||
+         name === "BlueET(proj)")
+        ? 0
+        : 1,
+
+    tension: 0.2,
+
+    fill: false,
+
+    stack:
+        (name === "BlueET(proj)" ||
+         name === "GreenET(proj)")
+        ? "ET"
+        : undefined
+
+});
+
+}
+
+
+
+    console.log(
+        "Chart data:",
+        chartData
+    );
+
+
+plotAverageWaterBalance(records)
+
+    /* =================================================
+       DESTROY OLD CHART
+    ================================================= */
+
+    if (
+        timeSeriesChart
+    ) {
+
+        timeSeriesChart.destroy();
+
+    }
+
+
+    /* =================================================
+       CREATE NEW CHART
+    ================================================= */
+
+    const canvas =
+        document.getElementById(
+            "chart"
+        );
+
+
+    timeSeriesChart =
+        new Chart(
+
+            canvas,
+
+            {
+
+                type: "line",
+
+
+                data: {
+
+                    labels: years,
+
+                    datasets:
+                        chartData
+
+                },
+
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+
+                    interaction: {
+
+                        mode: "index",
+
+                        intersect: false
+
+                    },
+
+
+                    plugins: {
+
+                        title: {
+
+                            display: true,
+
+                            text:
+                                "Annual Time Series - ID " +
+                                id
+
+                        },
+
+
+                        legend: {
+
+                            display: true,
+
+                            position: "bottom"
+
+                        }
+
+                    },
+
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display: true,
+
+                                text: "Year"
+
+                            }
+
+                        },
+
+
+                        y: {
+
+                            title: {
+
+                                display: true,
+
+                                text: "Value"
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+
+    console.log(
+        "Chart created successfully."
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
