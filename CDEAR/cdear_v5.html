@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<title>CDEAR AET Explorer</title>
+<title>CDEAR Time Series Explorer</title>
 
 <link
 rel="stylesheet"
@@ -101,7 +101,7 @@ canvas {
     </div>
 	<div id="averageChartBox">
 
-    <h3>Average Precipitation</h3>
+    <h3>Average P.PET.AET</h3>
 
     <canvas id="averageChart"></canvas>
 
@@ -367,75 +367,185 @@ function getPeriodValues(record, startYear, endYear) {
 // ------------------------------------------------------------
 // Draw Average P + SD
 // ------------------------------------------------------------
-function plotAveragePrecipitation(records) {
 
-    if (!records["P(hist)"] && !records["P(proj)"])
+
+function plotAverageWaterBalance(records) {
+
+    // --------------------------------------------------------
+    // Check data
+    // --------------------------------------------------------
+    if (
+        !records["P(hist)"] &&
+        !records["P(proj)"] &&
+        !records["PET(hist)"] &&
+        !records["PET(proj)"] &&
+        !records["AET(hist)"] &&
+        !records["AET(proj)"]
+    ) {
         return;
+    }
 
 
     // --------------------------------------------------------
     // Define periods
     // --------------------------------------------------------
     const periods = [
+
         {
             label: "2001–2020",
             start: 2001,
-            end: 2020,
-            dataset: "P(hist)"
+            end: 2020
         },
+
         {
             label: "2021–2045",
             start: 2021,
-            end: 2045,
-            dataset: "P(proj)"
+            end: 2045
         },
+
         {
             label: "2046–2075",
             start: 2046,
-            end: 2075,
-            dataset: "P(proj)"
+            end: 2075
         },
+
         {
             label: "2076–2100",
             start: 2076,
-            end: 2100,
-            dataset: "P(proj)"
+            end: 2100
         }
+
     ];
 
 
     // --------------------------------------------------------
-    // Calculate mean and SD
+    // Dataset selector
+    // Historical = hist
+    // Future = proj
     // --------------------------------------------------------
-    const averages = [];
-    const deviations = [];
+    function getDataset(variable, period) {
+
+        if (period.start <= 2020) {
+
+            return records[variable + "(hist)"];
+
+        } else {
+
+            return records[variable + "(proj)"];
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // Calculate mean and SD for each variable
+    // --------------------------------------------------------
+
+    const P_mean = [];
+    const P_sd = [];
+
+    const PET_mean = [];
+    const PET_sd = [];
+
+    const AET_mean = [];
+    const AET_sd = [];
+
 
     periods.forEach(period => {
 
-        const record = records[period.dataset];
+        // -------------------------
+        // P
+        // -------------------------
+        const pRecord =
+            getDataset("P", period);
 
-        const values = getPeriodValues(
-            record,
-            period.start,
-            period.end
+        const pValues =
+            pRecord
+                ? getPeriodValues(
+                    pRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        P_mean.push(
+            calculateMean(pValues)
         );
 
-        const mean = calculateMean(values);
-        const sd = calculateSD(values);
+        P_sd.push(
+            calculateSD(pValues)
+        );
 
-        averages.push(mean);
-        deviations.push(sd);
+
+        // -------------------------
+        // PET
+        // -------------------------
+        const petRecord =
+            getDataset("PET", period);
+
+        const petValues =
+            petRecord
+                ? getPeriodValues(
+                    petRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        PET_mean.push(
+            calculateMean(petValues)
+        );
+
+        PET_sd.push(
+            calculateSD(petValues)
+        );
+
+
+        // -------------------------
+        // AET
+        // -------------------------
+        const aetRecord =
+            getDataset("AET", period);
+
+        const aetValues =
+            aetRecord
+                ? getPeriodValues(
+                    aetRecord,
+                    period.start,
+                    period.end
+                )
+                : [];
+
+        AET_mean.push(
+            calculateMean(aetValues)
+        );
+
+        AET_sd.push(
+            calculateSD(aetValues)
+        );
 
     });
 
 
-    console.log("Average P:", averages);
-    console.log("SD P:", deviations);
+    // --------------------------------------------------------
+    // Console check
+    // --------------------------------------------------------
+
+    console.log("Average P:", P_mean);
+    console.log("SD P:", P_sd);
+
+    console.log("Average PET:", PET_mean);
+    console.log("SD PET:", PET_sd);
+
+    console.log("Average AET:", AET_mean);
+    console.log("SD AET:", AET_sd);
 
 
     // --------------------------------------------------------
     // Destroy previous chart
     // --------------------------------------------------------
+
     if (averageChart) {
         averageChart.destroy();
     }
@@ -444,8 +554,11 @@ function plotAveragePrecipitation(records) {
     // --------------------------------------------------------
     // Create chart
     // --------------------------------------------------------
+
     const ctx =
-        document.getElementById("averageChart").getContext("2d");
+        document
+            .getElementById("averageChart")
+            .getContext("2d");
 
 
     averageChart = new Chart(ctx, {
@@ -454,18 +567,24 @@ function plotAveragePrecipitation(records) {
 
         data: {
 
-            labels: periods.map(p => p.label),
+            labels:
+                periods.map(
+                    p => p.label
+                ),
 
             datasets: [
 
+                // ==================================================
+                // P
+                // ==================================================
                 {
-                    label: "Average P",
+                    label: "P",
 
-                    data: averages,
+                    data: P_mean,
 
-                    backgroundColor: "#2F80ED",
+                    backgroundColor: "#3498DB",
 
-                    borderColor: "#1B4F9C",
+                    borderColor: "#21618C",
 
                     borderWidth: 1,
 
@@ -483,9 +602,87 @@ function plotAveragePrecipitation(records) {
 
                         y: {
 
-                            plus: deviations,
+                            plus: P_sd,
 
-                            minus: deviations
+                            minus: P_sd
+
+                        }
+
+                    }
+
+                },
+
+
+                // ==================================================
+                // PET
+                // ==================================================
+                {
+                    label: "PET",
+
+                    data: PET_mean,
+
+                    backgroundColor: "#F39C12",
+
+                    borderColor: "#B9770E",
+
+                    borderWidth: 1,
+
+                    borderRadius: 4,
+
+                    errorBarColor: "#222222",
+
+                    errorBarLineWidth: 2,
+
+                    errorBarWhiskerLineWidth: 2,
+
+                    errorBarWhiskerRatio: 0.5,
+
+                    errorBars: {
+
+                        y: {
+
+                            plus: PET_sd,
+
+                            minus: PET_sd
+
+                        }
+
+                    }
+
+                },
+
+
+                // ==================================================
+                // AET
+                // ==================================================
+                {
+                    label: "AET",
+
+                    data: AET_mean,
+
+                    backgroundColor: "#27AE60",
+
+                    borderColor: "#196F3D",
+
+                    borderWidth: 1,
+
+                    borderRadius: 4,
+
+                    errorBarColor: "#222222",
+
+                    errorBarLineWidth: 2,
+
+                    errorBarWhiskerLineWidth: 2,
+
+                    errorBarWhiskerRatio: 0.5,
+
+                    errorBars: {
+
+                        y: {
+
+                            plus: AET_sd,
+
+                            minus: AET_sd
 
                         }
 
@@ -498,17 +695,25 @@ function plotAveragePrecipitation(records) {
         },
 
 
+        // --------------------------------------------------------
+        // OPTIONS
+        // --------------------------------------------------------
+
         options: {
 
             responsive: true,
 
             maintainAspectRatio: false,
 
+
             plugins: {
 
                 legend: {
+
                     display: true
+
                 },
+
 
                 tooltip: {
 
@@ -516,30 +721,83 @@ function plotAveragePrecipitation(records) {
 
                         label: function(context) {
 
-                            const index = context.dataIndex;
+                            const index =
+                                context.dataIndex;
 
-                            const mean = averages[index];
+                            const dataset =
+                                context.dataset;
 
-                            const sd = deviations[index];
+
+                            let mean;
+                            let sd;
+
+
+                            if (dataset.label === "P") {
+
+                                mean =
+                                    P_mean[index];
+
+                                sd =
+                                    P_sd[index];
+
+                            }
+
+                            else if (
+                                dataset.label === "PET"
+                            ) {
+
+                                mean =
+                                    PET_mean[index];
+
+                                sd =
+                                    PET_sd[index];
+
+                            }
+
+                            else if (
+                                dataset.label === "AET"
+                            ) {
+
+                                mean =
+                                    AET_mean[index];
+
+                                sd =
+                                    AET_sd[index];
+
+                            }
+
 
                             if (
                                 mean === null ||
-                                sd === null
+                                mean === undefined ||
+                                isNaN(mean)
                             ) {
+
                                 return "No data";
+
                             }
 
+
                             return [
-                                "Average P: " +
+
+                                dataset.label +
+                                ": " +
                                 mean.toFixed(1),
 
                                 "SD: ±" +
-                                sd.toFixed(1),
+                                (
+                                    sd ?? 0
+                                ).toFixed(1),
 
                                 "Range: " +
-                                (mean - sd).toFixed(1) +
+                                (
+                                    mean - sd
+                                ).toFixed(1) +
                                 " – " +
-                                (mean + sd).toFixed(1)
+                                (
+                                    mean + sd
+                                ).toFixed(1)
+
                             ];
 
                         }
@@ -574,7 +832,7 @@ function plotAveragePrecipitation(records) {
 
                         display: true,
 
-                        text: "Precipitation (mm/year)"
+                        text: "Water flux (mm/year)"
 
                     }
 
@@ -1202,7 +1460,8 @@ chartData.push({
         chartData
     );
 
-plotAveragePrecipitation(records);
+
+plotAverageWaterBalance(records)
 
     /* =================================================
        DESTROY OLD CHART
