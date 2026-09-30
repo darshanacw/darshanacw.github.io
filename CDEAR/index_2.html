@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>CDEAR - Country Climate Time Series</title>
+
+
+<!-- =====================================================
+     LEAFLET
+===================================================== -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<!-- =====================================================
+     CHART.JS
+===================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+</script>
+
+
+<!-- =====================================================
+     PAGE STYLE
+===================================================== -->
+
+<style>
+
+html,
+body {
+
+    height: 100%;
+
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+
+}
+
+
+#container {
+
+    display: flex;
+
+    height: 100vh;
+
+}
+
+
+#map {
+
+    width: 50%;
+
+    height: 100%;
+
+}
+
+
+#panel {
+
+    width: 50%;
+
+    padding: 25px;
+
+    box-sizing: border-box;
+
+    overflow: auto;
+
+}
+
+
+#title {
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+}
+
+
+#countryName {
+
+    font-size: 20px;
+
+    margin: 10px 0 15px;
+
+}
+
+
+#message {
+
+    color: #666;
+
+    margin-bottom: 20px;
+
+}
+
+
+.chart-container {
+
+    height: 420px;
+
+}
+
+
+.info-box {
+
+    margin-top: 20px;
+
+    padding: 12px;
+
+    background: #f5f5f5;
+
+    border-radius: 5px;
+
+}
+.controls {
+
+    margin-bottom: 20px;
+
+    padding: 12px;
+
+    background: #f5f5f5;
+
+    border-radius: 5px;
+
+}
+
+.controls label {
+
+    margin-right: 5px;
+
+}
+
+.controls select {
+
+    margin-right: 20px;
+
+    padding: 5px;
+
+}
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     MAIN CONTAINER
+===================================================== -->
+
+<div id="container">
+
+
+    <!-- MAP -->
+
+    <div id="map"></div>
+
+
+    <!-- RIGHT PANEL -->
+
+    <div id="panel">
+
+
+        <div id="title">
+            CDEAR Climate Data
+        </div>
+
+
+        <div id="countryName">
+            Select a country
+        </div>
+
+
+        <div id="message">
+            Loading climate data...
+        </div>
+
+<div class="controls">
+
+    <label>
+        <b>Year:</b>
+    </label>
+
+    <select id="yearSelect">
+        <option value="">Select year</option>
+    </select>
+
+
+    <label>
+        <b>Parameter:</b>
+    </label>
+
+    <select id="parameterSelect">
+
+        <option value="P">
+            P
+        </option>
+
+        <option value="PET">
+            PET
+        </option>
+
+        <option value="AET">
+            AET
+        </option>
+
+    </select>
+
+</div>
+
+
+        <div class="chart-container">
+
+            <canvas id="climateChart"></canvas>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <b>Variables</b>
+            <br>
+
+            P = Precipitation (mm/year)
+            <br>
+
+            PET = Potential Evapotranspiration (mm/year)
+            <br>
+
+            AET = Actual Evapotranspiration (mm/year)
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     MAIN JAVASCRIPT
+===================================================== -->
+
+<script type="module">
+
+
+/* =====================================================
+   HYPARQUET ES MODULE
+
+   IMPORTANT:
+   Do NOT add another <script src="hyparquet...">
+===================================================== */
+
+import {
+
+    asyncBufferFromUrl,
+
+    parquetReadObjects
+
+}
+from
+"https://cdn.jsdelivr.net/npm/hyparquet@1.30.1/+esm";
+
+
+
+/* =====================================================
+   GLOBAL VARIABLES
+===================================================== */
+
+let map = L
+    .map('map')
+    .setView([0, 20], 3);
+
+
+let chart = null;
+
+
+let countryData = [];
+
+let countryLayer = null;
+
+let selectedYear = null;
+
+let selectedParameter = 'P';
+
+
+
+/* =====================================================
+   BASE MAP
+===================================================== */
+
+L.tileLayer(
+
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+    {
+
+        attribution:
+            '&copy; OpenStreetMap contributors'
+
+    }
+
+).addTo(map);
+
+
+
+/* =====================================================
+   LOAD PARQUET DATA
+===================================================== */
+
+/* =====================================================
+   LOAD PARQUET DATA
+===================================================== */
+
+async function loadData() {
+
+    try {
+
+        console.log('Starting Parquet loading...');
+
+        document.getElementById('message').innerHTML =
+            'Loading country climate data...';
+
+
+        /* ---------------------------------------------
+           Parquet URL
+        --------------------------------------------- */
+
+        const parquetURL =
+            'data/country_timeseries.parquet';
+
+
+        /* ---------------------------------------------
+           FIRST: Fetch file manually
+           This checks what the web server is actually
+           returning to the browser.
+        --------------------------------------------- */
+
+        console.log(
+            'Fetching Parquet:',
+            parquetURL
+        );
+
+
+        const response =
+            await fetch(parquetURL, {
+                cache: 'no-store'
+            });
+
+
+        console.log(
+            'HTTP status:',
+            response.status
+        );
+
+
+        console.log(
+            'Content-Type:',
+            response.headers.get('content-type')
+        );
+
+
+        console.log(
+            'Content-Length:',
+            response.headers.get('content-length')
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Parquet HTTP error: ${response.status}`
+            );
+
+        }
+
+
+        /* ---------------------------------------------
+           Read file as ArrayBuffer
+        --------------------------------------------- */
+
+        const buffer =
+            await response.arrayBuffer();
+
+
+        console.log(
+            'Downloaded bytes:',
+            buffer.byteLength
+        );
+
+
+        /* ---------------------------------------------
+           Check Parquet magic bytes
+        --------------------------------------------- */
+
+        const bytes =
+            new Uint8Array(buffer);
+
+
+        function bytesToText(
+            array
+        ) {
+
+            return String.fromCharCode(
+                ...array
+            );
+
+        }
+
+
+        const first4 =
+            bytesToText(
+                bytes.slice(0, 4)
+            );
+
+
+        const last4 =
+            bytesToText(
+                bytes.slice(
+                    Math.max(0, bytes.length - 4)
+                )
+            );
+
+
+        console.log(
+            'First 4 bytes:',
+            first4
+        );
+
+
+        console.log(
+            'Last 4 bytes:',
+            last4
+        );
+
+
+        /* ---------------------------------------------
+           Validate Parquet signature
+        --------------------------------------------- */
+
+        if (first4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet header. ` +
+                `Expected PAR1 but received "${first4}".`
+            );
+
+        }
+
+
+        if (last4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet footer. ` +
+                `Expected PAR1 but received "${last4}".`
+            );
+
+        }
+
+
+        console.log(
+            'Valid Parquet file detected.'
+        );
+
+
+        /* ---------------------------------------------
+           Open using HyParquet
+        --------------------------------------------- */
+
+const file = {
+    byteLength: buffer.byteLength,
+    slice: (start, end) => buffer.slice(start, end)
+};
+
+console.log(
+    'Using validated Parquet buffer:',
+    file.byteLength,
+    'bytes'
+);
+
+
+        /* ---------------------------------------------
+           Read required columns
+        --------------------------------------------- */
+
+        countryData =
+            await parquetReadObjects({
+
+                file: file,
+
+                columns: [
+
+                    'country_id',
+                    'country_name',
+                    'year',
+                    'P',
+                    'PET',
+                    'AET'
+
+                ]
+
+            });
+
+/* ---------------------------------------------
+   Populate year selector
+--------------------------------------------- */
+
+const years = [
+
+    ...new Set(
+
+        countryData.map(
+
+            row =>
+                Number(row.year)
+
+        )
+
+    )
+
+].sort(
+
+    (a, b) =>
+        a - b
+
+);
+
+
+const yearSelect =
+    document.getElementById(
+        'yearSelect'
+    );
+
+
+yearSelect.innerHTML =
+    '<option value="">Select year</option>';
+
+
+years.forEach(
+
+    year => {
+
+        const option =
+            document.createElement(
+                'option'
+            );
+
+        option.value = year;
+
+        option.textContent = year;
+
+        yearSelect.appendChild(
+            option
+        );
+
+    }
+
+);
+
+
+/*
+   Select the first year automatically
+*/
+
+if (years.length > 0) {
+
+    selectedYear =
+        years[0];
+
+    yearSelect.value =
+        years[0];
+
+}
+        /* ---------------------------------------------
+           Console information
+        --------------------------------------------- */
+
+        console.log(
+            'Loaded rows:',
+            countryData.length
+        );
+
+
+        if (countryData.length > 0) {
+
+            console.log(
+                'First row:',
+                countryData[0]
+            );
+
+        }
+
+
+        /* ---------------------------------------------
+           Update message
+        --------------------------------------------- */
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Click a country on the map to display annual P, PET and AET.';
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            'PARQUET ERROR:',
+            error
+        );
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Error loading country time-series data. Check the browser console.';
+
+
+    }
+
+}
+
+/* =====================================================
+   LOAD COUNTRY GEOJSON
+===================================================== */
+
+async function loadCountries() {
+
+    try {
+
+
+        console.log(
+            'Loading country GeoJSON...'
+        );
+
+
+        const response =
+            await fetch(
+                'data/countries.geojson'
+            );
+
+
+
+        /* ---------------------------------------------
+           Check HTTP response
+        --------------------------------------------- */
+
+        if (!response.ok) {
+
+            throw new Error(
+
+                `GeoJSON HTTP error: ${response.status}`
+
+            );
+
+        }
+
+
+
+        /* ---------------------------------------------
+           Convert to JSON
+        --------------------------------------------- */
+
+        const geojson =
+            await response.json();
+
+
+
+        console.log(
+            'GeoJSON loaded successfully'
+        );
+
+
+
+        /* ---------------------------------------------
+           Add GeoJSON to Leaflet
+        --------------------------------------------- */
+
+countryLayer = L.geoJSON(
+    geojson,
+    {
+
+                style: {
+
+                    weight: 1,
+
+                    fillOpacity: 0.2
+
+                },
+
+
+                onEachFeature:
+                    function(
+                        feature,
+                        layer
+                    ) {
+
+
+                        /* -------------------------
+                           Country properties
+                        ------------------------- */
+
+                        const countryId =
+                            feature.properties.country_id;
+
+
+                        const countryName =
+                            feature.properties.country_name;
+
+
+
+                        /* -------------------------
+                           Click event
+                        ------------------------- */
+
+                        layer.on(
+
+                            'click',
+
+                            function() {
+
+
+                                console.log(
+                                    'Country clicked:',
+                                    countryId,
+                                    countryName
+                                );
+
+
+                                showCountry(
+
+                                    countryId,
+
+                                    countryName
+
+                                );
+
+                            }
+
+                        );
+
+
+                    }
+
+            }
+
+        ).addTo(map);
+
+
+    }
+/* =====================================================
+   GET COLOR FOR VALUE
+===================================================== */
+
+function getColor(value, parameter) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        !Number.isFinite(Number(value))
+    ) {
+
+        return '#cccccc';
+
+    }
+
+
+    value = Number(value);
+
+
+    /*
+       Simple parameter-specific colour scales
+    */
+
+    let breaks;
+
+
+    if (parameter === 'P') {
+
+        breaks = [
+            0,
+            250,
+            500,
+            750,
+            1000,
+            1500,
+            2000,
+            3000
+        ];
+
+    }
+
+    else if (parameter === 'PET') {
+
+        breaks = [
+            0,
+            500,
+            1000,
+            1500,
+            2000,
+            2500,
+            3000
+        ];
+
+    }
+
+    else if (parameter === 'AET') {
+
+        breaks = [
+            0,
+            250,
+            500,
+            750,
+            1000,
+            1500,
+            2000,
+            2500
+        ];
+
+    }
+
+
+    if (value < breaks[1]) return '#ffffcc';
+
+    if (value < breaks[2]) return '#ffeda0';
+
+    if (value < breaks[3]) return '#fed976';
+
+    if (value < breaks[4]) return '#feb24c';
+
+    if (value < breaks[5]) return '#fd8d3c';
+
+    if (value < breaks[6]) return '#f03b20';
+
+    return '#bd0026';
+
+}
+/* =====================================================
+   UPDATE COUNTRY COLORS
+===================================================== */
+
+function updateCountryColors() {
+
+    if (!countryLayer) {
+
+        return;
+
+    }
+
+
+    if (!selectedYear) {
+
+        return;
+
+    }
+
+
+    countryLayer.eachLayer(
+
+        function(layer) {
+
+            const countryId =
+                layer.feature.properties.country_id;
+
+
+            /*
+               Find the record for this country
+               and selected year
+            */
+
+            const row =
+                countryData.find(
+
+                    r =>
+
+                        String(r.country_id) ===
+                        String(countryId)
+
+                        &&
+
+                        Number(r.year) ===
+                        Number(selectedYear)
+
+                );
+
+
+            let value = null;
+
+
+            if (row) {
+
+                value =
+                    Number(
+                        row[selectedParameter]
+                    );
+
+            }
+
+
+            /*
+               Apply polygon style
+            */
+
+            layer.setStyle({
+
+                fillColor:
+                    getColor(
+                        value,
+                        selectedParameter
+                    ),
+
+                fillOpacity: 0.75,
+
+                color: '#333',
+
+                weight: 1
+
+            });
+
+        }
+
+    );
+
+}
+
+    catch (error) {
+
+
+        console.error(
+            'GEOJSON ERROR:',
+            error
+        );
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Error loading country map data.';
+
+
+    }
+
+}
+
+
+
+/* =====================================================
+   SHOW COUNTRY DATA
+===================================================== */
+
+function showCountry(
+
+    countryId,
+
+    countryName
+
+) {
+
+
+    /* ---------------------------------------------
+       Country name
+    --------------------------------------------- */
+
+    document.getElementById(
+        'countryName'
+    ).innerHTML =
+        countryName;
+
+
+
+    /* ---------------------------------------------
+       Filter country
+    --------------------------------------------- */
+
+    const rows =
+
+        countryData
+
+        .filter(
+
+            row =>
+
+                String(row.country_id) ===
+                String(countryId)
+
+        )
+
+        .sort(
+
+            (a, b) =>
+
+                Number(a.year) -
+                Number(b.year)
+
+        );
+
+
+
+    /* ---------------------------------------------
+       Check data
+    --------------------------------------------- */
+
+    if (!rows.length) {
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'No time-series data found for this country.';
+
+
+        return;
+
+    }
+
+
+
+    /* ---------------------------------------------
+       Number of observations
+    --------------------------------------------- */
+
+    document.getElementById(
+        'message'
+    ).innerHTML =
+
+        `${rows.length} annual observations`;
+
+
+
+    /* ---------------------------------------------
+       Prepare arrays
+    --------------------------------------------- */
+
+    const years =
+
+        rows.map(
+
+            row =>
+                Number(row.year)
+
+        );
+
+
+    const P =
+
+        rows.map(
+
+            row =>
+                Number(row.P)
+
+        );
+
+
+    const PET =
+
+        rows.map(
+
+            row =>
+                Number(row.PET)
+
+        );
+
+
+    const AET =
+
+        rows.map(
+
+            row =>
+                Number(row.AET)
+
+        );
+
+
+
+    /* ---------------------------------------------
+       Remove old chart
+    --------------------------------------------- */
+
+    if (chart) {
+
+        chart.destroy();
+
+    }
+
+
+
+    /* ---------------------------------------------
+       Create Chart.js chart
+    --------------------------------------------- */
+
+    chart = new Chart(
+
+        document.getElementById(
+            'climateChart'
+        ),
+
+        {
+
+            type: 'line',
+
+
+            data: {
+
+                labels: years,
+
+
+                datasets: [
+
+                    {
+
+                        label: 'P',
+
+                        data: P,
+
+                        borderWidth: 2,
+
+                        pointRadius: 0,
+
+                        tension: 0.15
+
+                    },
+
+
+                    {
+
+                        label: 'PET',
+
+                        data: PET,
+
+                        borderWidth: 2,
+
+                        pointRadius: 0,
+
+                        tension: 0.15
+
+                    },
+
+
+                    {
+
+                        label: 'AET',
+
+                        data: AET,
+
+                        borderWidth: 2,
+
+                        pointRadius: 0,
+
+                        tension: 0.15
+
+                    }
+
+                ]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+
+                interaction: {
+
+                    mode: 'index',
+
+                    intersect: false
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        title: {
+
+                            display: true,
+
+                            text: 'Year'
+
+                        }
+
+                    },
+
+
+                    y: {
+
+                        title: {
+
+                            display: true,
+
+                            text: 'mm/year'
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    );
+
+}
+
+
+/* =====================================================
+   CONTROL EVENTS
+===================================================== */
+
+document
+    .getElementById('yearSelect')
+    .addEventListener(
+        'change',
+        function() {
+
+            selectedYear =
+                Number(
+                    this.value
+                );
+
+            updateCountryColors();
+
+        }
+    );
+
+
+document
+    .getElementById('parameterSelect')
+    .addEventListener(
+        'change',
+        function() {
+
+            selectedParameter =
+                this.value;
+
+            updateCountryColors();
+
+        }
+    );
+/* =====================================================
+   START APPLICATION
+===================================================== */
+
+console.log(
+    'CDEAR dashboard starting...'
+);
+
+
+/* Load both files */
+
+loadData();
+
+loadCountries();
+
+updateCountryColors();
+
+</script>
+
+
+</body>
+
+</html>
