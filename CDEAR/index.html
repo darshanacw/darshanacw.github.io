@@ -422,17 +422,16 @@ async function loadData() {
            Open using HyParquet
         --------------------------------------------- */
 
-        const file =
-            await asyncBufferFromUrl({
+const file = {
+    byteLength: buffer.byteLength,
+    slice: (start, end) => buffer.slice(start, end)
+};
 
-                url: parquetURL
-
-            });
-
-
-        console.log(
-            'Parquet buffer opened successfully.'
-        );
+console.log(
+    'Using validated Parquet buffer:',
+    file.byteLength,
+    'bytes'
+);
 
 
         /* ---------------------------------------------
