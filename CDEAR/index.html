@@ -263,40 +263,176 @@ L.tileLayer(
    LOAD PARQUET DATA
 ===================================================== */
 
+/* =====================================================
+   LOAD PARQUET DATA
+===================================================== */
+
 async function loadData() {
 
     try {
 
+        console.log('Starting Parquet loading...');
 
-        console.log(
-            'Starting Parquet loading...'
-        );
-
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
+        document.getElementById('message').innerHTML =
             'Loading country climate data...';
 
 
+        /* ---------------------------------------------
+           Parquet URL
+        --------------------------------------------- */
+
+        const parquetURL =
+            'data/country_timeseries.parquet';
+
 
         /* ---------------------------------------------
-           Open Parquet file
+           FIRST: Fetch file manually
+           This checks what the web server is actually
+           returning to the browser.
+        --------------------------------------------- */
+
+        console.log(
+            'Fetching Parquet:',
+            parquetURL
+        );
+
+
+        const response =
+            await fetch(parquetURL, {
+                cache: 'no-store'
+            });
+
+
+        console.log(
+            'HTTP status:',
+            response.status
+        );
+
+
+        console.log(
+            'Content-Type:',
+            response.headers.get('content-type')
+        );
+
+
+        console.log(
+            'Content-Length:',
+            response.headers.get('content-length')
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Parquet HTTP error: ${response.status}`
+            );
+
+        }
+
+
+        /* ---------------------------------------------
+           Read file as ArrayBuffer
+        --------------------------------------------- */
+
+        const buffer =
+            await response.arrayBuffer();
+
+
+        console.log(
+            'Downloaded bytes:',
+            buffer.byteLength
+        );
+
+
+        /* ---------------------------------------------
+           Check Parquet magic bytes
+        --------------------------------------------- */
+
+        const bytes =
+            new Uint8Array(buffer);
+
+
+        function bytesToText(
+            array
+        ) {
+
+            return String.fromCharCode(
+                ...array
+            );
+
+        }
+
+
+        const first4 =
+            bytesToText(
+                bytes.slice(0, 4)
+            );
+
+
+        const last4 =
+            bytesToText(
+                bytes.slice(
+                    Math.max(0, bytes.length - 4)
+                )
+            );
+
+
+        console.log(
+            'First 4 bytes:',
+            first4
+        );
+
+
+        console.log(
+            'Last 4 bytes:',
+            last4
+        );
+
+
+        /* ---------------------------------------------
+           Validate Parquet signature
+        --------------------------------------------- */
+
+        if (first4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet header. ` +
+                `Expected PAR1 but received "${first4}".`
+            );
+
+        }
+
+
+        if (last4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet footer. ` +
+                `Expected PAR1 but received "${last4}".`
+            );
+
+        }
+
+
+        console.log(
+            'Valid Parquet file detected.'
+        );
+
+
+        /* ---------------------------------------------
+           Open using HyParquet
         --------------------------------------------- */
 
         const file =
             await asyncBufferFromUrl({
 
-                url:
-                    'data/country_timeseries.parquet'
+                url: parquetURL
 
             });
 
 
         console.log(
-            'Parquet file opened successfully'
+            'Parquet buffer opened successfully.'
         );
-
 
 
         /* ---------------------------------------------
@@ -311,21 +447,15 @@ async function loadData() {
                 columns: [
 
                     'country_id',
-
                     'country_name',
-
                     'year',
-
                     'P',
-
                     'PET',
-
                     'AET'
 
                 ]
 
             });
-
 
 
         /* ---------------------------------------------
@@ -348,7 +478,6 @@ async function loadData() {
         }
 
 
-
         /* ---------------------------------------------
            Update message
         --------------------------------------------- */
@@ -362,7 +491,6 @@ async function loadData() {
     }
 
     catch (error) {
-
 
         console.error(
             'PARQUET ERROR:',
@@ -379,8 +507,6 @@ async function loadData() {
     }
 
 }
-
-
 
 /* =====================================================
    LOAD COUNTRY GEOJSON
