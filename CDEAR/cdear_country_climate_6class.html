@@ -1,411 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CDEAR - Climate Water-Energy Classes</title>
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>CDEAR - Country Climate Classification</title>
-
-
-<!-- =====================================================
-     LEAFLET
-===================================================== -->
-
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
->
-
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
-
-
-<!-- =====================================================
-     CHART.JS
-===================================================== -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
-</script>
-
-
-<!-- =====================================================
-     PAGE STYLE
-===================================================== -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
 <style>
-
-html,
-body {
-
+html, body {
     height: 100%;
-
     margin: 0;
-
     font-family: Arial, sans-serif;
-
 }
-
 
 #container {
-
     display: flex;
-
     height: 100vh;
-
 }
-
 
 #map {
-
     width: 50%;
-
     height: 100%;
-
 }
-
 
 #panel {
-
     width: 50%;
-
     padding: 25px;
-
     box-sizing: border-box;
-
     overflow: auto;
-
 }
-
 
 #title {
-
     font-size: 24px;
-
     font-weight: bold;
-
 }
-
 
 #countryName {
-
     font-size: 20px;
-
-    margin: 10px 0 8px;
-
+    margin: 10px 0 15px;
 }
-
 
 #message {
-
     color: #666;
-
-    margin-bottom: 15px;
-
+    margin-bottom: 20px;
 }
-
-
-.controls {
-
-    margin-bottom: 15px;
-
-    padding: 12px;
-
-    background: #f5f5f5;
-
-    border-radius: 5px;
-
-}
-
-
-.controls-row {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    align-items: center;
-
-    gap: 10px;
-
-}
-
-
-.controls label {
-
-    font-weight: bold;
-
-}
-
-
-.controls select {
-
-    padding: 6px 8px;
-
-}
-
-
-.controls button {
-
-    padding: 6px 12px;
-
-    cursor: pointer;
-
-}
-
 
 .chart-container {
-
     height: 420px;
-
 }
-
 
 .info-box {
-
     margin-top: 20px;
-
     padding: 12px;
-
     background: #f5f5f5;
-
     border-radius: 5px;
-
-    line-height: 1.55;
-
 }
 
+.controls {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.controls label {
+    margin-right: 5px;
+}
+
+.controls select,
+.controls button {
+    margin-right: 12px;
+    padding: 6px 9px;
+}
 
 .legend {
-
-    background: white;
-
-    padding: 10px;
-
+    background: #fff;
+    padding: 10px 12px;
     line-height: 18px;
-
     border-radius: 5px;
-
-    box-shadow: 0 0 6px rgba(0,0,0,0.25);
-
-    min-width: 220px;
-
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+    min-width: 240px;
 }
-
 
 .legend-title {
-
     font-weight: bold;
-
-    margin-bottom: 6px;
-
+    margin-bottom: 7px;
 }
-
 
 .legend-row {
-
     display: flex;
-
-    align-items: center;
-
-    margin-bottom: 3px;
-
+    align-items: flex-start;
+    margin-bottom: 4px;
 }
-
 
 .legend-color {
-
     width: 22px;
-
-    height: 15px;
-
+    height: 16px;
     margin-right: 7px;
-
     border: 1px solid #777;
-
-    flex-shrink: 0;
-
+    flex: 0 0 auto;
 }
 
-
-.map-year-control {
-
-    background: rgba(255,255,255,0.95);
-
-    padding: 8px 12px;
-
-    border-radius: 5px;
-
-    box-shadow: 0 0 6px rgba(0,0,0,0.25);
-
-    font-size: 17px;
-
+#periodLabel {
+    font-size: 22px;
     font-weight: bold;
-
+    margin-bottom: 8px;
 }
-
-
 </style>
-
 </head>
 
-
 <body>
-
-
-<!-- =====================================================
-     MAIN CONTAINER
-===================================================== -->
-
 <div id="container">
-
-
-    <!-- MAP -->
 
     <div id="map"></div>
 
-
-    <!-- RIGHT PANEL -->
-
     <div id="panel">
+        <div id="title">CDEAR Climate Water-Energy Classes</div>
+        <div id="countryName">Select a country</div>
+        <div id="message">Loading climate data...</div>
 
-
-        <div id="title">
-            CDEAR Country Climate Classification
-        </div>
-
-
-        <div id="countryName">
-            Select a country
-        </div>
-
-
-        <div id="message">
-            Loading climate data...
-        </div>
-
-
-        <!-- =================================================
-             DECADE CONTROLS
-        ================================================== -->
+        <div id="periodLabel">Period: —</div>
 
         <div class="controls">
-
-            <div class="controls-row">
-
-                <label for="rangeSelect">
-                    10-year range:
-                </label>
-
-                <select id="rangeSelect">
-
-                    <option value="">
-                        Loading...
-                    </option>
-
-                </select>
-
-
-                <button id="playButton">
-                    ▶ Play
-                </button>
-
-
-                <button id="stopButton">
-                    ⏸ Pause
-                </button>
-
-
-                <label for="speedSelect">
-                    Speed:
-                </label>
-
-                <select id="speedSelect">
-
-                    <option value="1500">
-                        Slow
-                    </option>
-
-                    <option value="800" selected>
-                        Normal
-                    </option>
-
-                    <option value="400">
-                        Fast
-                    </option>
-
-                </select>
-
-            </div>
-
+            <label><b>10-year period:</b></label>
+            <select id="periodSelect">
+                <option value="">Loading...</option>
+            </select>
         </div>
 
+        <div class="controls">
+            <button id="playButton">▶ Play</button>
+            <button id="stopButton">⏸ Pause</button>
 
-        <!-- =================================================
-             COUNTRY CHART
-        ================================================== -->
+            <label><b>Speed:</b></label>
+            <select id="speedSelect">
+                <option value="1000">Slow</option>
+                <option value="500" selected>Normal</option>
+                <option value="200">Fast</option>
+            </select>
+        </div>
 
         <div class="chart-container">
-
             <canvas id="climateChart"></canvas>
-
         </div>
-
-
-        <!-- =================================================
-             INFORMATION
-        ================================================== -->
 
         <div class="info-box">
+            <b>Classification basis</b><br>
+            Each country is classified from the mean annual P, PET and AET
+            over the selected 10-year period.<br><br>
 
-            <b>Classification method</b>
-
-            <br>
-
-            Each country is classified using the
-            <b>10-year mean</b> of annual P, PET and AET
-            for the selected range.
-
-            <br><br>
-
-            <b>P</b> = Precipitation (mm/year)
-
-            <br>
-
-            <b>PET</b> = Potential Evapotranspiration (mm/year)
-
-            <br>
-
-            <b>AET</b> = Actual Evapotranspiration (mm/year)
-
-            <br><br>
-
-            The map contains six classes representing the
-            six possible rank orders of P, PET and AET.
-
+            P = Precipitation (mm/year)<br>
+            PET = Potential Evapotranspiration (mm/year)<br>
+            AET = Actual Evapotranspiration (mm/year)
         </div>
-
-
     </div>
-
 </div>
 
-
-<!-- =====================================================
-     MAIN JAVASCRIPT
-===================================================== -->
-
 <script type="module">
-
-
-/* =====================================================
-   HYPARQUET
-===================================================== */
 
 import {
     parquetReadObjects
@@ -413,990 +167,442 @@ import {
 from
 "https://cdn.jsdelivr.net/npm/hyparquet@1.30.1/+esm";
 
-
 /* =====================================================
-   GLOBAL VARIABLES
+   MAP / GLOBAL VARIABLES
 ===================================================== */
 
-let map =
-    L
-        .map('map')
-        .setView(
-            [0, 20],
-            3
-        );
-
-
-let chart = null;
-
-
-let countryData = [];
-
-
-let countryLayer = null;
-
-
-/* 10-year ranges */
-
-let availableRanges = [];
-
-
-let selectedRangeIndex = null;
-
-
-/* Classification records
-
-   Key:
-   `${countryId}|${rangeIndex}`
-
-*/
-
-let classificationData = new Map();
-
-
-let animationTimer = null;
-
-
-let animationSpeed = 800;
-
-
-/* Leaflet controls */
-
-let legendControl = null;
-
-
-let decadeControl = null;
-
-
-/* =====================================================
-   CLASS DEFINITIONS
-===================================================== */
-
-const CLASS_DEFINITIONS = [
-
-    {
-        id: 1,
-
-        name:
-            'Precipitation-Dominant',
-
-        order:
-            'P > PET > AET',
-
-        color:
-            '#1b9e77'
-    },
-
-
-    {
-        id: 2,
-
-        name:
-            'Precipitation–Actual ET Dominant',
-
-        order:
-            'P > AET > PET',
-
-        color:
-            '#d95f02'
-    },
-
-
-    {
-        id: 3,
-
-        name:
-            'Potential ET-Dominant',
-
-        order:
-            'PET > P > AET',
-
-        color:
-            '#7570b3'
-    },
-
-
-    {
-        id: 4,
-
-        name:
-            'Potential ET–Actual ET Dominant',
-
-        order:
-            'PET > AET > P',
-
-        color:
-            '#e7298a'
-    },
-
-
-    {
-        id: 5,
-
-        name:
-            'Actual ET-Dominant',
-
-        order:
-            'AET > P > PET',
-
-        color:
-            '#66a61e'
-    },
-
-
-    {
-        id: 6,
-
-        name:
-            'Actual ET–Potential ET Dominant',
-
-        order:
-            'AET > PET > P',
-
-        color:
-            '#e6ab02'
-    }
-
-];
-
-
-/* =====================================================
-   BASE MAP
-===================================================== */
+const map = L
+    .map('map')
+    .setView([0, 20], 3);
 
 L.tileLayer(
-
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-
     {
-        attribution:
-            '&copy; OpenStreetMap contributors'
+        attribution: '&copy; OpenStreetMap contributors'
     }
-
 ).addTo(map);
 
+let chart = null;
+let countryData = [];
+let countryLayer = null;
+let animationTimer = null;
+let animationSpeed = 500;
+let periods = [];
+let selectedPeriodIndex = 0;
+let countryYearIndex = new Map();
+let selectedCountryId = null;
 
 /* =====================================================
-   MAP YEAR/RANGE CONTROL
+   SIX FIXED CLASSES
 ===================================================== */
 
-decadeControl =
-    L.control({
-        position: 'topleft'
-    });
+const CLASS_INFO = {
 
+    1: {
+        name: 'Precipitation-Dominant',
+        order: 'P > PET > AET',
+        color: '#1b9e77'
+    },
 
-decadeControl.onAdd =
-    function() {
+    2: {
+        name: 'Precipitation–Actual ET Dominant',
+        order: 'P > AET > PET',
+        color: '#66a61e'
+    },
 
-        const div =
-            L.DomUtil.create(
-                'div',
-                'map-year-control'
-            );
+    3: {
+        name: 'Potential ET-Dominant',
+        order: 'PET > P > AET',
+        color: '#e6ab02'
+    },
 
-        div.id =
-            'mapRangeLabel';
+    4: {
+        name: 'Potential ET–Actual ET Dominant',
+        order: 'PET > AET > P',
+        color: '#d95f02'
+    },
 
-        div.innerHTML =
-            '10-year range';
+    5: {
+        name: 'Actual ET-Dominant',
+        order: 'AET > P > PET',
+        color: '#7570b3'
+    },
 
-        return div;
+    6: {
+        name: 'Actual ET–Potential ET Dominant',
+        order: 'AET > PET > P',
+        color: '#e7298a'
+    }
+};
 
-    };
-
-
-decadeControl.addTo(map);
-
+const NO_DATA_COLOR = '#cccccc';
+const TIE_COLOR = '#999999';
 
 /* =====================================================
-   LOAD PARQUET DATA
+   GET CLASS FROM THREE MEANS
+
+   Strict ranking is required. Ties are shown separately
+   as grey so they are not forced into an incorrect class.
+===================================================== */
+
+function classifyClimate(P, PET, AET) {
+
+    if (
+        !Number.isFinite(P) ||
+        !Number.isFinite(PET) ||
+        !Number.isFinite(AET)
+    ) {
+        return {
+            classId: null,
+            name: 'No data',
+            order: '—',
+            color: NO_DATA_COLOR
+        };
+    }
+
+    const values = [
+        { key: 'P', value: P },
+        { key: 'PET', value: PET },
+        { key: 'AET', value: AET }
+    ];
+
+    values.sort((a, b) => b.value - a.value);
+
+    const tied =
+        values[0].value === values[1].value ||
+        values[1].value === values[2].value;
+
+    if (tied) {
+        return {
+            classId: null,
+            name: 'Tie / indistinguishable',
+            order: `${values[0].key} = ${values[1].key}` +
+                   (values[2].value === values[1].value
+                       ? ` = ${values[2].key}`
+                       : ` > ${values[2].key}`),
+            color: TIE_COLOR
+        };
+    }
+
+    const order = values.map(d => d.key).join('>');
+
+    const classMap = {
+        'P>PET>AET': 1,
+        'P>AET>PET': 2,
+        'PET>P>AET': 3,
+        'PET>AET>P': 4,
+        'AET>P>PET': 5,
+        'AET>PET>P': 6
+    };
+
+    const classId = classMap[order];
+    const info = CLASS_INFO[classId];
+
+    return {
+        classId,
+        name: info.name,
+        order: info.order,
+        color: info.color
+    };
+}
+
+/* =====================================================
+   LOAD PARQUET
 ===================================================== */
 
 async function loadData() {
 
     try {
 
-        console.log(
-            'Starting Parquet loading...'
-        );
+        console.log('Starting Parquet loading...');
 
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
+        document.getElementById('message').innerHTML =
             'Loading country climate data...';
 
+        const parquetURL = 'data/country_timeseries.parquet';
 
-        const parquetURL =
-            'data/country_timeseries.parquet';
-
-
-        console.log(
-            'Fetching Parquet:',
-            parquetURL
+        const response = await fetch(
+            parquetURL,
+            { cache: 'no-store' }
         );
-
-
-        const response =
-            await fetch(
-
-                parquetURL,
-
-                {
-                    cache: 'no-store'
-                }
-
-            );
-
-
-        console.log(
-            'HTTP status:',
-            response.status
-        );
-
-
-        console.log(
-            'Content-Type:',
-            response.headers.get(
-                'content-type'
-            )
-        );
-
 
         if (!response.ok) {
-
-            throw new Error(
-                `Parquet HTTP error: ${response.status}`
-            );
-
+            throw new Error(`Parquet HTTP error: ${response.status}`);
         }
 
+        const buffer = await response.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
 
-        const buffer =
-            await response.arrayBuffer();
+        const first4 = String.fromCharCode(...bytes.slice(0, 4));
+        const last4 = String.fromCharCode(...bytes.slice(-4));
 
+        console.log('Downloaded bytes:', buffer.byteLength);
+        console.log('First 4 bytes:', first4);
+        console.log('Last 4 bytes:', last4);
 
-        console.log(
-            'Downloaded bytes:',
-            buffer.byteLength
-        );
-
-
-        /* ---------------------------------------------
-           Validate Parquet
-        --------------------------------------------- */
-
-        const bytes =
-            new Uint8Array(buffer);
-
-
-        function bytesToText(array) {
-
-            return String.fromCharCode(
-                ...array
-            );
-
+        if (first4 !== 'PAR1' || last4 !== 'PAR1') {
+            throw new Error('Invalid Parquet file.');
         }
-
-
-        const first4 =
-            bytesToText(
-                bytes.slice(
-                    0,
-                    4
-                )
-            );
-
-
-        const last4 =
-            bytesToText(
-                bytes.slice(
-                    Math.max(
-                        0,
-                        bytes.length - 4
-                    )
-                )
-            );
-
-
-        if (
-            first4 !== 'PAR1'
-        ) {
-
-            throw new Error(
-                `Invalid Parquet header: ${first4}`
-            );
-
-        }
-
-
-        if (
-            last4 !== 'PAR1'
-        ) {
-
-            throw new Error(
-                `Invalid Parquet footer: ${last4}`
-            );
-
-        }
-
-
-        console.log(
-            'Valid Parquet file detected.'
-        );
-
-
-        /* ---------------------------------------------
-           Use validated buffer
-        --------------------------------------------- */
 
         const file = {
-
-            byteLength:
-                buffer.byteLength,
-
-            slice:
-                (start, end) =>
-                    buffer.slice(
-                        start,
-                        end
-                    )
-
+            byteLength: buffer.byteLength,
+            slice: (start, end) => buffer.slice(start, end)
         };
 
+        countryData = await parquetReadObjects({
+            file,
+            columns: [
+                'country_id',
+                'country_name',
+                'year',
+                'P',
+                'PET',
+                'AET'
+            ]
+        });
 
-        /* ---------------------------------------------
-           Read Parquet
-        --------------------------------------------- */
-
-        countryData =
-            await parquetReadObjects({
-
-                file: file,
-
-                columns: [
-
-                    'country_id',
-                    'country_name',
-                    'year',
-                    'P',
-                    'PET',
-                    'AET'
-
-                ]
-
-            });
-
-
-        console.log(
-            'Loaded rows:',
-            countryData.length
-        );
-
-
-        if (
-            !countryData.length
-        ) {
-
-            throw new Error(
-                'Parquet contains no rows.'
-            );
-
+        if (!countryData.length) {
+            throw new Error('Parquet contains no rows.');
         }
 
+        buildCountryYearIndex();
+        buildPeriods();
+        populatePeriodSelector();
 
-        console.log(
-            'First row:',
-            countryData[0]
-        );
+        updateClassificationMap();
 
+        document.getElementById('message').innerHTML =
+            'Select a 10-year period or press Play to animate the classification.';
 
-        /* ---------------------------------------------
-           Prepare decade ranges
-        --------------------------------------------- */
+        if (selectedCountryId !== null) {
+            showCountry(
+                selectedCountryId,
+                getCountryName(selectedCountryId)
+            );
+        }
 
-        buildAvailableRanges();
+    } catch (error) {
 
+        console.error('PARQUET ERROR:', error);
 
-        /* ---------------------------------------------
-           Build 10-year classifications
-        --------------------------------------------- */
-
-        buildClassificationData();
-
-
-        /* ---------------------------------------------
-           Populate selector
-        --------------------------------------------- */
-
-        populateRangeSelector();
-
-
-        updateMap();
-
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
-            'Click a country to display annual P, PET and AET.';
-
-
+        document.getElementById('message').innerHTML =
+            'Error loading country time-series data. Check the browser console.';
     }
-
-    catch (error) {
-
-        console.error(
-            'PARQUET ERROR:',
-            error
-        );
-
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
-            'Error loading country climate data. Check the browser console.';
-
-    }
-
 }
 
-
 /* =====================================================
-   BUILD AVAILABLE 10-YEAR RANGES
+   INDEX DATA FOR FAST 10-YEAR LOOKUPS
 ===================================================== */
 
-function buildAvailableRanges() {
+function buildCountryYearIndex() {
 
-    const years = [
+    countryYearIndex = new Map();
 
-        ...new Set(
+    for (const row of countryData) {
 
-            countryData
+        const countryId = String(row.country_id);
+        const year = Number(row.year);
 
-                .map(
-                    row =>
-                        Number(
-                            row.year
-                        )
-                )
+        if (!countryYearIndex.has(countryId)) {
+            countryYearIndex.set(countryId, new Map());
+        }
 
-                .filter(
-                    year =>
-                        Number.isFinite(
-                            year
-                        )
-                )
+        countryYearIndex.get(countryId).set(year, row);
+    }
+}
 
-        )
+/* =====================================================
+   BUILD NON-OVERLAPPING 10-YEAR PERIODS
+===================================================== */
 
-    ].sort(
-        (a, b) =>
-            a - b
-    );
+function buildPeriods() {
 
+    const years = countryData
+        .map(row => Number(row.year))
+        .filter(Number.isFinite);
 
-    if (
-        !years.length
-    ) {
-
-        availableRanges = [];
-
+    if (!years.length) {
+        periods = [];
         return;
-
     }
 
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
 
-    const minYear =
-        years[0];
-
-
-    const maxYear =
-        years[years.length - 1];
-
-
-    availableRanges = [];
-
-
-    /*
-       Build complete consecutive 10-year ranges.
-
-       Example:
-       2001–2010
-       2011–2020
-       ...
-    */
+    periods = [];
 
     for (
         let start = minYear;
-        start <= maxYear;
+        start + 9 <= maxYear;
         start += 10
     ) {
+        periods.push({
+            start,
+            end: start + 9,
+            label: `${start}–${start + 9}`
+        });
+    }
 
-        const end =
-            start + 9;
+    selectedPeriodIndex = 0;
+}
 
+/* =====================================================
+   PERIOD SELECTOR
+===================================================== */
 
-        const rangeYears =
-            years.filter(
+function populatePeriodSelector() {
 
-                year =>
-                    year >= start &&
-                    year <= end
+    const select = document.getElementById('periodSelect');
 
-            );
+    select.innerHTML = '';
 
+    for (let i = 0; i < periods.length; i++) {
 
-        /*
-           Use only complete 10-year ranges.
-        */
+        const option = document.createElement('option');
 
-        if (
-            rangeYears.length === 10
-        ) {
+        option.value = i;
+        option.textContent = periods[i].label;
 
-            availableRanges.push({
+        select.appendChild(option);
+    }
 
-                index:
-                    availableRanges.length,
+    if (periods.length) {
+        select.value = selectedPeriodIndex;
+        updatePeriodLabel();
+    }
+}
 
-                startYear:
-                    start,
+/* =====================================================
+   CALCULATE 10-YEAR MEANS FOR ONE COUNTRY
+===================================================== */
 
-                endYear:
-                    end,
+function getCountryPeriodStats(countryId, start, end) {
 
-                label:
-                    `${start}–${end}`,
+    const yearMap = countryYearIndex.get(String(countryId));
 
-                years:
-                    rangeYears
+    if (!yearMap) {
+        return null;
+    }
 
+    let pSum = 0;
+    let petSum = 0;
+    let aetSum = 0;
+
+    let pCount = 0;
+    let petCount = 0;
+    let aetCount = 0;
+
+    for (let year = start; year <= end; year++) {
+
+        const row = yearMap.get(year);
+
+        if (!row) continue;
+
+        const p = Number(row.P);
+        const pet = Number(row.PET);
+        const aet = Number(row.AET);
+
+        if (Number.isFinite(p)) {
+            pSum += p;
+            pCount++;
+        }
+
+        if (Number.isFinite(pet)) {
+            petSum += pet;
+            petCount++;
+        }
+
+        if (Number.isFinite(aet)) {
+            aetSum += aet;
+            aetCount++;
+        }
+    }
+
+    if (!pCount || !petCount || !aetCount) {
+        return null;
+    }
+
+    return {
+        P: pSum / pCount,
+        PET: petSum / petCount,
+        AET: aetSum / aetCount,
+        nP: pCount,
+        nPET: petCount,
+        nAET: aetCount
+    };
+}
+
+/* =====================================================
+   UPDATE MAP CLASSIFICATION
+===================================================== */
+
+function updateClassificationMap() {
+
+    if (!countryLayer || !periods.length || !countryData.length) {
+        return;
+    }
+
+    const period = periods[selectedPeriodIndex];
+
+    if (!period) return;
+
+    document.getElementById('periodLabel').textContent =
+        `Period: ${period.label}`;
+
+    countryLayer.eachLayer(layer => {
+
+        const countryId =
+            layer.feature.properties.country_id;
+
+        const stats = getCountryPeriodStats(
+            countryId,
+            period.start,
+            period.end
+        );
+
+        if (!stats) {
+
+            layer.setStyle({
+                fillColor: NO_DATA_COLOR,
+                fillOpacity: 0.75,
+                color: '#333',
+                weight: 1
             });
 
-        }
-
-    }
-
-
-    console.log(
-        'Available 10-year ranges:',
-        availableRanges
-    );
-
-}
-
-
-/* =====================================================
-   BUILD CLASSIFICATION DATA
-===================================================== */
-
-function buildClassificationData() {
-
-    classificationData =
-        new Map();
-
-
-    /*
-       Index all rows by country and year.
-    */
-
-    const byCountry =
-        new Map();
-
-
-    countryData.forEach(
-
-        row => {
-
-            const countryId =
-                String(
-                    row.country_id
-                );
-
-
-            if (
-                !byCountry.has(
-                    countryId
-                )
-            ) {
-
-                byCountry.set(
-                    countryId,
-                    []
-                );
-
-            }
-
-
-            byCountry
-                .get(countryId)
-                .push(row);
-
-        }
-
-    );
-
-
-    /*
-       Calculate one 10-year mean for each
-       country and each decade.
-    */
-
-    byCountry.forEach(
-
-        (rows, countryId) => {
-
-
-            availableRanges.forEach(
-
-                range => {
-
-                    const rangeRows =
-                        rows.filter(
-
-                            row => {
-
-                                const year =
-                                    Number(
-                                        row.year
-                                    );
-
-                                return (
-                                    year >=
-                                        range.startYear
-                                    &&
-                                    year <=
-                                        range.endYear
-                                );
-
-                            }
-
-                        );
-
-
-                    if (
-                        rangeRows.length < 10
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const meanP =
-                        calculateMean(
-                            rangeRows,
-                            'P'
-                        );
-
-
-                    const meanPET =
-                        calculateMean(
-                            rangeRows,
-                            'PET'
-                        );
-
-
-                    const meanAET =
-                        calculateMean(
-                            rangeRows,
-                            'AET'
-                        );
-
-
-                    if (
-                        meanP === null ||
-                        meanPET === null ||
-                        meanAET === null
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    const classInfo =
-                        classifyValues(
-
-                            meanP,
-                            meanPET,
-                            meanAET
-
-                        );
-
-
-                    classificationData.set(
-
-                        `${countryId}|${range.index}`,
-
-                        {
-
-                            countryId:
-                                countryId,
-
-                            countryName:
-                                rangeRows[0]
-                                    .country_name,
-
-                            rangeIndex:
-                                range.index,
-
-                            meanP:
-                                meanP,
-
-                            meanPET:
-                                meanPET,
-
-                            meanAET:
-                                meanAET,
-
-                            classId:
-                                classInfo.id,
-
-                            className:
-                                classInfo.name,
-
-                            order:
-                                classInfo.order,
-
-                            color:
-                                classInfo.color
-
-                        }
-
-                    );
-
-                }
-
+            layer.bindTooltip(
+                `${layer.feature.properties.country_name}<br>` +
+                `No complete data for ${period.label}`,
+                { sticky: true }
             );
 
+            return;
         }
 
-    );
-
-
-    console.log(
-        'Classification records:',
-        classificationData.size
-    );
-
-}
-
-
-/* =====================================================
-   CALCULATE MEAN
-===================================================== */
-
-function calculateMean(
-    rows,
-    field
-) {
-
-    const values =
-        rows
-
-            .map(
-                row =>
-                    Number(
-                        row[field]
-                    )
-            )
-
-            .filter(
-                value =>
-                    Number.isFinite(
-                        value
-                    )
-            );
-
-
-    if (
-        values.length !== 10
-    ) {
-
-        return null;
-
-    }
-
-
-    return (
-
-        values.reduce(
-            (sum, value) =>
-                sum + value,
-            0
-        )
-
-        /
-
-        values.length
-
-    );
-
-}
-
-
-/* =====================================================
-   CLASSIFY P, PET, AET
-===================================================== */
-
-function classifyValues(
-    P,
-    PET,
-    AET
-) {
-
-    /*
-       Sort descending.
-
-       A fixed tie-break order is used only if
-       values are numerically equal within a very
-       small tolerance. This guarantees one of the
-       six requested classes.
-    */
-
-    const tolerance =
-        0.000001;
-
-
-    const values = [
-
-        {
-            key: 'P',
-            value: P,
-            priority: 1
-        },
-
-        {
-            key: 'PET',
-            value: PET,
-            priority: 2
-        },
-
-        {
-            key: 'AET',
-            value: AET,
-            priority: 3
-        }
-
-    ];
-
-
-    values.sort(
-
-        (a, b) => {
-
-            const difference =
-                b.value -
-                a.value;
-
-
-            if (
-                Math.abs(
-                    difference
-                ) > tolerance
-            ) {
-
-                return difference;
-
-            }
-
-
-            return (
-                a.priority -
-                b.priority
-            );
-
-        }
-
-    );
-
-
-    const order =
-        values
-            .map(
-                item =>
-                    item.key
-            )
-            .join('>');
-
-
-    const definition =
-        CLASS_DEFINITIONS.find(
-
-            item =>
-                item.order === order
-
+        const classification = classifyClimate(
+            stats.P,
+            stats.PET,
+            stats.AET
         );
 
+        layer.setStyle({
+            fillColor: classification.color,
+            fillOpacity: 0.78,
+            color: '#333',
+            weight: 1
+        });
 
-    return (
-        definition ||
-        CLASS_DEFINITIONS[0]
-    );
-
-}
-
-
-/* =====================================================
-   POPULATE RANGE SELECTOR
-===================================================== */
-
-function populateRangeSelector() {
-
-    const rangeSelect =
-        document.getElementById(
-            'rangeSelect'
+        layer.bindTooltip(
+            `${layer.feature.properties.country_name}<br>` +
+            `<b>${classification.name}</b><br>` +
+            `${classification.order}<br>` +
+            `P: ${stats.P.toFixed(1)} mm/year<br>` +
+            `PET: ${stats.PET.toFixed(1)} mm/year<br>` +
+            `AET: ${stats.AET.toFixed(1)} mm/year<br>` +
+            `Period: ${period.label}`,
+            { sticky: true }
         );
-
-
-    rangeSelect.innerHTML =
-        '';
-
-
-    availableRanges.forEach(
-
-        range => {
-
-            const option =
-                document.createElement(
-                    'option'
-                );
-
-
-            option.value =
-                range.index;
-
-
-            option.textContent =
-                range.label;
-
-
-            rangeSelect.appendChild(
-                option
-            );
-
-        }
-
-    );
-
-
-    if (
-        availableRanges.length > 0
-    ) {
-
-        selectedRangeIndex =
-            0;
-
-
-        rangeSelect.value =
-            '0';
-
-    }
-
+    });
 }
-
 
 /* =====================================================
    LOAD COUNTRY GEOJSON
@@ -1406,719 +612,263 @@ async function loadCountries() {
 
     try {
 
-        console.log(
-            'Loading country GeoJSON...'
-        );
+        console.log('Loading country GeoJSON...');
 
+        const response = await fetch('data/countries.geojson');
 
-        const response =
-            await fetch(
-                'data/countries.geojson'
-            );
-
-
-        if (
-            !response.ok
-        ) {
-
-            throw new Error(
-                `GeoJSON HTTP error: ${response.status}`
-            );
-
+        if (!response.ok) {
+            throw new Error(`GeoJSON HTTP error: ${response.status}`);
         }
 
+        const geojson = await response.json();
 
-        const geojson =
-            await response.json();
+        countryLayer = L.geoJSON(
+            geojson,
+            {
+                style: {
+                    weight: 1,
+                    color: '#333',
+                    fillColor: NO_DATA_COLOR,
+                    fillOpacity: 0.75
+                },
 
+                onEachFeature: function(feature, layer) {
 
-        console.log(
-            'GeoJSON loaded successfully'
-        );
+                    const countryId =
+                        feature.properties.country_id;
 
+                    const countryName =
+                        feature.properties.country_name;
 
-        countryLayer =
-            L.geoJSON(
+                    layer.on('click', function() {
 
-                geojson,
+                        selectedCountryId = countryId;
 
-                {
+                        console.log(
+                            'Country clicked:',
+                            countryId,
+                            countryName
+                        );
 
-                    style: {
-
-                        weight:
-                            1,
-
-                        color:
-                            '#333333',
-
-                        fillColor:
-                            '#cccccc',
-
-                        fillOpacity:
-                            0.80
-
-                    },
-
-
-                    onEachFeature:
-
-                        function(
-                            feature,
-                            layer
-                        ) {
-
-                            const countryId =
-                                feature
-                                    .properties
-                                    .country_id;
-
-
-                            const countryName =
-                                feature
-                                    .properties
-                                    .country_name;
-
-
-                            layer.on(
-
-                                'click',
-
-                                function() {
-
-                                    console.log(
-
-                                        'Country clicked:',
-
-                                        countryId,
-
-                                        countryName
-
-                                    );
-
-
-                                    showCountry(
-
-                                        countryId,
-
-                                        countryName
-
-                                    );
-
-                                }
-
-                            );
-
-                        }
-
+                        showCountry(countryId, countryName);
+                    });
                 }
-
-            ).addTo(map);
-
-
-        /* ---------------------------------------------
-           Add static classification legend
-        --------------------------------------------- */
-
-        createLegend();
-
-
-        /* ---------------------------------------------
-           Apply initial colors
-        --------------------------------------------- */
-
-        updateMap();
-
-    }
-
-    catch (error) {
-
-        console.error(
-            'GEOJSON ERROR:',
-            error
-        );
-
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
-            'Error loading country map data.';
-
-    }
-
-}
-
-
-/* =====================================================
-   UPDATE MAP COLORS
-===================================================== */
-
-function updateMap() {
-
-    if (
-        !countryLayer
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        selectedRangeIndex === null
-    ) {
-
-        return;
-
-    }
-
-
-    const range =
-        availableRanges[
-            selectedRangeIndex
-        ];
-
-
-    if (
-        !range
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-       Update map range label.
-    */
-
-    const mapRangeLabel =
-        document.getElementById(
-            'mapRangeLabel'
-        );
-
-
-    if (
-        mapRangeLabel
-    ) {
-
-        mapRangeLabel.innerHTML =
-            `10-year mean: ${range.label}`;
-
-    }
-
-
-    countryLayer.eachLayer(
-
-        function(layer) {
-
-            const countryId =
-                String(
-                    layer
-                        .feature
-                        .properties
-                        .country_id
-                );
-
-
-            const record =
-                classificationData.get(
-
-                    `${countryId}|${selectedRangeIndex}`
-
-                );
-
-
-            if (
-                !record
-            ) {
-
-                layer.setStyle({
-
-                    fillColor:
-                        '#cccccc',
-
-                    fillOpacity:
-                        0.70,
-
-                    color:
-                        '#777',
-
-                    weight:
-                        1
-
-                });
-
-
-                layer.unbindTooltip();
-
-
-                return;
-
             }
+        ).addTo(map);
 
+        updateClassificationMap();
 
-            layer.setStyle({
+    } catch (error) {
 
-                fillColor:
-                    record.color,
+        console.error('GEOJSON ERROR:', error);
 
-                fillOpacity:
-                    0.80,
-
-                color:
-                    '#333',
-
-                weight:
-                    1
-
-            });
-
-
-            layer.bindTooltip(
-
-                `<b>${record.countryName}</b><br>` +
-
-                `Period: ${range.label}<br>` +
-
-                `Class: ${record.className}<br>` +
-
-                `Order: ${record.order}<br>` +
-
-                `Mean P: ${record.meanP.toFixed(1)} mm/year<br>` +
-
-                `Mean PET: ${record.meanPET.toFixed(1)} mm/year<br>` +
-
-                `Mean AET: ${record.meanAET.toFixed(1)} mm/year`,
-
-                {
-                    sticky:
-                        true
-                }
-
-            );
-
-        }
-
-    );
-
+        document.getElementById('message').innerHTML =
+            'Error loading country map data.';
+    }
 }
 
-
 /* =====================================================
-   CREATE STATIC LEGEND
+   MAP LEGEND
 ===================================================== */
 
 function createLegend() {
 
-    legendControl =
-        L.control({
-            position:
-                'bottomright'
-        });
+    const legend = L.control({ position: 'bottomright' });
 
+    legend.onAdd = function() {
 
-    legendControl.onAdd =
-        function() {
+        const div = L.DomUtil.create('div', 'legend');
 
-            const div =
-                L.DomUtil.create(
-                    'div',
-                    'legend'
-                );
+        let html = '<div class="legend-title">10-year P / PET / AET classification</div>';
 
+        for (let i = 1; i <= 6; i++) {
 
-            let html =
-                '<div class="legend-title">' +
-                '10-year P / PET / AET classification' +
-                '</div>';
-
-
-            CLASS_DEFINITIONS.forEach(
-
-                item => {
-
-                    html +=
-
-                        `<div class="legend-row">
-
-                            <span
-                                class="legend-color"
-                                style="background:${item.color}"
-                            ></span>
-
-                            <span>
-                                ${item.name}<br>
-                                <small>${item.order}</small>
-                            </span>
-
-                        </div>`;
-
-                }
-
-            );
-
+            const info = CLASS_INFO[i];
 
             html +=
+                `<div class="legend-row">` +
+                `<span class="legend-color" style="background:${info.color}"></span>` +
+                `<span><b>Class ${i}</b>: ${info.order}<br>${info.name}</span>` +
+                `</div>`;
+        }
 
-                `<div class="legend-row">
+        html +=
+            `<div class="legend-row">` +
+            `<span class="legend-color" style="background:${TIE_COLOR}"></span>` +
+            `<span>Tie / indistinguishable</span>` +
+            `</div>`;
 
-                    <span
-                        class="legend-color"
-                        style="background:#cccccc"
-                    ></span>
+        html +=
+            `<div class="legend-row">` +
+            `<span class="legend-color" style="background:${NO_DATA_COLOR}"></span>` +
+            `<span>No data</span>` +
+            `</div>`;
 
-                    <span>
-                        No complete 10-year data
-                    </span>
+        div.innerHTML = html;
 
-                </div>`;
+        return div;
+    };
 
-
-            div.innerHTML =
-                html;
-
-
-            return div;
-
-        };
-
-
-    legendControl.addTo(
-        map
-    );
-
+    legend.addTo(map);
 }
 
-
 /* =====================================================
-   SHOW COUNTRY DATA
+   SHOW COUNTRY CHART
 ===================================================== */
 
-function showCountry(
+function getCountryName(countryId) {
 
-    countryId,
+    const row = countryData.find(
+        r => String(r.country_id) === String(countryId)
+    );
 
-    countryName
+    return row ? row.country_name : 'Selected country';
+}
 
-) {
+function showCountry(countryId, countryName) {
 
-    document.getElementById(
-        'countryName'
-    ).innerHTML =
-        countryName;
+    document.getElementById('countryName').innerHTML = countryName;
 
+    const rows = countryData
+        .filter(
+            row => String(row.country_id) === String(countryId)
+        )
+        .sort(
+            (a, b) => Number(a.year) - Number(b.year)
+        );
 
-    const rows =
+    if (!rows.length) {
 
-        countryData
-
-            .filter(
-
-                row =>
-
-                    String(
-                        row.country_id
-                    ) ===
-                    String(
-                        countryId
-                    )
-
-            )
-
-            .sort(
-
-                (a, b) =>
-
-                    Number(
-                        a.year
-                    )
-
-                    -
-
-                    Number(
-                        b.year
-                    )
-
-            );
-
-
-    if (
-        !rows.length
-    ) {
-
-        document.getElementById(
-            'message'
-        ).innerHTML =
+        document.getElementById('message').innerHTML =
             'No time-series data found for this country.';
 
         return;
-
     }
 
+    const years = rows.map(row => Number(row.year));
+    const P = rows.map(row => Number(row.P));
+    const PET = rows.map(row => Number(row.PET));
+    const AET = rows.map(row => Number(row.AET));
 
-    document.getElementById(
-        'message'
-    ).innerHTML =
+    const period = periods[selectedPeriodIndex];
+    const stats = period
+        ? getCountryPeriodStats(countryId, period.start, period.end)
+        : null;
 
-        `${rows.length} annual observations | ` +
-        `Classification: ${getCountryClassificationText(countryId)}`;
+    if (stats) {
 
-
-    const years =
-
-        rows.map(
-
-            row =>
-                Number(
-                    row.year
-                )
-
+        const classification = classifyClimate(
+            stats.P,
+            stats.PET,
+            stats.AET
         );
 
+        document.getElementById('message').innerHTML =
+            `${rows.length} annual observations | ` +
+            `${period.label}: ${classification.name} ` +
+            `(${classification.order})`;
 
-    const P =
+    } else {
 
-        rows.map(
+        document.getElementById('message').innerHTML =
+            `${rows.length} annual observations`;
+    }
 
-            row =>
-                Number(
-                    row.P
-                )
-
-        );
-
-
-    const PET =
-
-        rows.map(
-
-            row =>
-                Number(
-                    row.PET
-                )
-
-        );
-
-
-    const AET =
-
-        rows.map(
-
-            row =>
-                Number(
-                    row.AET
-                )
-
-        );
-
-
-    if (
-        chart
-    ) {
-
+    if (chart) {
         chart.destroy();
-
     }
 
+    chart = new Chart(
+        document.getElementById('climateChart'),
+        {
+            type: 'line',
 
-    chart =
+            data: {
+                labels: years,
 
-        new Chart(
+                datasets: [
+                    {
+                        label: 'P',
+                        data: P,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.15
+                    },
+                    {
+                        label: 'PET',
+                        data: PET,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.15
+                    },
+                    {
+                        label: 'AET',
+                        data: AET,
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.15
+                    }
+                ]
+            },
 
-            document.getElementById(
-                'climateChart'
-            ),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
 
-            {
-
-                type:
-                    'line',
-
-
-                data: {
-
-                    labels:
-                        years,
-
-
-                    datasets: [
-
-                        {
-
-                            label:
-                                'P',
-
-                            data:
-                                P,
-
-                            borderWidth:
-                                2,
-
-                            pointRadius:
-                                0,
-
-                            tension:
-                                0.15
-
-                        },
-
-
-                        {
-
-                            label:
-                                'PET',
-
-                            data:
-                                PET,
-
-                            borderWidth:
-                                2,
-
-                            pointRadius:
-                                0,
-
-                            tension:
-                                0.15
-
-                        },
-
-
-                        {
-
-                            label:
-                                'AET',
-
-                            data:
-                                AET,
-
-                            borderWidth:
-                                2,
-
-                            pointRadius:
-                                0,
-
-                            tension:
-                                0.15
-
-                        }
-
-                    ]
-
+                interaction: {
+                    mode: 'index',
+                    intersect: false
                 },
 
-
-                options: {
-
-                    responsive:
-                        true,
-
-                    maintainAspectRatio:
-                        false,
-
-
-                    interaction: {
-
-                        mode:
-                            'index',
-
-                        intersect:
-                            false
-
-                    },
-
-
-                    plugins: {
-
+                scales: {
+                    x: {
                         title: {
-
-                            display:
-                                true,
-
-                            text:
-                                'Annual P, PET and AET'
-
+                            display: true,
+                            text: 'Year'
                         }
-
                     },
-
-
-                    scales: {
-
-                        x: {
-
-                            title: {
-
-                                display:
-                                    true,
-
-                                text:
-                                    'Year'
-
-                            }
-
-                        },
-
-
-                        y: {
-
-                            title: {
-
-                                display:
-                                    true,
-
-                                text:
-                                    'mm/year'
-
-                            }
-
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'mm/year'
                         }
-
                     }
-
                 }
-
             }
-
-        );
-
+        }
+    );
 }
-
 
 /* =====================================================
-   COUNTRY CLASSIFICATION TEXT
+   PERIOD CONTROL
 ===================================================== */
 
-function getCountryClassificationText(
-    countryId
-) {
+document
+    .getElementById('periodSelect')
+    .addEventListener('change', function() {
 
-    const key =
+        selectedPeriodIndex = Number(this.value);
 
-        `${String(countryId)}|${selectedRangeIndex}`;
+        updatePeriodLabel();
+        updateClassificationMap();
 
+        if (selectedCountryId !== null) {
+            showCountry(
+                selectedCountryId,
+                getCountryName(selectedCountryId)
+            );
+        }
+    });
 
-    const record =
-        classificationData.get(
-            key
-        );
+function updatePeriodLabel() {
 
+    const period = periods[selectedPeriodIndex];
 
-    if (
-        !record
-    ) {
-
-        return 'No complete 10-year classification available';
-
-    }
-
-
-    return (
-        `${record.className} (${record.order})`
-    );
-
+    document.getElementById('periodLabel').textContent =
+        period
+            ? `Period: ${period.label}`
+            : 'Period: —';
 }
-
 
 /* =====================================================
    PLAY ANIMATION
@@ -2126,281 +876,66 @@ function getCountryClassificationText(
 
 function playAnimation() {
 
-    if (
-        availableRanges.length < 2
-    ) {
-
-        return;
-
-    }
-
-
     stopAnimation();
 
+    if (!periods.length) {
+        return;
+    }
 
-    animationSpeed =
-        Number(
-            document.getElementById(
-                'speedSelect'
-            ).value
-        );
+    animationSpeed = Number(
+        document.getElementById('speedSelect').value
+    );
 
+    animationTimer = setInterval(function() {
 
-    animationTimer =
+        selectedPeriodIndex++;
 
-        setInterval(
+        if (selectedPeriodIndex >= periods.length) {
+            selectedPeriodIndex = 0;
+        }
 
-            function() {
+        document.getElementById('periodSelect').value =
+            selectedPeriodIndex;
 
-                let index =
-                    selectedRangeIndex;
+        updatePeriodLabel();
+        updateClassificationMap();
 
+        if (selectedCountryId !== null) {
+            showCountry(
+                selectedCountryId,
+                getCountryName(selectedCountryId)
+            );
+        }
 
-                index++;
-
-
-                if (
-                    index >=
-                    availableRanges.length
-                ) {
-
-                    index = 0;
-
-                }
-
-
-                selectedRangeIndex =
-                    index;
-
-
-                document.getElementById(
-                    'rangeSelect'
-                ).value =
-                    String(
-                        index
-                    );
-
-
-                updateMap();
-
-
-                updateSelectedCountryMessage();
-
-            },
-
-            animationSpeed
-
-        );
-
+    }, animationSpeed);
 }
-
-
-/* =====================================================
-   STOP ANIMATION
-===================================================== */
 
 function stopAnimation() {
 
-    if (
-        animationTimer
-    ) {
-
-        clearInterval(
-            animationTimer
-        );
-
-
-        animationTimer =
-            null;
-
+    if (animationTimer) {
+        clearInterval(animationTimer);
+        animationTimer = null;
     }
-
 }
 
-
-/* =====================================================
-   UPDATE CURRENT COUNTRY MESSAGE DURING ANIMATION
-===================================================== */
-
-function updateSelectedCountryMessage() {
-
-    const countryName =
-        document.getElementById(
-            'countryName'
-        ).innerHTML;
-
-
-    if (
-        !countryName ||
-        countryName ===
-            'Select a country'
-    ) {
-
-        return;
-
-    }
-
-
-    const feature =
-        countryLayer
-            ?.getLayers()
-            .find(
-
-                layer =>
-
-                    layer
-                        .feature
-                        ?.properties
-                        ?.country_name ===
-                    countryName
-
-            );
-
-
-    if (
-        !feature
-    ) {
-
-        return;
-
-    }
-
-
-    const countryId =
-        feature
-            .feature
-            .properties
-            .country_id;
-
-
-    document.getElementById(
-        'message'
-    ).innerHTML =
-
-        `Classification: ` +
-        getCountryClassificationText(
-            countryId
-        );
-
-}
-
-
-/* =====================================================
-   RANGE SELECTOR
-===================================================== */
+document
+    .getElementById('playButton')
+    .addEventListener('click', playAnimation);
 
 document
-    .getElementById(
-        'rangeSelect'
-    )
-    .addEventListener(
-
-        'change',
-
-        function() {
-
-            stopAnimation();
-
-
-            selectedRangeIndex =
-                Number(
-                    this.value
-                );
-
-
-            updateMap();
-
-
-            updateSelectedCountryMessage();
-
-        }
-
-    );
-
+    .getElementById('stopButton')
+    .addEventListener('click', stopAnimation);
 
 /* =====================================================
-   PLAY BUTTON
+   START
 ===================================================== */
 
-document
-    .getElementById(
-        'playButton'
-    )
-    .addEventListener(
+console.log('CDEAR six-class dashboard starting...');
 
-        'click',
-
-        playAnimation
-
-    );
-
-
-/* =====================================================
-   PAUSE BUTTON
-===================================================== */
-
-document
-    .getElementById(
-        'stopButton'
-    )
-    .addEventListener(
-
-        'click',
-
-        stopAnimation
-
-    );
-
-
-/* =====================================================
-   SPEED
-===================================================== */
-
-document
-    .getElementById(
-        'speedSelect'
-    )
-    .addEventListener(
-
-        'change',
-
-        function() {
-
-            animationSpeed =
-                Number(
-                    this.value
-                );
-
-
-            if (
-                animationTimer
-            ) {
-
-                playAnimation();
-
-            }
-
-        }
-
-    );
-
-
-/* =====================================================
-   START APPLICATION
-===================================================== */
-
-console.log(
-    'CDEAR classification dashboard starting...'
-);
-
-
+createLegend();
 loadData();
-
 loadCountries();
 
 </script>
-
-
 </body>
-
 </html>
