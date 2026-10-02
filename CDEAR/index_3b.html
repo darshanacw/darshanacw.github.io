@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+   content="width=device-width, initial-scale=1.0">
+
+<title>CDEAR - Country Climate Time Series</title>
+
+<!-- =====================================================
+     LEAFLET
+===================================================== -->
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<!-- =====================================================
+     CHART.JS
+===================================================== -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js">
+</script>
+
+<!-- =====================================================
+     PAGE STYLE
+===================================================== -->
+
+<style>
+
+html,
+body {
+
+    height: 100%;
+
+    margin: 0;
+
+    font-family: Arial, sans-serif;
+
+}
+
+
+#container {
+
+    display: flex;
+
+    height: 100vh;
+
+}
+
+
+#map {
+
+    width: 50%;
+
+    height: 100%;
+
+}
+
+
+#panel {
+
+    width: 50%;
+
+    padding: 25px;
+
+    box-sizing: border-box;
+
+    overflow: auto;
+
+}
+
+
+#title {
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+}
+
+
+#countryName {
+
+    font-size: 20px;
+
+    margin: 10px 0 15px;
+
+}
+
+
+#message {
+
+    color: #666;
+
+    margin-bottom: 20px;
+
+}
+
+
+.chart-container {
+
+    height: 420px;
+
+}
+
+
+.info-box {
+
+    margin-top: 20px;
+
+    padding: 12px;
+
+    background: #f5f5f5;
+
+    border-radius: 5px;
+
+}
+
+
+.controls {
+
+    margin-bottom: 20px;
+
+    padding: 12px;
+
+    background: #f5f5f5;
+
+    border-radius: 5px;
+
+}
+
+
+.controls label {
+
+    margin-right: 5px;
+
+}
+
+
+.controls select {
+
+    margin-right: 20px;
+
+    padding: 5px;
+
+}
+
+
+.legend {
+
+    background: white;
+
+    padding: 10px;
+
+    line-height: 18px;
+
+    border-radius: 5px;
+
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+
+}
+
+
+.legend-title {
+
+    font-weight: bold;
+
+    margin-bottom: 5px;
+
+}
+
+
+.legend-item {
+
+    display: flex;
+
+    align-items: center;
+
+}
+
+
+.legend-color {
+
+    width: 20px;
+
+    height: 15px;
+
+    margin-right: 5px;
+
+    border: 1px solid #999;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- =====================================================
+     MAIN CONTAINER
+===================================================== -->
+
+<div id="container">
+
+```
+<!-- MAP -->
+
+<div id="map"></div>
+
+
+<!-- RIGHT PANEL -->
+
+<div id="panel">
+
+
+    <div id="title">
+        CDEAR Climate Data
+    </div>
+
+
+    <div id="countryName">
+        Select a country
+    </div>
+
+
+    <div id="message">
+        Loading climate data...
+    </div>
+
+
+    <!-- =================================================
+         YEAR + PARAMETER
+    ================================================= -->
+
+    <div class="controls">
+
+        <label>
+            <b>Year:</b>
+        </label>
+
+        <select id="yearSelect">
+
+            <option value="">
+                Select year
+            </option>
+
+        </select>
+
+
+        <label>
+            <b>Parameter:</b>
+        </label>
+
+        <select id="parameterSelect">
+
+            <option value="P">
+                P
+            </option>
+
+            <option value="PET">
+                PET
+            </option>
+
+            <option value="AET">
+                AET
+            </option>
+
+            <option value="GET">
+                GET
+            </option>
+
+            <option value="BET">
+                BET
+            </option>
+
+            <option value="BET_RATIO">
+                BET / First 10-year Average BET
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- =================================================
+         ANIMATION
+    ================================================= -->
+
+    <div class="controls">
+
+        <button id="playButton">
+            ▶ Play
+        </button>
+
+        <button id="stopButton">
+            ⏸ Pause
+        </button>
+
+        <label>
+            Speed:
+        </label>
+
+        <select id="speedSelect">
+
+            <option value="1000">
+                Slow
+            </option>
+
+            <option value="500" selected>
+                Normal
+            </option>
+
+            <option value="200">
+                Fast
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <!-- =================================================
+         CHART
+    ================================================= -->
+
+    <div class="chart-container">
+
+        <canvas id="climateChart"></canvas>
+
+    </div>
+
+
+    <!-- =================================================
+         INFORMATION
+    ================================================= -->
+
+    <div class="info-box">
+
+        <b>Variables</b>
+
+        <br><br>
+
+        P = Precipitation (mm/year)
+
+        <br>
+
+        PET = Potential Evapotranspiration (mm/year)
+
+        <br>
+
+        AET = Actual Evapotranspiration (mm/year)
+
+        <br>
+
+        GET = Green Evapotranspiration (mm/year)
+
+        <br>
+
+        BET = Blue Evapotranspiration (mm/year)
+
+        <br><br>
+
+        <b>BET Ratio</b>
+
+        <br>
+
+        BET / first 10-year average BET
+
+        <br>
+
+        1.0 = equal to baseline
+
+        <br>
+
+        &gt;1.0 = higher than baseline
+
+        <br>
+
+        &lt;1.0 = lower than baseline
+
+    </div>
+
+
+</div>
+```
+
+</div>
+
+<!-- =====================================================
+     MAIN JAVASCRIPT
+===================================================== -->
+
+<script type="module">
+
+
+/* =====================================================
+   HYPARQUET
+===================================================== */
+
+import {
+
+    parquetReadObjects
+
+}
+
+from
+
+"https://cdn.jsdelivr.net/npm/hyparquet@1.30.1/+esm";
+
+
+/* =====================================================
+   GLOBAL VARIABLES
+===================================================== */
+
+let map = L
+
+    .map('map')
+
+    .setView(
+        [0, 20],
+        3
+    );
+
+
+let chart = null;
+
+
+let countryData = [];
+
+
+let countryLayer = null;
+
+
+let selectedYear = null;
+
+
+let selectedParameter = 'P';
+
+
+let animationTimer = null;
+
+
+let availableYears = [];
+
+
+let animationSpeed = 500;
+
+
+/* =====================================================
+   BASE MAP
+===================================================== */
+
+L.tileLayer(
+
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+    {
+
+        attribution:
+            '&copy; OpenStreetMap contributors'
+
+    }
+
+).addTo(map);
+
+
+/* =====================================================
+   LOAD PARQUET DATA
+===================================================== */
+
+async function loadData() {
+
+    try {
+
+        console.log(
+            'Starting Parquet loading...'
+        );
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Loading country climate data...';
+
+
+        const parquetURL =
+            'data/country_timeseries_ADM0.parquet';
+
+
+        /* ---------------------------------------------
+           Fetch Parquet
+        --------------------------------------------- */
+
+        console.log(
+            'Fetching Parquet:',
+            parquetURL
+        );
+
+
+        const response =
+            await fetch(
+
+                parquetURL,
+
+                {
+                    cache: 'no-store'
+                }
+
+            );
+
+
+        console.log(
+            'HTTP status:',
+            response.status
+        );
+
+
+        console.log(
+            'Content-Type:',
+            response.headers.get(
+                'content-type'
+            )
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Parquet HTTP error: ${response.status}`
+            );
+
+        }
+
+
+        /* ---------------------------------------------
+           Read buffer
+        --------------------------------------------- */
+
+        const buffer =
+            await response.arrayBuffer();
+
+
+        console.log(
+            'Downloaded bytes:',
+            buffer.byteLength
+        );
+
+
+        /* ---------------------------------------------
+           Validate Parquet
+        --------------------------------------------- */
+
+        const bytes =
+            new Uint8Array(buffer);
+
+
+        function bytesToText(array) {
+
+            return String.fromCharCode(
+                ...array
+            );
+
+        }
+
+
+        const first4 =
+            bytesToText(
+                bytes.slice(0, 4)
+            );
+
+
+        const last4 =
+            bytesToText(
+
+                bytes.slice(
+
+                    Math.max(
+                        0,
+                        bytes.length - 4
+                    )
+
+                )
+
+            );
+
+
+        console.log(
+            'First 4 bytes:',
+            first4
+        );
+
+
+        console.log(
+            'Last 4 bytes:',
+            last4
+        );
+
+
+        if (first4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet header: ${first4}`
+            );
+
+        }
+
+
+        if (last4 !== 'PAR1') {
+
+            throw new Error(
+                `Invalid Parquet footer: ${last4}`
+            );
+
+        }
+
+
+        console.log(
+            'Valid Parquet file detected.'
+        );
+
+
+        /* ---------------------------------------------
+           Create file object
+        --------------------------------------------- */
+
+        const file = {
+
+            byteLength:
+                buffer.byteLength,
+
+            slice:
+                (start, end) =>
+                    buffer.slice(start, end)
+
+        };
+
+
+        /* ---------------------------------------------
+           Read Parquet
+        --------------------------------------------- */
+
+        countryData =
+            await parquetReadObjects({
+
+                file: file,
+
+                columns: [
+
+                    'country_id',
+
+                    'country_name',
+
+                    'year',
+
+                    'P',
+
+                    'PET',
+
+                    'AET',
+
+                    'GET',
+
+                    'BET'
+
+                ]
+
+            });
+
+
+        console.log(
+            'Loaded rows:',
+            countryData.length
+        );
+
+
+        if (!countryData.length) {
+
+            throw new Error(
+                'Parquet contains no rows.'
+            );
+
+        }
+
+
+        console.log(
+            'First row:',
+            countryData[0]
+        );
+
+
+        /* ---------------------------------------------
+           Calculate BET baseline
+        --------------------------------------------- */
+
+        calculateBETBaseline();
+
+
+        /* ---------------------------------------------
+           Populate year selector
+        --------------------------------------------- */
+
+        populateYearSelector();
+
+
+        /* ---------------------------------------------
+           Update map
+        --------------------------------------------- */
+
+        updateCountryColors();
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Click a country on the map to display annual P, PET, AET, GET and BET.';
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            'PARQUET ERROR:',
+            error
+        );
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Error loading country time-series data. Check the browser console.';
+
+    }
+
+}
+
+
+/* =====================================================
+   CALCULATE BET BASELINE
+===================================================== */
+
+function calculateBETBaseline() {
+
+    console.log(
+        'Calculating first 10-year average BET...'
+    );
+
+
+    /* ---------------------------------------------
+       Get first 10 years
+    --------------------------------------------- */
+
+    const firstTenYears = [
+
+        ...new Set(
+
+            countryData
+
+                .map(
+                    row =>
+                        Number(row.year)
+                )
+
+        )
+
+    ]
+
+    .sort(
+        (a, b) =>
+            a - b
+    )
+
+    .slice(
+        0,
+        10
+    );
+
+
+    console.log(
+        'BET baseline years:',
+        firstTenYears
+    );
+
+
+    /* ---------------------------------------------
+       Group by country
+    --------------------------------------------- */
+
+    const countryGroups = {};
+
+
+    countryData.forEach(
+
+        row => {
+
+            const countryId =
+                String(
+                    row.country_id
+                );
+
+
+            const year =
+                Number(
+                    row.year
+                );
+
+
+            const bet =
+                Number(
+                    row.BET
+                );
+
+
+            if (
+                !firstTenYears.includes(year)
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !Number.isFinite(bet)
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !countryGroups[countryId]
+            ) {
+
+                countryGroups[countryId] = [];
+
+            }
+
+
+            countryGroups[countryId].push(
+                bet
+            );
+
+        }
+
+    );
+
+
+    /* ---------------------------------------------
+       Calculate mean
+    --------------------------------------------- */
+
+    const betBaselines = {};
+
+
+    Object.keys(
+        countryGroups
+    ).forEach(
+
+        countryId => {
+
+            const values =
+                countryGroups[countryId];
+
+
+            const mean =
+
+                values.reduce(
+
+                    (sum, value) =>
+                        sum + value,
+
+                    0
+
+                )
+
+                /
+
+                values.length;
+
+
+            betBaselines[countryId] =
+                mean;
+
+        }
+
+    );
+
+
+    /* ---------------------------------------------
+       Add BET_RATIO to every row
+    --------------------------------------------- */
+
+    countryData.forEach(
+
+        row => {
+
+            const countryId =
+                String(
+                    row.country_id
+                );
+
+
+            const bet =
+                Number(
+                    row.BET
+                );
+
+
+            const baseline =
+                betBaselines[countryId];
+
+
+            if (
+
+                Number.isFinite(bet)
+
+                &&
+
+                Number.isFinite(baseline)
+
+                &&
+
+                baseline !== 0
+
+            ) {
+
+                row.BET_RATIO =
+                    bet / baseline;
+
+            }
+
+            else {
+
+                row.BET_RATIO =
+                    null;
+
+            }
+
+        }
+
+    );
+
+
+    console.log(
+        'BET baselines:',
+        betBaselines
+    );
+
+}
+
+
+/* =====================================================
+   POPULATE YEAR SELECTOR
+===================================================== */
+
+function populateYearSelector() {
+
+    availableYears = [
+
+        ...new Set(
+
+            countryData.map(
+
+                row =>
+                    Number(row.year)
+
+            )
+
+        )
+
+    ].sort(
+
+        (a, b) =>
+            a - b
+
+    );
+
+
+    const yearSelect =
+        document.getElementById(
+            'yearSelect'
+        );
+
+
+    yearSelect.innerHTML =
+        '<option value="">Select year</option>';
+
+
+    availableYears.forEach(
+
+        year => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+
+            option.value =
+                year;
+
+
+            option.textContent =
+                year;
+
+
+            yearSelect.appendChild(
+                option
+            );
+
+        }
+
+    );
+
+
+    /* ---------------------------------------------
+       Select first year
+    --------------------------------------------- */
+
+    if (
+        availableYears.length > 0
+    ) {
+
+        selectedYear =
+            availableYears[0];
+
+
+        yearSelect.value =
+            availableYears[0];
+
+    }
+
+}
+
+
+/* =====================================================
+   LOAD COUNTRY GEOJSON
+===================================================== */
+
+async function loadCountries() {
+
+    try {
+
+        console.log(
+            'Loading country GeoJSON...'
+        );
+
+
+        const response =
+            await fetch(
+                'data/countries.geojson'
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `GeoJSON HTTP error: ${response.status}`
+            );
+
+        }
+
+
+        const geojson =
+            await response.json();
+
+
+        console.log(
+            'GeoJSON loaded successfully'
+        );
+
+
+        /* ---------------------------------------------
+           Create country layer
+        --------------------------------------------- */
+
+        countryLayer =
+            L.geoJSON(
+
+                geojson,
+
+                {
+
+                    style: {
+
+                        weight: 1,
+
+                        color: '#333',
+
+                        fillColor: '#cccccc',
+
+                        fillOpacity: 0.75
+
+                    },
+
+
+                    onEachFeature:
+
+                        function(
+                            feature,
+                            layer
+                        ) {
+
+
+                            const countryId =
+                                feature.properties.country_id;
+
+
+                            const countryName =
+                                feature.properties.country_name;
+
+
+                            layer.on(
+
+                                'click',
+
+                                function() {
+
+                                    console.log(
+                                        'Country clicked:',
+                                        countryId,
+                                        countryName
+                                    );
+
+
+                                    showCountry(
+
+                                        countryId,
+
+                                        countryName
+
+                                    );
+
+                                }
+
+                            );
+
+                        }
+
+                }
+
+            ).addTo(map);
+
+
+        /* ---------------------------------------------
+           Apply colours
+        --------------------------------------------- */
+
+        updateCountryColors();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            'GEOJSON ERROR:',
+            error
+        );
+
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'Error loading country map data.';
+
+    }
+
+}
+
+
+/* =====================================================
+   GET COLOR
+===================================================== */
+
+function getColor(
+
+    value,
+
+    parameter
+
+) {
+
+    if (
+
+        value === null
+
+        ||
+
+        value === undefined
+
+        ||
+
+        !Number.isFinite(
+            Number(value)
+        )
+
+    ) {
+
+        return '#cccccc';
+
+    }
+
+
+    value =
+        Number(value);
+
+
+    /* =================================================
+       BET RATIO
+    ================================================= */
+
+    if (
+        parameter === 'BET_RATIO'
+    ) {
+
+        /*
+           Ratio classes:
+
+           < 0.50
+           0.50 - 0.75
+           0.75 - 0.90
+           0.90 - 1.10
+           1.10 - 1.25
+           1.25 - 1.50
+           > 1.50
+        */
+
+
+        if (
+            value < 0.50
+        )
+            return '#d73027';
+
+
+        if (
+            value < 0.75
+        )
+            return '#fc8d59';
+
+
+        if (
+            value < 0.90
+        )
+            return '#fee090';
+
+
+        if (
+            value < 1.10
+        )
+            return '#ffffbf';
+
+
+        if (
+            value < 1.25
+        )
+            return '#e0f3f8';
+
+
+        if (
+            value < 1.50
+        )
+            return '#91bfdb';
+
+
+        return '#4575b4';
+
+    }
+
+
+    /* =================================================
+       STANDARD MM/YEAR VARIABLES
+    ================================================= */
+
+    const breaks = [
+
+        0,
+        250,
+        500,
+        750,
+        1000,
+        1500,
+        2000,
+        3000
+
+    ];
+
+
+    if (
+        value < breaks[1]
+    )
+        return '#ffffcc';
+
+
+    if (
+        value < breaks[2]
+    )
+        return '#ffeda0';
+
+
+    if (
+        value < breaks[3]
+    )
+        return '#fed976';
+
+
+    if (
+        value < breaks[4]
+    )
+        return '#feb24c';
+
+
+    if (
+        value < breaks[5]
+    )
+        return '#fd8d3c';
+
+
+    if (
+        value < breaks[6]
+    )
+        return '#f03b20';
+
+
+    return '#bd0026';
+
+}
+
+
+/* =====================================================
+   LEGEND
+===================================================== */
+
+let legend = null;
+
+
+function updateLegend() {
+
+    if (legend) {
+
+        map.removeControl(
+            legend
+        );
+
+    }
+
+
+    legend =
+        L.control({
+            position: 'bottomright'
+        });
+
+
+    legend.onAdd =
+        function() {
+
+            const div =
+                L.DomUtil.create(
+                    'div',
+                    'legend'
+                );
+
+
+            let html = '';
+
+
+            /* -----------------------------------------
+               BET Ratio legend
+            ----------------------------------------- */
+
+            if (
+                selectedParameter ===
+                'BET_RATIO'
+            ) {
+
+                html +=
+                    '<div class="legend-title">' +
+                    'BET / Baseline BET' +
+                    '</div>';
+
+
+                const classes = [
+
+                    ['< 0.50', '#d73027'],
+
+                    ['0.50 – 0.75', '#fc8d59'],
+
+                    ['0.75 – 0.90', '#fee090'],
+
+                    ['0.90 – 1.10', '#ffffbf'],
+
+                    ['1.10 – 1.25', '#e0f3f8'],
+
+                    ['1.25 – 1.50', '#91bfdb'],
+
+                    ['> 1.50', '#4575b4']
+
+                ];
+
+
+                classes.forEach(
+
+                    item => {
+
+                        html +=
+
+                            '<div class="legend-item">' +
+
+                            '<div class="legend-color" ' +
+
+                            'style="background:' +
+                            item[1] +
+                            '"></div>' +
+
+                            item[0] +
+
+                            '</div>';
+
+                    }
+
+                );
+
+            }
+
+
+            /* -----------------------------------------
+               Standard variables
+            ----------------------------------------- */
+
+            else {
+
+                html +=
+                    '<div class="legend-title">' +
+                    selectedParameter +
+                    ' (mm/year)' +
+                    '</div>';
+
+
+                const classes = [
+
+                    ['< 250', '#ffffcc'],
+
+                    ['250 – 500', '#ffeda0'],
+
+                    ['500 – 750', '#fed976'],
+
+                    ['750 – 1000', '#feb24c'],
+
+                    ['1000 – 1500', '#fd8d3c'],
+
+                    ['1500 – 2000', '#f03b20'],
+
+                    ['> 2000', '#bd0026']
+
+                ];
+
+
+                classes.forEach(
+
+                    item => {
+
+                        html +=
+
+                            '<div class="legend-item">' +
+
+                            '<div class="legend-color" ' +
+
+                            'style="background:' +
+                            item[1] +
+                            '"></div>' +
+
+                            item[0] +
+
+                            '</div>';
+
+                    }
+
+                );
+
+            }
+
+
+            div.innerHTML =
+                html;
+
+
+            return div;
+
+        };
+
+
+    legend.addTo(map);
+
+}
+
+
+/* =====================================================
+   UPDATE COUNTRY COLORS
+===================================================== */
+
+function updateCountryColors() {
+
+    if (
+        !countryLayer
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        selectedYear === null
+    ) {
+
+        return;
+
+    }
+
+
+    countryLayer.eachLayer(
+
+        function(layer) {
+
+
+            const countryId =
+                layer.feature
+                    .properties
+                    .country_id;
+
+
+            /* -----------------------------------------
+               Find country + year
+            ----------------------------------------- */
+
+            const row =
+                countryData.find(
+
+                    r =>
+
+                        String(
+                            r.country_id
+                        ) ===
+                        String(
+                            countryId
+                        )
+
+                        &&
+
+                        Number(
+                            r.year
+                        ) ===
+                        Number(
+                            selectedYear
+                        )
+
+                );
+
+
+            let value =
+                null;
+
+
+            if (row) {
+
+                value =
+                    Number(
+                        row[
+                            selectedParameter
+                        ]
+                    );
+
+            }
+
+
+            /* -----------------------------------------
+               Apply style
+            ----------------------------------------- */
+
+            layer.setStyle({
+
+                fillColor:
+                    getColor(
+
+                        value,
+
+                        selectedParameter
+
+                    ),
+
+                fillOpacity:
+                    0.75,
+
+                color:
+                    '#333',
+
+                weight:
+                    1
+
+            });
+
+
+            /* -----------------------------------------
+               Tooltip
+            ----------------------------------------- */
+
+            if (row) {
+
+                let displayValue =
+                    '';
+
+
+                if (
+                    selectedParameter ===
+                    'BET_RATIO'
+                ) {
+
+                    displayValue =
+
+                        Number.isFinite(
+                            value
+                        )
+
+                        ?
+
+                        value.toFixed(2)
+
+                        :
+
+                        'N/A';
+
+                }
+
+                else {
+
+                    displayValue =
+
+                        Number.isFinite(
+                            value
+                        )
+
+                        ?
+
+                        value.toFixed(1) +
+                        ' mm/year'
+
+                        :
+
+                        'N/A';
+
+                }
+
+
+                layer.bindTooltip(
+
+                    `${row.country_name}<br>` +
+
+                    `${selectedParameter}: ` +
+
+                    `${displayValue}<br>` +
+
+                    `Year: ${selectedYear}`,
+
+                    {
+                        sticky: true
+                    }
+
+                );
+
+            }
+
+        }
+
+    );
+
+
+    updateLegend();
+
+}
+
+
+/* =====================================================
+   PLAY ANIMATION
+===================================================== */
+
+function playAnimation() {
+
+    if (animationTimer) {
+
+        clearInterval(
+            animationTimer
+        );
+
+    }
+
+
+    animationSpeed =
+        Number(
+
+            document.getElementById(
+                'speedSelect'
+            ).value
+
+        );
+
+
+    animationTimer =
+        setInterval(
+
+            function() {
+
+                let index =
+                    availableYears.indexOf(
+                        selectedYear
+                    );
+
+
+                index++;
+
+
+                if (
+                    index >=
+                    availableYears.length
+                ) {
+
+                    index = 0;
+
+                }
+
+
+                selectedYear =
+                    availableYears[index];
+
+
+                document.getElementById(
+                    'yearSelect'
+                ).value =
+                    selectedYear;
+
+
+                updateCountryColors();
+
+            },
+
+            animationSpeed
+
+        );
+
+}
+
+
+/* =====================================================
+   STOP ANIMATION
+===================================================== */
+
+function stopAnimation() {
+
+    if (animationTimer) {
+
+        clearInterval(
+            animationTimer
+        );
+
+        animationTimer = null;
+
+    }
+
+}
+
+
+/* =====================================================
+   SHOW COUNTRY DATA
+===================================================== */
+
+function showCountry(
+
+    countryId,
+
+    countryName
+
+) {
+
+    document.getElementById(
+        'countryName'
+    ).innerHTML =
+        countryName;
+
+
+    /* ---------------------------------------------
+       Filter country
+    --------------------------------------------- */
+
+    const rows =
+
+        countryData
+
+        .filter(
+
+            row =>
+
+                String(
+                    row.country_id
+                ) ===
+                String(
+                    countryId
+                )
+
+        )
+
+        .sort(
+
+            (a, b) =>
+
+                Number(a.year) -
+                Number(b.year)
+
+        );
+
+
+    if (
+        !rows.length
+    ) {
+
+        document.getElementById(
+            'message'
+        ).innerHTML =
+            'No time-series data found for this country.';
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        'message'
+    ).innerHTML =
+
+        `${rows.length} annual observations`;
+
+
+    /* ---------------------------------------------
+       Years
+    --------------------------------------------- */
+
+    const years =
+
+        rows.map(
+
+            row =>
+                Number(row.year)
+
+        );
+
+
+    /* ---------------------------------------------
+       P
+    --------------------------------------------- */
+
+    const P =
+
+        rows.map(
+
+            row =>
+                Number(row.P)
+
+        );
+
+
+    /* ---------------------------------------------
+       PET
+    --------------------------------------------- */
+
+    const PET =
+
+        rows.map(
+
+            row =>
+                Number(row.PET)
+
+        );
+
+
+    /* ---------------------------------------------
+       AET
+    --------------------------------------------- */
+
+    const AET =
+
+        rows.map(
+
+            row =>
+                Number(row.AET)
+
+        );
+
+
+    /* ---------------------------------------------
+       GET
+    --------------------------------------------- */
+
+    const GET =
+
+        rows.map(
+
+            row =>
+                Number(row.GET)
+
+        );
+
+
+    /* ---------------------------------------------
+       BET
+    --------------------------------------------- */
+
+    const BET =
+
+        rows.map(
+
+            row =>
+                Number(row.BET)
+
+        );
+
+
+    /* ---------------------------------------------
+       Destroy previous chart
+    --------------------------------------------- */
+
+    if (chart) {
+
+        chart.destroy();
+
+    }
+
+
+    /* ---------------------------------------------
+       Create chart
+    --------------------------------------------- */
+
+    chart =
+
+        new Chart(
+
+            document.getElementById(
+                'climateChart'
+            ),
+
+            {
+
+                type:
+                    'line',
+
+
+                data: {
+
+                    labels:
+                        years,
+
+
+                    datasets: [
+
+                        {
+
+                            label:
+                                'P',
+
+                            data:
+                                P,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                0,
+
+                            tension:
+                                0.15
+
+                        },
+
+
+                        {
+
+                            label:
+                                'PET',
+
+                            data:
+                                PET,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                0,
+
+                            tension:
+                                0.15
+
+                        },
+
+
+                        {
+
+                            label:
+                                'AET',
+
+                            data:
+                                AET,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                0,
+
+                            tension:
+                                0.15
+
+                        },
+
+
+                        {
+
+                            label:
+                                'GET',
+
+                            data:
+                                GET,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                0,
+
+                            tension:
+                                0.15
+
+                        },
+
+
+                        {
+
+                            label:
+                                'BET',
+
+                            data:
+                                BET,
+
+                            borderWidth:
+                                2,
+
+                            pointRadius:
+                                0,
+
+                            tension:
+                                0.15
+
+                        }
+
+                    ]
+
+                },
+
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+
+                    interaction: {
+
+                        mode:
+                            'index',
+
+                        intersect:
+                            false
+
+                    },
+
+
+                    scales: {
+
+                        x: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    'Year'
+
+                            }
+
+                        },
+
+
+                        y: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    'mm/year'
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =====================================================
+   YEAR CONTROL
+===================================================== */
+
+document
+
+    .getElementById(
+        'yearSelect'
+    )
+
+    .addEventListener(
+
+        'change',
+
+        function() {
+
+            selectedYear =
+                Number(
+                    this.value
+                );
+
+
+            updateCountryColors();
+
+        }
+
+    );
+
+
+/* =====================================================
+   PARAMETER CONTROL
+===================================================== */
+
+document
+
+    .getElementById(
+        'parameterSelect'
+    )
+
+    .addEventListener(
+
+        'change',
+
+        function() {
+
+            selectedParameter =
+                this.value;
+
+
+            updateCountryColors();
+
+        }
+
+    );
+
+
+/* =====================================================
+   PLAY BUTTON
+===================================================== */
+
+document
+
+    .getElementById(
+        'playButton'
+    )
+
+    .addEventListener(
+
+        'click',
+
+        playAnimation
+
+    );
+
+
+/* =====================================================
+   STOP BUTTON
+===================================================== */
+
+document
+
+    .getElementById(
+        'stopButton'
+    )
+
+    .addEventListener(
+
+        'click',
+
+        stopAnimation
+
+    );
+
+
+/* =====================================================
+   START APPLICATION
+===================================================== */
+
+console.log(
+    'CDEAR dashboard starting...'
+);
+
+
+loadData();
+
+
+loadCountries();
+
+</script>
+
+</body>
+
+</html>
