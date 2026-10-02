@@ -361,7 +361,7 @@ async function loadData() {
 
 
         const parquetURL =
-            'data/country_timeseries.parquet';
+            'data/country_timeseries_ADM2.parquet';
 
 
         /* ---------------------------------------------
@@ -682,7 +682,7 @@ async function loadCountries() {
 
         const response =
             await fetch(
-                'data/countries.geojson'
+                'data/countries_ADM2_gen.geojson'
             );
 
 
