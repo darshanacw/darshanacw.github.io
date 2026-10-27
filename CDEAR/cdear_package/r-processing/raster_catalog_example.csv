@@ -1,0 +1,3 @@
+file,variable,dataset_type,scenario,model,year,month,temporal_scale
+/data/rainfall_2000_01.tif,rainfall,historical,historical,ensemble,2000,1,monthly
+/data/SSP245/MIROC6/rainfall_2050_01.tif,rainfall,projected,SSP245,MIROC6,2050,1,monthly

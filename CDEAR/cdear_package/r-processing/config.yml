@@ -1,0 +1,13 @@
+paths:
+  boundaries: data/boundaries.gpkg
+  boundary_layer: spatial_units
+  cropland_mask: data/masks/cropland.tif
+  rainfed_mask: data/masks/rainfed.tif
+  irrigated_mask: data/masks/irrigated.tif
+  raster_catalog: data/raster_catalog.csv
+  output_csv: output/regional_statistics.csv
+  checkpoint_dir: output/checkpoints
+processing:
+  workers: 6
+  overwrite: false
+  quantiles: true
