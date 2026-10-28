@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDEAR · Climate Data Engine for Agricultural Resilience · Zambia · SSP585</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--bg:#06101d;--panel:#0d1a2b;--line:#20334a;--text:#eaf2f8;--muted:#8395a9;--cyan:#39c5ef;--green:#36d399;--violet:#9b8afb;--amber:#ffb454;--red:#ff6b6b}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}body{overflow:hidden}button,select{font:inherit}
+.app{height:100dvh;display:flex;flex-direction:column}
+.top{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--line);background:#081421}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--cyan),var(--green));display:grid;place-items:center;color:#05202c;font-weight:900}
+.brand b{font-size:15px}.brand small{display:block;color:var(--muted);font-size:9px;margin-top:2px}
+.righthead{display:flex;align-items:center;gap:8px}.tag{border:1px solid #2f4862;background:#102235;color:#aabcce;border-radius:20px;padding:5px 9px;font-size:9px}.tag.hot{border-color:#ff6b6b66;color:#ffb0b0;background:#2a1520}
+.export{border:0;background:var(--cyan);color:#03202b;border-radius:8px;padding:7px 11px;font-weight:700;font-size:11px;cursor:pointer}
+main{height:calc(100dvh - 58px);padding:10px 14px;max-width:1700px;width:100%;margin:auto;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:8px}
+.filters{display:grid;grid-template-columns:1fr 1.5fr 1fr 1.2fr 1fr 1fr 1fr;gap:7px;padding:8px 10px;border:1px solid var(--line);background:#0b1828;border-radius:11px}
+.f label{display:block;color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px}
+.f select,.f .box{width:100%;height:29px;border:1px solid #2a3e55;background:#081421;color:#dce8f2;border-radius:7px;padding:0 7px;font-size:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;overflow:hidden;white-space:nowrap}
+.f select:disabled{opacity:.75}.f .box button{border:0;background:#1c4f67;color:#b9f1ff;border-radius:5px;font-size:9px;padding:2px 6px;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.kpi{position:relative;padding:8px 10px;border:1px solid var(--line);background:linear-gradient(145deg,#0d1a2b,#0a1727);border-radius:10px;min-width:0}
+.kpi:before{content:"";position:absolute;right:9px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--c)}
+.kpi small{display:block;color:var(--muted);font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kpi strong{display:block;font-size:18px;margin:2px 0;color:#fff}.kpi em{font-style:normal;font-size:8.5px;color:#71859a}
+.layout{min-height:0;display:grid;grid-template-columns:1.04fr .96fr;gap:8px}
+.card{border:1px solid var(--line);background:linear-gradient(145deg,#0d1a2b,#0a1727);border-radius:11px;padding:10px;min-height:0;overflow:hidden}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;gap:6px}.ey{color:var(--cyan);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px}.hd h2{font-size:12px;margin:2px 0 0}.sub{font-size:8.5px;color:var(--muted);margin-top:2px}
+.seg{display:inline-flex;border:1px solid #39c5ef33;border-radius:12px;overflow:hidden;flex:none}.seg button{border:0;background:#39c5ef10;color:#77ddff;font-size:9px;padding:4px 8px;cursor:pointer}.seg button.on{background:#1c4f67;color:#d5f6ff}
+.left{display:grid;grid-template-rows:minmax(0,1.18fr) auto;gap:8px;min-height:0}.mapcard{display:flex;flex-direction:column}
+.maparea{position:relative;flex:1;min-height:0;border-radius:8px;overflow:hidden;background:#071221}
+#map{position:absolute;inset:0;background:#071221}
+.leaflet-container{background:#071221;font-family:inherit}
+.mapnote,.mapchange{position:absolute;top:8px;z-index:500;background:#07111ee8;border:1px solid #263a50;border-radius:8px;padding:6px 8px;font-size:8px;pointer-events:none}
+.mapnote{left:50px}.mapchange{right:8px;text-align:right}.mapchange b{display:block;color:#ffca7a;font-size:13px}
+.legend{position:absolute;bottom:8px;left:8px;right:8px;z-index:500;border:1px solid #263a50;background:#07111ee8;border-radius:8px;padding:6px;pointer-events:none}
+.bar{height:5px;border-radius:8px;background:linear-gradient(90deg,#214d76,#39c5ef,#34d399,#ffb454,#ff6b6b)}.legend div:first-child{display:flex;justify-content:space-between;color:#9fb3c7;font-size:7.5px;margin-bottom:4px}
+.leaflet-tooltip{background:#07111e;color:#eaf2f8;border:1px solid #2a4660;font-size:10px;border-radius:6px}
+.leaflet-control-layers,.leaflet-bar a{background:#0d1a2b!important;color:#cfe3f1!important;border-color:#2a4660!important}
+.compare{display:grid;grid-template-columns:1.2fr .8fr;gap:7px}
+.mini{border:1px solid #20334a;background:#091625;border-radius:9px;padding:8px}.mini h3{font-size:9px;margin:0 0 6px}
+.bars{display:grid;gap:5px}.row{display:grid;grid-template-columns:78px 1fr 44px;gap:5px;align-items:center;font-size:7.5px;color:#9eb0c1}.row b{text-align:right;color:#dbe7f1}
+.track{height:5px;background:#17283a;border-radius:8px;overflow:hidden}.fill{height:100%;border-radius:8px}.row.sel span{color:#7edcff}
+.rightcol{display:grid;grid-template-rows:minmax(0,1.15fr) minmax(0,.85fr);gap:8px;min-height:0}.chartcard{display:flex;flex-direction:column}
+.multiCharts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:7px;flex:1;min-height:0;margin:7px 0}
+.smallChart{border:1px solid #1d334a;border-radius:8px;background:#091625;padding:6px;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;cursor:pointer}
+.smallChart{grid-column:span 2}.smallChart:nth-child(n+4){grid-column:span 3}.smallChart.on{border-color:#3fc5ee99;background:#0c2133}
+.smallChart .ct{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:8px;color:#91a5b9;margin-bottom:3px;line-height:1.1}
+.smallChart .ct span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.smallChart .ct span i{font-style:normal;color:#5f7489;margin-left:3px;font-size:7px}.smallChart .ct b{font-size:9px;white-space:nowrap}
+.smallChart canvas{display:block;width:100%;flex:1;min-height:64px}
+.periodCards{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:3px}
+.periodCards button{border:1px solid #20334a;background:#091625;color:#9dacbc;border-radius:7px;padding:5px;text-align:left;font-size:7.5px;cursor:pointer}.periodCards button b{display:block;color:#fff;font-size:10px;margin-top:2px}.periodCards button.on{border-color:#3fc5ee80;background:#153346}
+.bottomright{display:grid;grid-template-columns:1.1fr .9fr;gap:8px;min-height:0}
+.card>h2{font-size:12px;margin:3px 0 0}.insight{border-color:#2a6070;background:linear-gradient(135deg,#0a2733,#171a34);overflow:auto}.insight p{font-size:9px;line-height:1.45;color:#c8d5df;margin:6px 0}.insight b{color:#fff}
+.uncert{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px}.u{background:#071421;border:1px solid #20334a;border-radius:7px;padding:5px}.u span{font-size:7px;color:#8092a5}.u b{font-size:9px;display:block;margin:2px 0}.u i{display:block;height:3px;background:#1b2d40;border-radius:4px}.u i:after{content:"";display:block;height:100%;width:var(--w);background:var(--c);border-radius:4px}
+.adapt{overflow:auto}.adapt p{font-size:8.5px;line-height:1.4;color:#b8c7d4;margin:5px 0}.adapt ul{margin:5px 0;padding-left:14px;font-size:8.5px;line-height:1.4;color:#b8c7d4}.adapt li{margin-bottom:3px}
+.confidence{margin-top:5px;padding:5px;border:1px solid #26384c;background:#071421;border-radius:7px;font-size:7.5px;color:#8195a8}.confidence b{float:right;color:#ffcf7e}.footnote{font-size:7px;color:#65798e;margin-top:4px}
+.mobileFilter{display:none}
+.banner{display:none;margin:0 0 8px;padding:8px 10px;border:1px solid #ff6b6b66;background:#2a1520;color:#ffc2c2;border-radius:8px;font-size:10px}
+@media(max-width:900px){body{overflow:auto}.app{height:auto;min-height:100dvh}.top{position:sticky;top:0;z-index:1200}.tag{display:none}.mobileFilter{display:block;border:1px solid #2d465f;background:#0e2031;color:#cde3f1;border-radius:8px;padding:6px 8px}.filters{display:none;grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}main{height:auto;display:block;padding:8px}.layout{display:block}.card{margin-bottom:8px}.maparea{flex:none;height:330px}.left,.rightcol,.bottomright{display:block}.compare{grid-template-columns:1fr}.insight,.adapt{margin-bottom:8px}.kpi:last-child{grid-column:1/-1}.export span{display:none}.kpis{margin-top:8px}.mini{margin-top:8px}}
+@media(max-width:1000px){.multiCharts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,130px)}.smallChart,.smallChart:nth-child(n+4){grid-column:span 1}.smallChart:last-child{grid-column:span 2}.chartcard{min-height:470px}}
+@media(max-width:620px){.multiCharts{grid-template-columns:1fr;grid-template-rows:repeat(5,135px)}.smallChart,.smallChart:nth-child(n+4),.smallChart:last-child{grid-column:span 1}.chartcard{min-height:780px}}
+</style></head><body><div class="app">
+<header class="top"><div class="brand"><button class="mobileFilter" id="mobBtn">☰</button><div class="logo">C</div><div><b>CDEAR · Climate Data Engine for Agricultural Resilience</b><small>Zambia · cropland climate outlook</small></div></div>
+<div class="righthead"><span class="tag hot">SSP585 · high-emission pathway</span><span class="tag">Historical 2001–2020 · Projection 2021–2100</span><button class="export" id="btnExport">⇩ <span>Export series</span></button></div></header>
+<main>
+<section class="filters" id="filters">
+<div class="f"><label>Indicator</label><select id="indicator"></select></div>
+<div class="f"><label>Spatial unit (click map)</label><div class="box"><span id="unitLabel">All cropland polygons</span><button id="btnReset" style="display:none">✕ All</button></div></div>
+<div class="f"><label>Scenario</label><select id="scenario" disabled><option>SSP585</option></select></div>
+<div class="f"><label>Climate model</label><select id="model" disabled><option>As provided in data</option></select></div>
+<div class="f"><label>Future period</label><select id="period"><option>2021–2040</option><option selected>2041–2060</option><option>2061–2080</option><option>2081–2100</option></select></div>
+<div class="f"><label>Baseline</label><select disabled><option>2001–2020</option></select></div>
+<div class="f"><label>Basemap</label><select id="basemap"><option value="dark">Dark</option><option value="sat">Satellite</option><option value="osm">Streets</option></select></div>
+</section>
+<section class="kpis">
+<div class="kpi" style="--c:#39c5ef"><small id="kBaseL">Historical baseline · 2001–2020</small><strong id="base">–</strong><em id="baseU">mm/year</em></div>
+<div class="kpi" style="--c:#22d3ee"><small>Projected mean · SSP585</small><strong id="future">–</strong><em id="periodLabel">–</em></div>
+<div class="kpi" style="--c:#9b8afb"><small>Typical-year range (±1 SD)</small><strong id="range">–</strong><em>Year-to-year variability in period</em></div>
+<div class="kpi" style="--c:#36d399"><small>Years moving the same way</small><strong id="agree">–</strong><em>Share of years beyond baseline</em></div>
+<div class="kpi" style="--c:#ffb454"><small>Climate-pressure signal</small><strong id="risk">–</strong><em id="riskSub">Aridity P/PET</em></div>
+</section>
+<section class="layout"><div class="left">
+<article class="card mapcard"><div class="hd"><div><div class="ey">Spatial outlook</div><h2 id="mapTitle">Rainfall change by cropland polygon</h2><div class="sub" id="mapSub"></div></div>
+<div class="seg" id="mapMode"><button data-m="chg" class="on">% change</button><button data-m="val">Future value</button></div></div>
+<div class="maparea"><div id="map"></div><div class="mapnote"><b>Cropland polygons</b><br>Click a polygon to analyse it</div><div class="mapchange">AREA-WEIGHTED CHANGE<b id="change">–</b></div>
+<div class="legend"><div><span id="lgLo">lower</span><span id="lgMid">cropland polygons</span><span id="lgHi">higher</span></div><div class="bar"></div></div></div></article>
+<div class="compare"><div class="mini"><h3 id="trajTitle">Rainfall · baseline vs future periods (mm/yr)</h3><div class="bars" id="trajBars"></div></div>
+<div class="mini"><h3>Green-water gap · <span id="gapPer">2041–2060</span></h3><div class="bars" id="gapBars"></div></div></div></div>
+<div class="rightcol"><article class="card chartcard"><div class="hd"><div><div class="ey" style="color:#aa9cff">Projection & variability</div><h2>Climate and water indicators · 2001–2100</h2><div class="sub">Annual (thin) · 10-yr average (bold) · ±1 SD band · dashed = 2001–2020 baseline · shaded = selected period</div></div></div>
+<div class="multiCharts" id="multi"></div>
+<div class="periodCards" id="periodCards"></div></article>
+<div class="bottomright"><article class="card insight"><div class="ey">Projection insight</div><h2 id="insightHead">–</h2><p id="insight"></p>
+<div class="uncert" id="uncert"></div><div class="footnote">SSP585 is a scenario-based projection, not a deterministic prediction. Range = year-to-year variability in the supplied data (no model-by-model spread).</div></article>
+<article class="card adapt"><div class="ey" style="color:#6ce6ad">Recommendation</div><h2>Pathway to a sustainable future</h2><div id="adapt"></div><div class="confidence">Recommendation confidence <b id="conf">–</b><br><span>Based on direction consistency, size of change and water gap.</span></div></article></div></div></section></main></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- DATA FILES (same as ZMB_nicer.html; keep them in the same folder) -->
+<script src="https://mws003-gis.github.io/AET_crop.js"></script>
+<script src="HPData.js"></script><script src="HPETData.js"></script><script src="HAETData.js"></script><script src="HGETData.js"></script><script src="HBETData.js"></script>
+<script src="FPData.js"></script><script src="FPETData.js"></script><script src="FAETData.js"></script><script src="FGETData.js"></script><script src="FBETData.js"></script><script src="FGETEData.js"></script>
+<script>
+/* ================= CONFIG ================= */
+const Y0=2001,Y1=2100,LASTH=2020,BASE=[2001,2020];
+const PERIODS=[[2021,2040],[2041,2060],[2061,2080],[2081,2100]];
+/* kind: how a change is judged. good = increase favourable, bad = increase unfavourable, neu = neutral */
+const IND=[
+ {k:'P',  name:'Rainfall',          hist:'HPData',   proj:'FPData',   color:'#39c5ef',kind:'good'},
+ {k:'PET',name:'PET',               hist:'HPETData', proj:'FPETData', color:'#ff9f43',kind:'bad'},
+ {k:'AET',name:'AET',               hist:'HAETData', proj:'FAETData', color:'#27d3df',kind:'neu'},
+ {k:'GET',name:'Green ET',          hist:'HGETData', proj:'FGETData', color:'#36d399',kind:'neu'},
+ {k:'BET',name:'Blue ET',           hist:'HBETData', proj:'FBETData', color:'#9b8afb',kind:'bad'},
+ {k:'REQ',name:'Required Green ET', hist:null,       proj:'FGETEData',color:'#a3e635',kind:'bad',noChart:true}  /* FGETEData = "UGreenET" in ZMB_nicer.html */
+];
+const G=n=>{try{return (typeof window[n]!=='undefined')?window[n]:(0,eval)('typeof '+n+"!=='undefined'?"+n+':undefined')}catch(e){return undefined}};
+const $=s=>document.querySelector(s),isN=x=>x!==null&&x!==undefined&&!isNaN(x);
+const fmt=x=>!isN(x)?'–':(Math.abs(x)<10?x.toFixed(1):Math.round(x).toLocaleString('en-US'));
+const sgn=(x,d=1)=>!isN(x)?'–':(x>0.0499?'+':x<-0.0499?'−':'')+Math.abs(x).toFixed(d);
+const mean=a=>{a=a.filter(isN);return a.length?a.reduce((s,v)=>s+v,0)/a.length:null};
+const sd=a=>{a=a.filter(isN);if(!a.length)return null;const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length)};
+
+/* ================= DATA INDEX ================= */
+const DS={};IND.forEach(i=>{DS[i.k]={hist:i.hist?G(i.hist):undefined,proj:i.proj?G(i.proj):undefined}});
+function indexOf(d){const m=new Map();if(!d)return m;for(const k in d){const r=d[k];if(!r)continue;m.set(String(k),r);if(r.id!==undefined)m.set(String(r.id),r)}return m}
+const IDX={};IND.forEach(i=>{IDX[i.k]={hist:indexOf(DS[i.k].hist),proj:indexOf(DS[i.k].proj)}});
+const have=k=>IDX[k].hist.size>0||IDX[k].proj.size>0;
+const YEARS=[];for(let y=Y0;y<=Y1;y++)YEARS.push(y);
+/* annual series (array 2001..2100, null = missing) for one polygon */
+const serCache={};
+function series(k,id){const key=k+'|'+id;if(serCache[key])return serCache[key];
+ const h=IDX[k].hist.get(String(id)),p=IDX[k].proj.get(String(id));
+ const out=YEARS.map(y=>{const order=y<=LASTH?[h,p]:[p,h];for(const r of order){if(!r)continue;const v=r['year_'+y];if(v!==undefined&&v!==null&&v!==''&&!isNaN(v))return +v}return null});
+ return serCache[key]=out}
+/* polygon area (ha) */
+const AREA=new Map();IND.forEach(i=>['hist','proj'].forEach(t=>IDX[i.k][t].forEach((r,id)=>{if(r.area_ha!==undefined&&!AREA.has(id))AREA.set(id,+r.area_ha)})));
+const allIds=(()=>{const s=new Set();IND.forEach(i=>['hist','proj'].forEach(t=>IDX[i.k][t].forEach((r,id)=>s.add(r.id!==undefined?String(r.id):id))));return [...s]})();
+/* area-weighted mean across all polygons */
+const aggCache={};
+function aggSeries(k){if(aggCache[k])return aggCache[k];
+ const ids=allIds.filter(id=>IDX[k].hist.has(id)||IDX[k].proj.has(id));
+ const S=ids.map(id=>[series(k,id),AREA.get(id)>0?AREA.get(id):1]);
+ return aggCache[k]=YEARS.map((_,i)=>{let a=0,w=0;S.forEach(([s,wt])=>{if(isN(s[i])){a+=s[i]*wt;w+=wt}});return w?a/w:null})}
+
+/* ================= STATE ================= */
+const st={ind:'P',sel:null,per:1,mode:'chg'};
+const unitSeries=k=>!have(k)?YEARS.map(()=>null):(st.sel?series(k,st.sel):aggSeries(k));
+const slice=(s,a,b)=>s.slice(a-Y0,b-Y0+1);
+/* stats of one series against baseline for a period */
+function stats(s,per){
+ let b=mean(slice(s,...BASE)),ref=false,bl='2001–2020';
+ if(!isN(b)){b=mean(slice(s,...PERIODS[0]));ref=true;bl='2021–2040 (ref.)'}
+ const v=slice(s,...per).filter(isN),f=mean(v),d=sd(v);
+ const ch=(isN(b)&&isN(f)&&b!==0&&!(ref&&per[0]===PERIODS[0][0]))?100*(f-b)/Math.abs(b):null;
+ let cons=null;if(isN(ch)&&v.length){const sg=Math.sign(f-b);cons=100*v.filter(x=>Math.sign(x-b)===sg&&sg!==0).length/v.length}
+ return{b,f,sd:d,ch,cons,ref,bl,n:v.length}}
+function slope(s,a,b){const p=[];for(let y=a;y<=b;y++){const v=s[y-Y0];if(isN(v))p.push([y,v])}if(p.length<3)return null;const n=p.length,mx=mean(p.map(q=>q[0])),my=mean(p.map(q=>q[1]));let sxx=0,sxy=0;p.forEach(([x,y])=>{sxx+=(x-mx)**2;sxy+=(x-mx)*(y-my)});return sxx?10*sxy/sxx:null}
+const favClass=(kind,ch)=>!isN(ch)?'#8395a9':kind==='neu'?'#8fd3ff':((ch>0)===(kind==='good'))?'#6ce6ad':'#ffb454';
+function aridity(p){return p<.05?'Hyper-arid':p<.2?'Arid':p<.5?'Semi-arid':p<.65?'Dry sub-humid':'Humid'}
+
+/* ================= FILTERS ================= */
+const selInd=$('#indicator');IND.filter(i=>have(i.k)&&!i.noChart).forEach(i=>{const o=document.createElement('option');o.value=i.k;o.textContent=i.name;selInd.appendChild(o)});
+if(!have('P')&&selInd.options.length)st.ind=selInd.options[0].value;selInd.value=st.ind;
+selInd.onchange=()=>{st.ind=selInd.value;update()};
+$('#period').onchange=e=>{st.per=e.target.selectedIndex;update()};
+$('#btnReset').onclick=()=>{select(null)};
+$('#mobBtn').onclick=()=>{const f=$('#filters');f.style.display=f.style.display==='grid'?'none':'grid'};
+document.querySelectorAll('#mapMode button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;document.querySelectorAll('#mapMode button').forEach(x=>x.classList.toggle('on',x===b));update()});
+function select(id){st.sel=id;$('#btnReset').style.display=id?'':'none';
+ $('#unitLabel').textContent=id?('Polygon '+id+(AREA.has(String(id))?' · '+AREA.get(String(id)).toLocaleString('en-US',{maximumFractionDigits:1})+' ha':'')):'All cropland polygons (area-weighted)';
+ if(layer)layer.eachLayer(l=>{l.setStyle(styleFor(l.feature));});
+ update()}
+
+/* ================= MAP ================= */
+const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([-14,28],6);
+const bases={dark:L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · CARTO',maxZoom:19}),
+ sat:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:19}),
+ osm:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19})};
+let curBase=bases.dark;curBase.addTo(map);
+$('#basemap').onchange=e=>{map.removeLayer(curBase);curBase=bases[e.target.value];curBase.addTo(map);curBase.bringToBack()};
+const RAMP=['#214d76','#39c5ef','#34d399','#ffb454','#ff6b6b'];
+function ramp(t){if(!isN(t))return '#3a4756';t=Math.max(0,Math.min(1,t))*(RAMP.length-1);const i=Math.min(RAMP.length-2,Math.floor(t)),f=t-i;const a=RAMP[i],b=RAMP[i+1];const c=h=>[1,3,5].map(j=>parseInt(h.substr(j,2),16));const A=c(a),B=c(b);return '#'+A.map((v,j)=>Math.round(v+(B[j]-v)*f).toString(16).padStart(2,'0')).join('')}
+let layer=null,polyVal={},lo=0,hi=1;
+function styleFor(f){const id=String(f.properties.id),v=polyVal[id],t=isN(v)?(v-lo)/((hi-lo)||1):null;const s=st.sel===id;
+ return{fillColor:ramp(isN(t)&&IND.find(i=>i.k===st.ind).kind==='good'?1-t:t),color:s?'#ffffff':'#0a1624',weight:s?2.4:.3,fillOpacity:.88}}
+if(typeof AET_crop!=='undefined'){
+ layer=L.geoJSON(AET_crop,{style:styleFor,onEachFeature:(f,l)=>{const id=String(f.properties.id);
+  l.on('click',()=>{select(id);l.bringToFront()});
+  l.on('mouseover',()=>l.bindTooltip('ID '+id+(isN(polyVal[id])?' · '+(st.mode==='chg'?sgn(polyVal[id])+'%':fmt(polyVal[id])+' mm/yr'):''),{sticky:true}).openTooltip())}}).addTo(map);
+ try{map.fitBounds(layer.getBounds())}catch(e){}
+}else{const b=$('#mapSub');b.textContent='AET_crop polygons not loaded'}
+function recolor(){
+ polyVal={};const per=PERIODS[st.per],k=st.ind;
+ allIds.forEach(id=>{if(!(IDX[k].hist.has(id)||IDX[k].proj.has(id)))return;const s=stats(series(k,id),per);polyVal[id]=st.mode==='chg'?s.ch:s.f});
+ const vals=Object.values(polyVal).filter(isN).sort((a,b)=>a-b);
+ if(vals.length){lo=vals[Math.floor(.03*(vals.length-1))];hi=vals[Math.ceil(.97*(vals.length-1))];if(st.mode==='chg'&&lo<0&&hi>0){const m=Math.max(-lo,hi);lo=-m;hi=m}if(lo===hi){lo-=1;hi+=1}}
+ const u=st.mode==='chg'?'%':' mm';$('#lgLo').textContent=(st.mode==='chg'?sgn(lo):fmt(lo))+u;$('#lgHi').textContent=(st.mode==='chg'?sgn(hi):fmt(hi))+u;
+ $('#lgMid').textContent=st.mode==='chg'?'change vs 2001–2020 (SSP585)':'projected mean (mm/yr)';
+ const rev=IND.find(i=>i.k===st.ind).kind==='good';$('.bar').style.background='linear-gradient(90deg,'+(rev?[...RAMP].reverse():RAMP).join(',')+')';
+ if(layer)layer.setStyle(styleFor)}
+
+/* ================= CHARTS ================= */
+const multi=$('#multi');IND.filter(i=>!i.noChart).forEach(i=>{const d=document.createElement('div');d.className='smallChart';d.dataset.k=i.k;d.innerHTML=`<div class="ct"><span>${i.name}<i></i></span><b>–</b></div><canvas></canvas>`;d.onclick=()=>{if(!have(i.k))return;st.ind=i.k;selInd.value=i.k;update()};multi.appendChild(d)});
+function drawSmall(cv,s,color,per){
+ const dpr=window.devicePixelRatio||1,w=cv.clientWidth||210,h=cv.clientHeight||85;cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);
+ const L=30,R=5,T=5,B=13,pw=w-L-R,ph=h-T-B;
+ const vals=s.filter(isN);if(!vals.length){x.fillStyle='#63798f';x.font='9px sans-serif';x.fillText('No data in files',L+6,h/2);return}
+ /* 10-yr trailing mean and SD */
+ const ma=s.map((_,i)=>{const a=s.slice(Math.max(0,i-9),i+1).filter(isN);return a.length>=5?mean(a):null});
+ const sdv=s.map((_,i)=>{const a=s.slice(Math.max(0,i-9),i+1).filter(isN);return a.length>=5?sd(a):null});
+ let mn=Infinity,mx=-Infinity;s.forEach((v,i)=>{if(isN(v)){mn=Math.min(mn,v);mx=Math.max(mx,v)}});mn=Math.min(mn,...ma.map((m,i)=>isN(m)?m-(sdv[i]||0):Infinity));mx=Math.max(mx,...ma.map((m,i)=>isN(m)?m+(sdv[i]||0):-Infinity));
+ const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
+ const X=i=>L+i/(YEARS.length-1)*pw,Yv=v=>T+(mx-v)/(mx-mn)*ph;
+ x.strokeStyle='#1b2d40';x.lineWidth=1;[0,.5,1].forEach(t=>{const yy=T+t*ph;x.beginPath();x.moveTo(L,yy);x.lineTo(w-R,yy);x.stroke()});
+ x.fillStyle='#63798f';x.font='7px sans-serif';x.textAlign='right';x.fillText(fmt(mx),L-3,T+6);x.fillText(fmt(mn),L-3,T+ph);x.textAlign='left';
+ [[2001,'2001'],[2020,'2020'],[2060,'2060'],[2100,'2100']].forEach(([y,t])=>{const xx=X(y-Y0);x.textAlign=y===2100?'right':y===2001?'left':'center';x.fillText(t,xx,h-3)});x.textAlign='left';
+ /* selected period shade */
+ x.fillStyle='rgba(57,197,239,.09)';x.fillRect(X(per[0]-Y0),T,X(per[1]-Y0)-X(per[0]-Y0),ph);
+ /* baseline */
+ const bm=mean(slice(s,...BASE));if(isN(bm)){x.setLineDash([3,3]);x.strokeStyle='#8aa0b6';x.beginPath();x.moveTo(L,Yv(bm));x.lineTo(w-R,Yv(bm));x.stroke();x.setLineDash([])}
+ x.setLineDash([2,3]);x.strokeStyle='#72869a';const dx=X(LASTH-Y0+.5);x.beginPath();x.moveTo(dx,T);x.lineTo(dx,T+ph);x.stroke();x.setLineDash([]);
+ /* band */
+ let run=[];const flush=()=>{if(run.length>1){x.beginPath();run.forEach((i,j)=>{const yy=Yv(ma[i]+sdv[i]);j?x.lineTo(X(i),yy):x.moveTo(X(i),yy)});[...run].reverse().forEach(i=>x.lineTo(X(i),Yv(ma[i]-sdv[i])));x.closePath();x.fillStyle=color+'22';x.fill()}run=[]};
+ ma.forEach((m,i)=>{if(isN(m)&&isN(sdv[i]))run.push(i);else flush()});flush();
+ const line=(arr,lw,col)=>{x.beginPath();let pen=false;arr.forEach((v,i)=>{if(!isN(v)){pen=false;return}pen?x.lineTo(X(i),Yv(v)):x.moveTo(X(i),Yv(v));pen=true});x.lineWidth=lw;x.strokeStyle=col;x.stroke()};
+ line(s,.8,color+'66');line(ma,2,color)}
+
+/* ================= UPDATE ================= */
+function update(){
+ const per=PERIODS[st.per],pl=per[0]+'–'+per[1],I=IND.find(i=>i.k===st.ind),unit=st.sel?'polygon '+st.sel:'all Zambian cropland polygons';
+ const S={};IND.forEach(i=>S[i.k]=unitSeries(i.k));const T={};IND.forEach(i=>T[i.k]=have(i.k)?stats(S[i.k],per):null);
+ const t=T[st.ind];
+ /* KPIs */
+ $('#kBaseL').textContent='Historical baseline · '+(t&&t.ref?'2021–2040 (ref.)':'2001–2020');
+ $('#base').textContent=t?fmt(t.b):'–';$('#baseU').textContent=I.name+' · mm/year';
+ $('#future').textContent=t?fmt(t.f):'–';$('#periodLabel').textContent=pl+' · mm/year';
+ $('#range').textContent=t&&isN(t.sd)?fmt(t.f-t.sd)+'–'+fmt(t.f+t.sd):'–';
+ $('#agree').textContent=t&&isN(t.cons)?Math.round(t.cons)+'%':'–';
+ /* pressure from aridity P/PET */
+ let risk='–',riskSub='Aridity P/PET',ai0=null,ai1=null,dAI=null;
+ if(T.P&&T.PET&&isN(T.P.b)&&isN(T.PET.b)&&isN(T.P.f)&&isN(T.PET.f)){ai0=T.P.b/T.PET.b;ai1=T.P.f/T.PET.f;dAI=100*(ai1-ai0)/ai0;risk=dAI<=-15?'High':dAI<=-5?'Moderate':dAI>=5?'Easing':'Low';riskSub='Aridity '+ai0.toFixed(2)+' → '+ai1.toFixed(2)+' ('+aridity(ai1)+')'}
+ else if(t&&isN(t.ch)){const u=I.kind==='good'?-t.ch:I.kind==='bad'?t.ch:Math.abs(t.ch);risk=u>12?'High':u>6?'Moderate':'Low';riskSub='Based on '+I.name+' change'}
+ $('#risk').textContent=risk;$('#riskSub').textContent=riskSub;
+ $('#change').textContent=t&&isN(t.ch)?sgn(t.ch)+'%':'–';
+ $('#mapTitle').textContent=I.name+(st.mode==='chg'?' change':' projection')+' by cropland polygon';
+ $('#mapSub').textContent=['Zambia','SSP585',pl,'vs 2001–2020'].join(' · ');
+ /* small charts */
+ IND.filter(i=>!i.noChart).forEach(i=>{const box=multi.querySelector(`[data-k="${i.k}"]`),b=box.querySelector('b'),em=box.querySelector('i'),tt=T[i.k];box.classList.toggle('on',i.k===st.ind);
+  if(tt&&isN(tt.f)){b.textContent=isN(tt.ch)?sgn(tt.ch)+'%':'ref.';b.style.color=favClass(i.kind,tt.ch);em.textContent=fmt(tt.b)+'→'+fmt(tt.f)}else{b.textContent='n/a';b.style.color='#8395a9';em.textContent=''}
+  drawSmall(box.querySelector('canvas'),S[i.k],i.color,per)});
+ /* period cards */
+ $('#periodCards').innerHTML=PERIODS.map((p,j)=>{const tt=have(st.ind)?stats(S[st.ind],p):null;return `<button data-j="${j}" class="${j===st.per?'on':''}"><span>${p[0]}–${p[1]}</span><b style="color:${tt?favClass(I.kind,tt.ch):'#fff'}">${tt&&isN(tt.ch)?sgn(tt.ch)+'%':'ref.'}</b></button>`}).join('');
+ document.querySelectorAll('#periodCards button').forEach(b=>b.onclick=()=>{st.per=+b.dataset.j;$('#period').selectedIndex=st.per;update()});
+ /* trajectory bars: baseline vs 4 periods */
+ $('#trajTitle').textContent=I.name+' · baseline vs future periods (mm/yr)';
+ const rows=[['Baseline',t?t.b:null,false]];PERIODS.forEach((p,j)=>rows.push([p[0]+'–'+p[1],have(st.ind)?stats(S[st.ind],p).f:null,j===st.per]));
+ const mxv=Math.max(...rows.map(r=>isN(r[1])?r[1]:0))||1;
+ $('#trajBars').innerHTML=rows.map(r=>`<div class="row ${r[2]?'sel':''}"><span>${r[0]}</span><div class="track"><div class="fill" style="width:${isN(r[1])?Math.max(3,100*r[1]/mxv):0}%;background:${r[0]==='Baseline'?'#8aa0b6':I.color}"></div></div><b>${fmt(r[1])}</b></div>`).join('');
+ /* green-water gap */
+ $('#gapPer').textContent=pl;
+ const gT=T.GET,rT=T.REQ;let gh='';
+ if(gT&&rT&&isN(gT.f)&&isN(rT.f)){const mxg=Math.max(gT.f,rT.f,1),gap=gT.f-rT.f;
+  gh=`<div class="row"><span>Available Green ET</span><div class="track"><div class="fill" style="width:${100*gT.f/mxg}%;background:#36d399"></div></div><b>${fmt(gT.f)}</b></div>
+  <div class="row"><span>Required Green ET</span><div class="track"><div class="fill" style="width:${100*rT.f/mxg}%;background:#a3e635"></div></div><b>${fmt(rT.f)}</b></div>
+  <div class="row"><span>${gap<0?'Deficit':'Surplus'}</span><div class="track"><div class="fill" style="width:${Math.min(100,100*Math.abs(gap)/mxg*3)}%;background:${gap<0?'#ff6b6b':'#36d399'}"></div></div><b>${sgn(gap,0)}</b></div>`}
+ else if(T.PET&&T.AET&&isN(T.PET.f)&&isN(T.AET.f)){const mxg=Math.max(T.PET.f,1),gp=T.PET.f-T.AET.f;
+  gh=`<div class="row"><span>PET</span><div class="track"><div class="fill" style="width:${100*T.PET.f/mxg}%;background:#ff9f43"></div></div><b>${fmt(T.PET.f)}</b></div><div class="row"><span>AET</span><div class="track"><div class="fill" style="width:${100*T.AET.f/mxg}%;background:#27d3df"></div></div><b>${fmt(T.AET.f)}</b></div><div class="row"><span>Unmet demand</span><div class="track"><div class="fill" style="width:${Math.min(100,100*gp/mxg)}%;background:#ff6b6b"></div></div><b>${fmt(gp)}</b></div>`}
+ $('#gapBars').innerHTML=gh||'<div class="row" style="grid-template-columns:1fr">Green/Required Green ET not in data files</div>';
+ /* insight */
+ let ins='',head='',adapt='',conf='LOW';
+ if(t&&isN(t.f)){
+  const dir=!isN(t.ch)?'':t.ch<0?'decrease':'increase';
+  head=(risk==='–'?'Projection':risk)+(risk==='Easing'?' – climate pressure easing':' climate-pressure signal');
+  ins=`For <b>${unit}</b>, ${I.name.toLowerCase()} is projected to ${isN(t.ch)?`<b>${dir} by ${Math.abs(t.ch).toFixed(1)}%</b>`:'average <b>'+fmt(t.f)+' mm/yr</b>'} during ${pl} under <b>SSP585</b> (${fmt(t.b)} → ${fmt(t.f)} mm/yr vs ${t.bl}). A typical year falls within <b>${fmt(t.f-t.sd)}–${fmt(t.f+t.sd)} mm/yr</b>${isN(t.cons)?`, and <b>${Math.round(t.cons)}%</b> of years move in the same direction as the average change`:''}.`;
+  if(isN(dAI))ins+=` Aridity index (P/PET) goes from <b>${ai0.toFixed(2)}</b> (${aridity(ai0)}) to <b>${ai1.toFixed(2)}</b> (${aridity(ai1)}).`;
+  if(gT&&rT&&isN(gT.f)&&isN(rT.f))ins+=` Green ET (<b>${fmt(gT.f)} mm</b>) is ${gT.f<rT.f?`<b>${fmt(rT.f-gT.f)} mm below</b>`:`<b>${fmt(gT.f-rT.f)} mm above</b>`} the required level.`;
+  /* uncertainty tiles */
+  const cv0=t.b&&sd(slice(S[st.ind],...BASE))?100*sd(slice(S[st.ind],...BASE))/t.b:null,cv1=t.f&&t.sd?100*t.sd/t.f:null,sl=slope(S[st.ind],2021,2100);
+  const tile=(a,b,w,c)=>`<div class="u"><span>${a}</span><b>${b}</b><i style="--w:${Math.max(4,Math.min(100,w))}%;--c:${c}"></i></div>`;
+  $('#uncert').innerHTML=tile('Variability 2001–2020',isN(cv0)?'CV '+cv0.toFixed(0)+'%':'–',(cv0||0)*3,'#36d399')+tile('Variability '+pl,isN(cv1)?'CV '+cv1.toFixed(0)+'%':'–',(cv1||0)*3,'#9b8afb')+tile('Trend 2021–2100',isN(sl)?sgn(sl)+' mm/dec':'–',Math.abs(sl||0)/(t.f||1)*1000,'#39c5ef');
+  /* recommendation */
+  const c=k=>T[k]&&isN(T[k].ch)?T[k].ch:null,dP=c('P'),dPET=c('PET'),dB=c('BET'),late=have('P')?stats(S.P,PERIODS[3]).ch:null,pts=[];
+  if(isN(dP)&&dP<=-5)pts.push(`<b>Protect rainfed production:</b> rainfall falls ${Math.abs(dP).toFixed(1)}% in ${pl}. Prioritise soil-moisture conservation (mulching, conservation tillage), rainwater harvesting and drought-tolerant, shorter-cycle varieties.`);
+  else if(isN(dP)&&dP>=5)pts.push(`<b>Use the extra rainfall:</b> rainfall rises ${dP.toFixed(1)}%. Strengthen drainage, erosion control and storage so surplus water supports dry-season crops.`);
+  else pts.push(`<b>Rainfall is broadly stable</b> (${sgn(dP)}%). Keep seasonal monitoring and flexible planting dates.`);
+  if(isN(dPET)&&dPET>=4)pts.push(`<b>Manage rising demand:</b> PET increases ${dPET.toFixed(1)}%, so crops need more water even if rain holds. Improve water-use efficiency (drip, scheduling, residue cover).`);
+  if(gT&&rT&&isN(gT.f)&&isN(rT.f)&&gT.f<rT.f*0.97)pts.push(`<b>Close the green-water gap:</b> plan supplemental irrigation of roughly ${fmt(rT.f-gT.f)} mm/yr in ${pl}, starting where the gap is largest on the map.`);
+  else if(isN(dB)&&dB>=5)pts.push(`<b>Plan irrigation supply:</b> Blue ET rises ${dB.toFixed(1)}%, so abstraction and storage must be sized for higher irrigation demand.`);
+  if(isN(late))pts.push(`<b>Long-term:</b> by 2081–2100 rainfall is ${sgn(late)}% vs baseline under SSP585 – design infrastructure and land-use plans for this end-of-century signal.`);
+  adapt='<ul>'+pts.map(p=>`<li>${p}</li>`).join('')+'</ul>';
+  conf=!isN(t.cons)?'LOW':(t.cons>=85&&Math.abs(t.ch)>=3)?'HIGH':t.cons>=65?'MEDIUM':'LOW';
+ }else{head='No data';ins='No data found for this indicator in the loaded files.';adapt='<p>–</p>';$('#uncert').innerHTML=''}
+ $('#insightHead').textContent=head;$('#insight').innerHTML=ins;$('#adapt').innerHTML=adapt;$('#conf').textContent=conf;
+ recolor()}
+
+/* ================= EXPORT ================= */
+$('#btnExport').onclick=()=>{const ks=IND.filter(i=>have(i.k)),cols=ks.map(i=>unitSeries(i.k));
+ let csv='Year,Period,'+ks.map(i=>i.name).join(',')+'\n';YEARS.forEach((y,j)=>{csv+=y+','+(y<=LASTH?'historical':'SSP585')+','+cols.map(c=>isN(c[j])?c[j]:'').join(',')+'\n'});
+ const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download='cdear_zambia_ssp585_'+(st.sel||'all')+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{update();map.invalidateSize()},150)});
+select(null);
+</script></body></html>
