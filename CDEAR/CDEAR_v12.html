@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDEAR · Climate Data Engine for Agricultural Resilience · Zambia · SSP585</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{--bg:#F3F6FA;--card:#fff;--ink:#1b2a3a;--muted:#6b7a8c;--line:#e3e9f0;--brand:#0b5c8a;--brand-dark:#08425f;--accent:#14a39a;--up:#138a52;--down:#d33a4a;--shadow:0 2px 10px rgba(16,42,67,.08)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}body{overflow:hidden}button,select{font:inherit}
+.app{height:100dvh;display:flex;flex-direction:column}
+.top{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#fff;background:linear-gradient(110deg,var(--brand-dark),var(--brand) 55%,var(--accent));box-shadow:0 2px 8px rgba(0,0,0,.18);z-index:1100}
+.brand{display:flex;align-items:center;gap:9px}.logo{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.2);display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px}
+.brand b{font-size:14px}.brand small{display:block;opacity:.85;font-size:9px;margin-top:1px}
+.righthead{display:flex;align-items:center;gap:7px}.tag{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:4px 9px;font-size:9px;white-space:nowrap}.tag.hot{background:#fff;color:#b42318;border-color:#fff;font-weight:700}.tag.warn{background:#fff3e3;color:#9a5b0c;border-color:#f6dcb8;font-weight:600}.tag.ok b{color:#9af0c3}
+.export{border:0;background:#fff;color:var(--brand-dark);border-radius:8px;padding:6px 10px;font-weight:700;font-size:11px;cursor:pointer}
+main{height:calc(100dvh - 46px);padding:7px 12px 10px;max-width:1700px;width:100%;margin:auto;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:6px}
+.filters{display:grid;grid-template-columns:1fr .8fr 1fr 1.2fr 1.2fr 1.2fr .9fr 1.1fr;gap:6px;padding:5px 8px 6px;border:1px solid var(--line);background:#fff;border-radius:10px;box-shadow:var(--shadow)}
+.f{min-width:0}.f label{display:block;color:var(--muted);font-size:7.5px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f select{width:100%;height:25px;border:1px solid #d3dce6;background:#fff;color:var(--ink);border-radius:7px;padding:0 6px;font-size:10px;font-weight:500}
+.f select:disabled{background:#f1f5f9;color:#9aa7b5}.f select.key{border-color:var(--brand);box-shadow:0 0 0 1px #0b5c8a22}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.kpi{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:7px;align-items:baseline;padding:4px 9px 5px;border:1px solid var(--line);background:#fff;border-radius:9px;min-width:0;box-shadow:var(--shadow)}
+.kpi:before{content:"";position:absolute;right:8px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--c)}
+.kpi small{grid-column:1/-1;color:var(--muted);font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;padding-right:12px}
+.kpi strong{font-size:15px;line-height:1.15;color:var(--ink);white-space:nowrap}
+.kpi em{font-style:normal;font-size:8px;color:#8795a5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.layout{min-height:0;display:grid;grid-template-columns:1.04fr .96fr;gap:7px}
+.card{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px;min-height:0;overflow:hidden;box-shadow:var(--shadow)}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;gap:6px}.ey{color:var(--brand);font-size:7.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700}.hd h2,.card>h2{font-size:12px;margin:2px 0 0;color:var(--brand-dark)}.sub{font-size:8.5px;color:var(--muted);margin-top:2px}
+.hdr{display:flex;gap:6px;align-items:center;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.seg{display:inline-flex;border:1px solid #cfe0ec;border-radius:12px;overflow:hidden;flex:none}.seg button{border:0;background:#fff;color:var(--brand);font-size:9px;padding:4px 8px;cursor:pointer;font-weight:600}.seg button.on{background:var(--brand);color:#fff}
+.chip{border:1px solid #cfe3f0;background:#e6f1f8;color:var(--brand-dark);border-radius:12px;font-size:9px;padding:4px 8px;cursor:pointer;font-weight:600;white-space:nowrap;display:none}
+.left{display:flex;flex-direction:column;min-height:0}.mapcard{display:flex;flex-direction:column;flex:1;min-height:0}
+.maparea{position:relative;flex:1;min-height:0;border-radius:8px;overflow:hidden;background:#dfe7ee}
+#map{position:absolute;inset:0;background:#dfe7ee}.leaflet-container{font-family:inherit}
+.mapnote,.mapchange{position:absolute;top:8px;z-index:500;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:8px;pointer-events:none;box-shadow:var(--shadow);color:var(--ink)}
+.mapnote{left:50px;max-width:55%}.mapchange{right:8px;text-align:right;color:var(--muted);font-weight:600}.mapchange b{display:block;color:#b45309;font-size:13px}
+.legend{position:absolute;bottom:8px;left:8px;right:8px;z-index:500;border:1px solid var(--line);background:rgba(255,255,255,.94);border-radius:8px;padding:6px;pointer-events:none;box-shadow:var(--shadow)}
+.bar{height:6px;border-radius:8px;background:linear-gradient(90deg,#214d76,#39c5ef,#34d399,#ffb454,#ff6b6b)}
+.lgRow{display:flex;justify-content:space-between;gap:6px;color:var(--muted);font-size:7.5px;margin-bottom:4px;font-weight:600}
+.lgC{display:none;gap:5px;flex-wrap:wrap;pointer-events:auto}.legend.cls .lgC{display:flex}.legend.cls .lgG{display:none}
+.lgItem{flex:1 1 150px;min-width:0;display:grid;grid-template-columns:12px minmax(0,1fr);gap:2px 6px;align-items:center;border:1.5px solid var(--c);background:#fff;border-radius:7px;padding:3px 6px;cursor:pointer;text-align:left;font:inherit}
+.lgItem .sw{width:12px;height:12px;border-radius:3px;background:var(--c);grid-row:1/3}.lgItem b{font-size:8.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lgItem em{font-style:normal;font-size:7.5px;color:var(--muted);white-space:nowrap}
+.lgItem.off{opacity:.45;border-color:var(--line);background:#f3f6f9}.lgItem.off .sw{background:#c5cfda}
+.lgItem.nd{--c:#8a97a6;flex:0 1 90px;cursor:default}
+.leaflet-tooltip{font-size:10px;font-weight:600;border-radius:6px}
+.rightcol{display:grid;grid-template-rows:minmax(0,.97fr) auto minmax(0,1.03fr);gap:6px;min-height:0}.chartcard{display:flex;flex-direction:column}
+.compare{display:grid;grid-template-columns:1.2fr .8fr;gap:7px}
+.mini{border:1px solid var(--line);background:#fff;border-radius:11px;padding:6px 9px 7px;box-shadow:var(--shadow);min-width:0}.mini h3{font-size:9px;margin:0 0 5px;color:var(--brand-dark)}
+.bars{display:grid;gap:3px}.row{display:grid;grid-template-columns:82px 1fr 44px;gap:5px;align-items:center;font-size:7.5px;color:#4a5a6c}.row b{text-align:right;color:var(--ink)}
+.track{height:5px;background:#e1e8ef;border-radius:8px;overflow:hidden}.fill{height:100%;border-radius:8px}.row.sel span{color:var(--brand);font-weight:700}
+.multiCharts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:7px;flex:1;min-height:0;margin:6px 0}
+.smallChart{grid-column:span 2;border:1px solid var(--line);border-radius:8px;background:#fbfdff;padding:6px;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;cursor:pointer}
+.smallChart:nth-child(n+4){grid-column:span 3}.smallChart.on{border-color:var(--brand);background:#eef6fb;box-shadow:0 0 0 1px #0b5c8a33}
+.smallChart .ct{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:8.5px;color:#4a5a6c;margin-bottom:3px;line-height:1.1;font-weight:700}
+.smallChart .ct span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.smallChart .ct span i{font-style:normal;color:#8795a5;margin-left:3px;font-size:7px;font-weight:500}.smallChart .ct b{font-size:9px;white-space:nowrap}
+.smallChart canvas{display:block;width:100%;flex:1;min-height:40px}
+.chartcard.combo .multiCharts{display:none}
+#combo{display:none;flex:1;min-height:0;margin:6px 0;flex-direction:column;gap:6px}.chartcard.combo #combo{display:flex}
+.cchips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}.cchips .lbl{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-right:2px}
+.cchip{display:inline-flex;align-items:center;gap:5px;border:1.5px solid var(--c);color:var(--c);background:#fff;border-radius:14px;padding:3px 9px;font-size:9px;font-weight:700;cursor:pointer;box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 12%,transparent)}
+.cchip i{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}.cchip em{font-style:normal;font-weight:600;color:var(--ink);opacity:.85}
+.cchip.off{border-color:var(--line);color:#9aa7b5;background:#f6f9fc;box-shadow:none}.cchip.off i{background:#c5cfda}.cchip.off em{color:#9aa7b5}
+#comboBox{position:relative;flex:1;min-height:0;border:1px solid var(--line);border-radius:8px;background:#fbfdff;overflow:hidden}#comboBox canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.periodCards{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:3px}
+.periodCards button{border:1px solid var(--line);background:#f6f9fc;color:var(--muted);border-radius:7px;padding:5px;text-align:left;font-size:7.5px;cursor:pointer;font-weight:600}.periodCards button b{display:block;color:var(--ink);font-size:10px;margin-top:2px}.periodCards button.on{border-color:var(--brand);background:#e6f1f8}
+.bottomright{display:grid;grid-template-columns:1.2fr .8fr;gap:7px;min-height:0}
+.xp{display:flex;flex-direction:column;gap:3px;overflow:auto;border-color:#cfe3f0;background:linear-gradient(135deg,#f3f9fd,#f7f5ff)}
+.xpTop{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.xpTabs{display:inline-flex;border:1px solid #cfe0ec;border-radius:12px;overflow:hidden;flex:none}.xpTabs button{border:0;background:#fff;color:var(--brand);font-size:9px;padding:3px 8px;cursor:pointer;font-weight:600}.xpTabs button.on{background:var(--brand);color:#fff}
+.xpHead{display:flex;gap:8px;align-items:center}
+.xpBadge{width:26px;height:26px;border-radius:8px;color:#fff;font-weight:800;font-size:14px;display:grid;place-items:center;flex:none;background:#8a97a6}
+.xpHead h2{margin:0;font-size:12px}.xpAns{font-size:8.5px;color:#3a4a5c;line-height:1.35;margin-top:1px}
+.xpWhy{font-size:8.5px;line-height:1.4;color:var(--ink)}
+.xpCrop{font-size:8.5px;line-height:1.4;color:var(--ink);background:#fff;border:1px dashed #b9d3e6;border-radius:7px;padding:4px 6px}
+.xpRules{display:grid;gap:3px}
+.xpRule{display:grid;grid-template-columns:18px minmax(0,1fr);gap:6px;align-items:start;border:1px solid var(--line);border-radius:7px;padding:2px 6px;background:#fff;opacity:.6}
+.xpRule.on{opacity:1;border-color:var(--c);background:color-mix(in srgb,var(--c) 7%,#fff);box-shadow:0 0 0 1px var(--c)}
+.xpRule .l{width:15px;height:15px;border-radius:50%;background:var(--c);color:#fff;font-weight:800;font-size:9px;display:grid;place-items:center}
+.xpRule .t{font-size:8.5px;font-weight:700;color:var(--ink)}.xpRule .d{font-size:7.5px;color:var(--muted);line-height:1.4}
+.xpRule .d i{font-style:normal;font-weight:800;margin-left:2px}.xy{color:#138a52}.xn{color:#d33a4a}.xq{color:#8a97a6}
+.xpShare{display:grid;gap:2px;margin-top:1px}.xpBar{display:flex;height:8px;border-radius:6px;overflow:hidden;background:#e3eaf1}.xpBar i{display:block;height:100%}
+.xpShareTxt{font-size:7.5px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}.xpShareTxt b{color:var(--ink)}
+.xpPer{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.xpPer button{display:flex;align-items:center;justify-content:space-between;gap:4px;border:1px solid var(--line);background:#fff;border-radius:7px;padding:2px 6px;font-size:7.5px;color:var(--muted);font-weight:600;cursor:pointer}
+.xpPer button.on{border-color:var(--brand);background:#e6f1f8}.xpPer button b{min-width:15px;height:15px;border-radius:50%;color:#fff;font-size:8.5px;display:grid;place-items:center;background:#8a97a6}
+.xpMiss{font-size:9px;color:#9a5b0c;background:#fff3e3;border:1px solid #f6dcb8;border-radius:7px;padding:6px 8px;line-height:1.4}
+#decBody{--vc:#8a97a6;display:none;flex-direction:column;gap:4px}.xp.tabDec #decBody{display:flex}.xp.tabDec #xpBody{display:none}
+.dhead{display:flex;gap:8px;align-items:center}
+.vpill{background:var(--vc);color:#fff;font-weight:800;font-size:10px;letter-spacing:.5px;padding:4px 9px;border-radius:7px;white-space:nowrap;text-transform:uppercase}
+.dhead b{font-size:10.5px;color:var(--ink);line-height:1.25;display:block}
+.lamps{display:flex;gap:3px;margin-left:auto;flex:none}.lamps i{width:9px;height:9px;border-radius:50%;background:var(--lc);opacity:.22}.lamps i.on{opacity:1;box-shadow:0 0 0 2px color-mix(in srgb,var(--lc) 25%,transparent)}
+.daction{font-size:8.8px;line-height:1.35;background:color-mix(in srgb,var(--vc) 9%,white);border-left:3px solid var(--vc);padding:5px 8px;border-radius:0 6px 6px 0;color:var(--ink)}
+.dlist{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.dlist li{display:grid;grid-template-columns:8px 1fr;gap:7px;font-size:8.4px;line-height:1.35;color:#3a4a5c;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:#fbfdff}
+.dlist li i{width:8px;height:8px;border-radius:50%;margin-top:3px;background:var(--sc)}.dlist li b{color:var(--ink)}
+.dlist li.bad{--sc:#d33a4a;background:#fff6f6;border-color:#f3cfd3}.dlist li.good{--sc:#138a52;background:#f2fbf6;border-color:#cdeadb}.dlist li.neu{--sc:#c98a1e}.dlist li.na{--sc:#b3bdc8;color:#8a97a6}
+.dnote{font-size:7px;color:#8a97a6;line-height:1.35}
+.adapt{overflow:auto}.adapt ul{margin:5px 0;padding-left:14px;font-size:8.5px;line-height:1.45;color:#3a4a5c}.adapt li{margin-bottom:3px}.adapt p{font-size:8.5px;color:#3a4a5c}
+.confidence{margin-top:5px;padding:5px;border:1px solid var(--line);background:#f6f9fc;border-radius:7px;font-size:7.5px;color:var(--muted)}.confidence b{float:right;color:#b45309}.footnote{font-size:7px;color:#8a97a6;margin-top:2px;line-height:1.35}
+.mobileFilter{display:none}
+@media(min-width:901px) and (max-height:880px){#trajBars{grid-template-columns:1fr 1fr;column-gap:16px}#trajBars .row{grid-template-columns:62px 1fr 34px}#chartCard .hd .sub{display:none}.smallChart{padding:4px 6px}.periodCards button{padding:3px 5px}.periodCards button b{margin-top:0}}
+@media(max-width:900px){body{overflow:auto}.app{height:auto;min-height:100dvh}.top{position:sticky;top:0}.tag{display:none}.mobileFilter{display:block;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:5px 8px}.filters{display:none;grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr);margin-top:6px}.kpi em{grid-column:1/-1;white-space:normal}main{height:auto;display:block;padding:8px}.layout{display:block}.card{margin-bottom:8px}.maparea{flex:none;height:330px}.left,.rightcol,.bottomright{display:block}.compare{grid-template-columns:1fr;margin-bottom:8px}.xp,.adapt{margin-bottom:8px}.kpi:last-child{grid-column:1/-1}.export span{display:none}.mini{margin-top:0}.mapnote{max-width:44%}#comboBox{flex:none;height:340px}.hd{flex-wrap:wrap}.xpTop{flex-wrap:wrap}}
+@media(max-width:1000px){.multiCharts{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,130px)}.smallChart,.smallChart:nth-child(n+4){grid-column:span 1}.smallChart:last-child{grid-column:span 2}.chartcard{min-height:470px}.chartcard.combo{min-height:0}}
+@media(max-width:620px){.multiCharts{grid-template-columns:1fr;grid-template-rows:repeat(5,135px)}.smallChart,.smallChart:nth-child(n+4),.smallChart:last-child{grid-column:span 1}.chartcard{min-height:780px}.chartcard.combo{min-height:0}}
+</style></head><body><div class="app">
+<header class="top"><div class="brand"><button class="mobileFilter" id="mobBtn">☰</button><div class="logo">C</div><div><b>CDEAR · Climate Data Engine for Agricultural Resilience</b><small>Zambia · cropland climate outlook</small></div></div>
+<div class="righthead"><span class="tag warn" id="demoTag" style="display:none">Demo units · boundary attributes not found</span><span class="tag" id="baseTag">Baseline 2001–2020</span><span class="tag hot">SSP585 · high-emission pathway</span><button class="export" id="btnExport">⇩ <span>Export series</span></button></div></header>
+<main>
+<section class="filters" id="filters">
+<div class="f"><label>Indicator</label><select id="indicator"></select></div>
+<div class="f"><label>Area type</label><select id="areaType" class="key"><option value="country">Country</option><option value="basin">Basin</option></select></div>
+<div class="f"><label id="lbTop">Country</label><select id="fTop"></select></div>
+<div class="f"><label id="lb1">Admin level 1</label><select id="fL1"></select></div>
+<div class="f"><label id="lb2">Admin level 2</label><select id="fL2"></select></div>
+<div class="f"><label id="lb3">Admin level 3</label><select id="fL3"></select></div>
+<div class="f"><label>Future period</label><select id="period"><option>2021–2040</option><option selected>2041–2060</option><option>2061–2080</option><option>2081–2100</option></select></div>
+<div class="f"><label>Basemap</label><select id="basemap"><option value="sat">Satellite + labels</option><option value="light">Light gray</option><option value="osm">Streets</option></select></div>
+</section>
+<section class="kpis">
+<div class="kpi" style="--c:#2F80ED"><small id="kBaseL">Historical baseline · 2001–2020</small><strong id="base">–</strong><em id="baseU">mm/year</em></div>
+<div class="kpi" style="--c:#00A8C6"><small>Projected mean · SSP585</small><strong id="future">–</strong><em id="periodLabel">–</em></div>
+<div class="kpi" style="--c:#8E44AD"><small>Typical-year range (±1 SD)</small><strong id="range">–</strong><em>Year-to-year variability</em></div>
+<div class="kpi" style="--c:#27AE60"><small>Years moving the same way</small><strong id="agree">–</strong><em>Share of years beyond baseline</em></div>
+<div class="kpi" style="--c:#F2994A"><small>Climate-pressure signal</small><strong id="risk">–</strong><em id="riskSub">Aridity P/PET</em></div>
+</section>
+<section class="layout"><div class="left">
+<article class="card mapcard"><div class="hd"><div><div class="ey">Spatial outlook</div><h2 id="mapTitle">Rainfall change by cropland polygon</h2><div class="sub" id="mapSub"></div></div>
+<div class="hdr"><button class="chip" id="polyChip"></button><div class="seg" id="mapMode"><button data-m="chg" class="on">% change</button><button data-m="val">Future value</button><button data-m="cls">A/B/C class</button><button data-m="unm">Unmet blue %</button></div></div></div>
+<div class="maparea"><div id="map"></div><div class="mapnote"><b>Cropland polygons</b><br><span id="nPoly">Click a polygon to analyse it</span></div><div class="mapchange"><span id="chgLbl">AREA-WEIGHTED CHANGE</span><b id="change">–</b></div>
+<div class="legend"><div class="lgG"><div class="lgRow"><span id="lgLo">lower</span><span id="lgMid">cropland polygons</span><span id="lgHi">higher</span></div><div class="bar"></div></div><div class="lgC" id="lgCls"></div></div></div></article></div>
+<div class="rightcol"><article class="card chartcard" id="chartCard"><div class="hd"><div><div class="ey" style="color:#6d4fd6">Projection & variability</div><h2>Climate and water indicators · 2001–2100</h2><div class="sub" id="chartSub">Annual (thin) · 10-yr average (bold) · ±1 SD band · dashed = 2001–2020 baseline · shaded = selected period</div></div>
+<div class="hdr"><div class="seg" id="cmodeSeg" style="display:none"><button data-c="abs" class="on">mm/yr</button><button data-c="pct">% vs baseline</button></div><div class="seg" id="viewSeg"><button data-v="sep" class="on">Separate panels</button><button data-v="combo">Integrated view</button></div></div></div>
+<div class="multiCharts" id="multi"></div>
+<div id="combo"><div class="cchips" id="cchips"></div><div id="comboBox"><canvas id="comboCv"></canvas></div></div>
+<div class="periodCards" id="periodCards"></div></article>
+<div class="compare"><div class="mini"><h3 id="trajTitle">Rainfall · baseline vs future periods (mm/yr)</h3><div class="bars" id="trajBars"></div></div>
+<div class="mini"><h3>Green-water gap · <span id="gapPer">2041–2060</span></h3><div class="bars" id="gapBars"></div></div></div>
+<div class="bottomright">
+<article class="card xp" id="xpCard"><div class="xpTop"><div><div class="ey" id="xpEy">Crop-expansion sustainability</div><div class="sub" id="xpSub">–</div></div><div class="xpTabs" id="xpTabs"><button data-t="xp" class="on">Expansion</button><button data-t="dec">Decision</button></div></div>
+<div id="xpBody"></div>
+<div id="decBody"><div class="dhead"><span class="vpill" id="dVerdict">–</span><div><b id="dHead">–</b></div><div class="lamps" id="dLamps"></div></div><div class="daction" id="dAction"></div><ul class="dlist" id="dList"></ul><div class="dnote" id="dNote"></div></div>
+<div class="footnote" id="xpFoot">Future: AET = FAETData · Green ET = FGETEData · Blue ET = FBETData. Baseline 2001–2020: HAETData · HGETData · HBETData. Scenario-based projection, not a deterministic prediction.</div></article>
+<article class="card adapt"><div class="ey" style="color:#138a52">Recommendation</div><h2>Pathway to a sustainable future</h2><div id="adapt"></div><div class="confidence">Recommendation confidence <b id="conf">–</b><br><span>Based on direction consistency, size of change and water gap.</span></div></article></div></div></section></main></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- DATA FILES (keep them in the same folder as this HTML) -->
+<script src="https://mws003-gis.github.io/AET_crop.js"></script>
+<!-- OPTIONAL: boundary membership per polygon, see "BOUNDARY ATTRIBUTES" note in the script. Safe if the file does not exist. -->
+<script src="CDEAR_polygon_units.js"></script>
+<!-- baseline 2001-2020 (H layers) -->
+<script src="HPData.js"></script><script src="HPETData.js"></script><script src="HAETData.js"></script><script src="HGETData.js"></script><script src="HBETData.js"></script>
+<!-- future 2021-2100 (F layers); Green ET = FGETEData -->
+<script src="FPData.js"></script><script src="FPETData.js"></script><script src="FAETData.js"></script><script src="FBETData.js"></script><script src="FGETEData.js"></script>
+<script>
+/* =====================================================================
+   BOUNDARY ATTRIBUTES  (how the Area dropdowns get their units)
+   Each cropland polygon needs the NAME of the unit it falls in. Put these
+   fields either in AET_crop feature properties, or in a separate file
+   CDEAR_polygon_units.js :  const CDEAR_POLYGON_UNITS = { "<polygon id>": { adm1:"", adm2:"", adm3:"", basin:"", sb1:"", sb2:"", sb3:"" }, ... };
+     Country : adm1, adm2, adm3   (sub-national levels 1-3)
+     Basin   : basin, sb1, sb2, sb3 (main basin and sub-basin levels 1-3)
+   Use the polygon centroid in the spatial join (R: st_point_on_surface + st_join).
+   If no such fields exist the dashboard builds clearly-labelled DEMO units so the
+   dropdowns can be tested.
+   ===================================================================== */
+/* ================= CONFIG ================= */
+const Y0=2001,Y1=2100,LASTH=2020,BASE=[2001,2020];
+const PERIODS=[[2021,2040],[2041,2060],[2061,2080],[2081,2100]];
+/* ---- SETTINGS (placeholders: edit to the values you can defend) ---- */
+const DEC={blueBand:5,bluePlan:10,rainDrop:10,eff:[0.6,0.7],
+ unmetTol:5,    /* % of AET : unmet Blue ET up to this is still treated as high potential */
+ unmetMax:30,   /* % of AET : unmet Blue ET at/above this gets the darkest red */
+ headMax:10};   /* % of AET : minimum top of the green (headroom) scale; it auto-stretches to the 95th percentile of the current selection */
+/* Seasonal crop water requirement (CWR), mm per growing season - FAO Irrigation & Drainage Paper 33: https://www.fao.org/4/U3160E/u3160e04.htm */
+const CROPS=[['Beans',300,500],['Sorghum / millet',450,650],['Soybean',450,700],['Groundnut',500,700],['Maize',500,800],['Sunflower',600,1000],['Cotton',700,1300],['Citrus',900,1200]];
+/* Layers. hist = BASELINE 2001-2020 (H layers) ; proj = FUTURE 2021-2100 (F layers).
+   AET = HAETData / FAETData · Green ET = HGETData / FGETEData · Blue ET = HBETData / FBETData */
+const IND=[
+ {k:'P',  name:'Rainfall', hist:'HPData',   proj:'FPData',    color:'#2F80ED',kind:'good',short:'P'},
+ {k:'PET',name:'PET',      hist:'HPETData', proj:'FPETData',  color:'#F2994A',kind:'bad', short:'PET'},
+ {k:'AET',name:'AET',      hist:'HAETData', proj:'FAETData',  color:'#EB5757',kind:'neu', short:'AET'},
+ {k:'GET',name:'Green ET', hist:'HGETData', proj:'FGETEData', color:'#27AE60',kind:'neu', short:'Green'},
+ {k:'BET',name:'Blue ET',  hist:'HBETData', proj:'FBETData',  color:'#00A8C6',kind:'bad', short:'Blue'}
+];
+const G=n=>{try{return (typeof window[n]!=='undefined')?window[n]:(0,eval)('typeof '+n+"!=='undefined'?"+n+':undefined')}catch(e){return undefined}};
+const $=s=>document.querySelector(s),isN=x=>x!==null&&x!==undefined&&!isNaN(x);
+const fmt=x=>!isN(x)?'–':(Math.abs(x)<10?x.toFixed(1):Math.round(x).toLocaleString('en-US'));
+const sgn=(x,d=1)=>!isN(x)?'–':(x>0.0499?'+':x<-0.0499?'−':'')+Math.abs(x).toFixed(d);
+const sgnF=x=>!isN(x)?'–':(x>0.4999?'+':x<-0.4999?'−':'')+fmt(Math.abs(x));
+const mean=a=>{a=a.filter(isN);return a.length?a.reduce((s,v)=>s+v,0)/a.length:null};
+const sd=a=>{a=a.filter(isN);if(!a.length)return null;const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length)};
+const natural=(a,b)=>a.localeCompare(b,undefined,{numeric:true});
+
+/* ================= DATA INDEX ================= */
+const DS={};IND.forEach(i=>{DS[i.k]={hist:G(i.hist),proj:G(i.proj)}});
+function indexOf(d){const m=new Map();if(!d)return m;for(const k in d){const r=d[k];if(!r)continue;m.set(String(k),r);if(r.id!==undefined)m.set(String(r.id),r)}return m}
+const IDX={};IND.forEach(i=>{IDX[i.k]={hist:indexOf(DS[i.k].hist),proj:indexOf(DS[i.k].proj)}});
+const have=k=>IDX[k].hist.size>0||IDX[k].proj.size>0;
+const YEARS=[];for(let y=Y0;y<=Y1;y++)YEARS.push(y);
+const serCache={};
+function series(k,id){const key=k+'|'+id;if(serCache[key])return serCache[key];
+ const h=IDX[k].hist.get(String(id)),p=IDX[k].proj.get(String(id));
+ const out=YEARS.map(y=>{const order=y<=LASTH?[h,p]:[p,h];for(const r of order){if(!r)continue;const v=r['year_'+y];if(v!==undefined&&v!==null&&v!==''&&!isNaN(v))return +v}return null});
+ return serCache[key]=out}
+const AREA=new Map();IND.forEach(i=>['hist','proj'].forEach(t=>IDX[i.k][t].forEach((r,id)=>{if(r.area_ha!==undefined&&!AREA.has(id))AREA.set(id,+r.area_ha)})));
+const allIds=(()=>{const s=new Set();IND.forEach(i=>['hist','proj'].forEach(t=>IDX[i.k][t].forEach((r,id)=>s.add(r.id!==undefined?String(r.id):id))));return [...s]})();
+
+/* strict baseline for per-polygon logic: if the H layer is loaded, a polygon WITHOUT 2001-2020 values has no baseline (-> no data), it is not silently given a 2021-2040 one */
+function polyBase(id,k,per){const s=series(k,id),b=mean(slice(s,...BASE));if(isN(b))return b;return BASEINFO[k].loaded?null:stats(s,per).b}
+/* ---- BASELINE CHECK: which H layers (2001-2020) are loaded and how many polygons have baseline values ---- */
+const BASEINFO=(function(){const o={};
+ IND.forEach(i=>{const m=IDX[i.k].hist;let n=0;
+  allIds.forEach(id=>{const r=m.get(id);if(r){for(let y=BASE[0];y<=BASE[1];y++){const v=r['year_'+y];if(v!==undefined&&v!==null&&v!==''&&!isNaN(v)){n++;break}}}});
+  o[i.k]={layer:i.hist,loaded:m.size>0,n,tot:allIds.length}});
+ return o})();
+(function(){const tag=$('#baseTag'),ks=IND.map(i=>i.k),miss=ks.filter(k=>!BASEINFO[k].loaded),part=ks.filter(k=>BASEINFO[k].loaded&&BASEINFO[k].n<BASEINFO[k].tot);
+ const lab=k=>IND.find(i=>i.k===k).short;
+ if(!miss.length&&!part.length){tag.classList.add('ok');tag.innerHTML='Baseline 2001–2020 · <b>✓</b> '+ks.map(lab).join(' · ')}
+ else{tag.classList.add('warn');tag.innerHTML='Baseline 2001–2020 · '+(miss.length?'missing: '+miss.map(lab).join(', ')+' (using 2021–2040)':'partial: '+part.map(lab).join(', ')+' (polygons without baseline = no data)')}
+ tag.title=ks.map(k=>BASEINFO[k].layer+': '+(BASEINFO[k].loaded?BASEINFO[k].n.toLocaleString('en-US')+' of '+BASEINFO[k].tot.toLocaleString('en-US')+' polygons':'not loaded')).join('\n')})();
+
+/* ================= POLYGON GEOMETRY + BOUNDARY ATTRIBUTES ================= */
+const FEATS=(typeof AET_crop!=='undefined'&&AET_crop&&AET_crop.features)?AET_crop.features:[];
+const EXTRA=(typeof CDEAR_POLYGON_UNITS!=='undefined')?CDEAR_POLYGON_UNITS:null;
+const KEYS={a1:['adm1','ADM1','ADM1_NAME','NAME_1'],a2:['adm2','ADM2','ADM2_NAME','NAME_2'],a3:['adm3','ADM3','ADM3_NAME','NAME_3'],
+ b0:['basin','BASIN','basin_name','BASIN_NAME'],s1:['sb1','SB1','subbasin1','sub_basin_1'],s2:['sb2','SB2','subbasin2','sub_basin_2'],s3:['sb3','SB3','subbasin3','sub_basin_3']};
+const pick=(o,ks)=>{if(!o)return '';for(const k of ks){const v=o[k];if(v!==undefined&&v!==null&&String(v).trim()!=='')return String(v).trim()}return ''};
+const BB={},LON={},LAT={},PATH={country:{},basin:{}};
+(function(){
+ FEATS.forEach(f=>{const id=String(f.properties&&f.properties.id);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  (function w(c){if(typeof c[0]==='number'){if(c[0]<x0)x0=c[0];if(c[0]>x1)x1=c[0];if(c[1]<y0)y0=c[1];if(c[1]>y1)y1=c[1]}else c.forEach(w)})(f.geometry.coordinates);
+  BB[id]=[x0,y0,x1,y1];LON[id]=(x0+x1)/2;LAT[id]=(y0+y1)/2;
+  const src=(EXTRA&&EXTRA[id])||f.properties;
+  PATH.country[id]=[pick(src,KEYS.a1),pick(src,KEYS.a2),pick(src,KEYS.a3)];
+  PATH.basin[id]=[pick(src,KEYS.b0),pick(src,KEYS.s1),pick(src,KEYS.s2),pick(src,KEYS.s3)]});
+})();
+const IS_DEMO={country:false,basin:false};
+function rankBins(ids,vals,n){const s=[...ids].sort((a,b)=>vals[a]-vals[b]),m={};s.forEach((id,i)=>m[id]=Math.min(n-1,Math.floor(i*n/s.length)));return m}
+function split(ids,nx,ny){const bx=rankBins(ids,LON,nx),by=rankBins(ids,LAT,ny),g={};ids.forEach(id=>{const k=bx[id]*ny+by[id];(g[k]=g[k]||[]).push(id)});return Object.keys(g).map(Number).sort((a,b)=>a-b).map(k=>g[k])}
+function demoTree(ids,prefixes,first){const out={};ids.forEach(id=>out[id]=[]);
+ const rec=(grp,d,code)=>{if(d===prefixes.length)return;split(grp,d===0?first[0]:2,d===0?first[1]:2).forEach((p,i)=>{const c=code?code+'.'+(i+1):String(i+1);p.forEach(id=>out[id].push(prefixes[d]+' '+c));rec(p,d+1,c)})};
+ rec(ids,0,'');return out}
+(function(){const ids=Object.keys(BB);if(!ids.length)return;
+ [['country',['Demo Province','Demo District','Demo Ward'],[3,3]],['basin',['Demo Basin','Demo SB1','Demo SB2','Demo SB3'],[3,1]]].forEach(([t,pre,first])=>{
+  if(ids.some(id=>PATH[t][id].some(Boolean)))return;
+  IS_DEMO[t]=true;const tree=demoTree(ids,pre,first);ids.forEach(id=>PATH[t][id]=tree[id])})})();
+
+/* ================= STATE ================= */
+const st={clsHide:new Set(),xpTab:'xp',view:'sep',cmode:'abs',hidden:new Set(),hov:null,ind:'P',sel:null,per:1,mode:'chg',type:'country',selv:{country:['','',''],basin:['','','','']}};
+const unitCache={};
+function unitKey(){return st.type+'|'+st.selv[st.type].join('|')}
+function unitIds(){const k=unitKey();if(unitCache[k])return unitCache[k];const sv=st.selv[st.type],P=PATH[st.type],any=sv.some(Boolean);
+ const ids=!any?allIds:allIds.filter(id=>{const p=P[id];if(!p)return false;for(let i=0;i<sv.length;i++)if(sv[i]&&p[i]!==sv[i])return false;return true});
+ return unitCache[k]={ids,set:any?new Set(ids):null}}
+function unitName(){const sv=st.selv[st.type],parts=[];
+ if(st.type==='country'){parts.push('Zambia');for(const v of sv){if(!v)break;parts.push(v)}}else{if(!sv[0])return 'All basins';for(const v of sv){if(!v)break;parts.push(v)}}
+ return parts.join(' › ')}
+const aggCache={};
+function aggSeries(k){const key=k+'|'+unitKey();if(aggCache[key])return aggCache[key];
+ const ids=unitIds().ids.filter(id=>IDX[k].hist.has(id)||IDX[k].proj.has(id));
+ const S=ids.map(id=>[series(k,id),AREA.get(id)>0?AREA.get(id):1]);
+ return aggCache[key]=YEARS.map((_,i)=>{let a=0,w=0;S.forEach(([s,wt])=>{if(isN(s[i])){a+=s[i]*wt;w+=wt}});return w?a/w:null})}
+const unitSeries=k=>!have(k)?YEARS.map(()=>null):(st.sel?series(k,st.sel):aggSeries(k));
+/* total area (ha) of the polygons in the current selection that have data for indicator k */
+function selArea(k){if(st.sel)return AREA.has(st.sel)?AREA.get(st.sel):null;let a=0,n=0;unitIds().ids.forEach(id=>{if((IDX[k].hist.has(id)||IDX[k].proj.has(id))&&AREA.has(id)){a+=AREA.get(id);n++}});return n?a:null}
+const slice=(s,a,b)=>s.slice(a-Y0,b-Y0+1);
+/* baseline = 2001-2020 mean (H layers). Only if a series has no 2001-2020 value at all does it fall back to 2021-2040 (flagged ref). */
+function stats(s,per){
+ let b=mean(slice(s,...BASE)),ref=false,bl='2001–2020';
+ if(!isN(b)){b=mean(slice(s,...PERIODS[0]));ref=true;bl='2021–2040 (ref.)'}
+ const v=slice(s,...per).filter(isN),f=mean(v),d=sd(v);
+ const ch=(isN(b)&&isN(f)&&b!==0&&!(ref&&per[0]===PERIODS[0][0]))?100*(f-b)/Math.abs(b):null;
+ let cons=null;if(isN(ch)&&v.length){const sg=Math.sign(f-b);cons=100*v.filter(x=>Math.sign(x-b)===sg&&sg!==0).length/v.length}
+ return{b,f,sd:d,ch,cons,ref,bl,n:v.length}}
+function slope(s,a,b){const p=[];for(let y=a;y<=b;y++){const v=s[y-Y0];if(isN(v))p.push([y,v])}if(p.length<3)return null;const mx=mean(p.map(q=>q[0])),my=mean(p.map(q=>q[1]));let sxx=0,sxy=0;p.forEach(([x,y])=>{sxx+=(x-mx)**2;sxy+=(x-mx)*(y-my)});return sxx?10*sxy/sxx:null}
+const favClass=(kind,ch)=>!isN(ch)?'#8a97a6':kind==='neu'?'#0b5c8a':((ch>0)===(kind==='good'))?'#138a52':'#d33a4a';
+function aridity(p){return p<.05?'Hyper-arid':p<.2?'Arid':p<.5?'Semi-arid':p<.65?'Dry sub-humid':'Humid'}
+
+/* ================= FILTERS ================= */
+const selInd=$('#indicator');IND.filter(i=>have(i.k)).forEach(i=>{const o=document.createElement('option');o.value=i.k;o.textContent=i.name;selInd.appendChild(o)});
+if(!have('P')&&selInd.options.length)st.ind=selInd.options[0].value;selInd.value=st.ind;
+selInd.onchange=()=>{st.ind=selInd.value;update()};
+$('#period').onchange=e=>{st.per=e.target.selectedIndex;update()};
+$('#mobBtn').onclick=()=>{const f=$('#filters');f.style.display=f.style.display==='grid'?'none':'grid'};
+document.querySelectorAll('#mapMode button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;document.querySelectorAll('#mapMode button').forEach(x=>x.classList.toggle('on',x===b));update()});
+$('#polyChip').onclick=()=>select(null);
+const optCache={};
+function optionsAt(i){const sv=st.selv[st.type],key=st.type+'|'+sv.slice(0,i).join('|')+'|'+i;if(optCache[key])return optCache[key];
+ const P=PATH[st.type],s=new Set();
+ allIds.forEach(id=>{const p=P[id];if(!p||!p[i])return;for(let j=0;j<i;j++)if(p[j]!==sv[j])return;s.add(p[i])});
+ return optCache[key]=[...s].sort(natural)}
+const ELS=[$('#fTop'),$('#fL1'),$('#fL2'),$('#fL3')],LBS=[$('#lbTop'),$('#lb1'),$('#lb2'),$('#lb3')];
+function fill(sel,opts,cur,allLabel,enabled){sel.innerHTML='<option value="">'+allLabel+'</option>'+opts.map(o=>'<option>'+o.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</option>').join('');sel.value=cur||'';sel.disabled=!enabled}
+function refreshFilters(){
+ const country=st.type==='country',sv=st.selv[st.type];$('#areaType').value=st.type;
+ const names=country?['Country','Admin level 1','Admin level 2','Admin level 3']:['Basin','Sub-basin level 1','Sub-basin level 2','Sub-basin level 3'];
+ names.forEach((n,j)=>LBS[j].textContent=n);
+ if(country){ELS[0].innerHTML='<option>Zambia</option>';ELS[0].disabled=true}
+ else{const o=optionsAt(0);fill(ELS[0],o,sv[0],'All basins',o.length>0)}
+ for(let j=1;j<=3;j++){const pi=country?j-1:j,prev=pi===0?true:!!sv[pi-1],o=prev?optionsAt(pi):[];fill(ELS[j],o,sv[pi],o.length?'All':'—',prev&&o.length>0)}
+ $('#demoTag').style.display=IS_DEMO[st.type]?'':'none'}
+$('#areaType').onchange=e=>{st.type=e.target.value;onUnitChange()};
+ELS.forEach((el,j)=>el.onchange=()=>{const pi=st.type==='country'?j-1:j;if(pi<0)return;const sv=st.selv[st.type];sv[pi]=el.value;for(let k=pi+1;k<sv.length;k++)sv[k]='';onUnitChange()});
+function onUnitChange(){st.sel=null;refreshFilters();update();fitToUnit()}
+function select(id){if(id){const u=unitIds();if(u.set&&!u.set.has(String(id)))return}st.sel=id?String(id):null;update()}
+
+/* ================= MAP ================= */
+const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([-14,28],6);
+map.createPane('labels');const lp=map.getPane('labels');lp.style.zIndex=650;lp.style.pointerEvents='none';
+const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
+const TL=(u,o)=>L.tileLayer(u,Object.assign({maxZoom:19},o));
+const bases={
+ sat:L.layerGroup([TL(ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:17,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'}),
+                   TL(ESRI+'Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:17,pane:'labels'})]),
+ light:L.layerGroup([TL(ESRI+'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:16,attribution:'© Esri, HERE, Garmin, OpenStreetMap contributors'}),
+                    TL(ESRI+'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:16,pane:'labels'})]),
+ osm:L.layerGroup([TL('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors'})])};
+let curBase=bases.sat;curBase.addTo(map);
+$('#basemap').onchange=e=>{map.removeLayer(curBase);curBase=bases[e.target.value];curBase.addTo(map)};
+const RAMP=['#214d76','#39c5ef','#34d399','#ffb454','#ff6b6b'];
+function lerpStops(stops,t){t=Math.max(0,Math.min(1,t))*(stops.length-1);const i=Math.min(stops.length-2,Math.floor(t)),f=t-i,c=h=>[1,3,5].map(k=>parseInt(h.substr(k,2),16)),A=c(stops[i]),B=c(stops[i+1]);return '#'+A.map((v,k)=>Math.round(v+(B[k]-v)*f).toString(16).padStart(2,'0')).join('')}
+function ramp(t){return isN(t)?lerpStops(RAMP,t):'#8a97a6'}
+let layer=null,polyVal={},lo=0,hi=1,UNITSET=null;
+
+/* ---- unmet Blue ET (% of AET): margin m = (Green ET + baseline Blue ET - AET) / AET ; m < 0 = unmet, m >= 0 = headroom.
+        baseline Blue ET = 2001-2020 mean of HBETData ---- */
+let UNM_HEAD=DEC.headMax;
+const marCache={};
+function polyMargin(id,j){const key=id+'|'+j;if(key in marCache)return marCache[key];let r=null;
+ if(have('GET')&&have('AET')&&have('BET')){const per=PERIODS[j],g=stats(series('GET',id),per).f,av=stats(series('AET',id),per).f,b0=polyBase(id,'BET',per);
+  if(isN(g)&&isN(av)&&av>0&&isN(b0)){const m=100*(g+b0-av)/av;r={m,unmet:Math.max(0,-m),mm:Math.max(0,av-g-b0),av}}}
+ return marCache[key]=r}
+/* small unmet (<= tolerance) is still shown as high potential (green); only larger unmet turns amber -> red */
+function unmColor(m){const tol=DEC.unmetTol;
+ if(m<-tol)return lerpStops(['#f6b73c','#ea7a3a','#d33a4a','#7f1d1d'],(-m-tol)/(DEC.unmetMax-tol));
+ return lerpStops(['#cdeed8','#7fcf9c','#1a9a5a','#0a5c35'],(m+tol)/(UNM_HEAD+tol))}
+function unmGradient(){const mn=-DEC.unmetMax,mx=UNM_HEAD,tot=mx-mn,pos=v=>(100*(v-mn)/tot).toFixed(2)+'%',st_=[];
+ for(let v=mn;v<-DEC.unmetTol;v+=2)st_.push(unmColor(v)+' '+pos(v));
+ st_.push(unmColor(-DEC.unmetTol-.01)+' '+pos(-DEC.unmetTol),unmColor(-DEC.unmetTol)+' '+pos(-DEC.unmetTol));
+ for(let v=-DEC.unmetTol+2;v<=mx;v+=Math.max(2,(mx+DEC.unmetTol)/30))st_.push(unmColor(v)+' '+pos(v));
+ return 'linear-gradient(90deg,'+st_.join(',')+')'}
+function unmStats(j){let tot=0,bad=0,sum=0,n=0,nd=0;
+ unitIds().ids.forEach(id=>{const r=polyMargin(id,j),w=AREA.get(String(id))>0?AREA.get(String(id)):1;if(!r){nd++;return}tot+=w;n++;sum+=r.unmet*w;if(r.unmet>DEC.unmetTol)bad+=w});
+ return{tot,n,nd,share:tot?100*bad/tot:null,mean:tot?sum/tot:null}}
+
+/* no outline on polygons (cleaner map); only the clicked polygon gets a white outline */
+function styleFor(f){const id=String(f.properties.id);
+ if(UNITSET&&!UNITSET.has(id))return{stroke:false,fillColor:'#ffffff',fillOpacity:.1};
+ if(st.mode==='unm'){const r=polyMargin(id,st.per),sel=st.sel===id,base={fillColor:r?unmColor(r.m):'#8a97a6',fillOpacity:r?.88:.35};
+  return sel?Object.assign(base,{stroke:true,color:'#ffffff',weight:2.5,fillOpacity:.96}):Object.assign(base,{stroke:false})}
+ if(st.mode==='cls'){const c=polyClass(id,st.per),sel=st.sel===id,off=c&&st.clsHide.has(c);
+  const base={fillColor:c?XP[c].c:'#8a97a6',fillOpacity:off?.07:(c?.86:.35)};
+  return sel?Object.assign(base,{stroke:true,color:'#ffffff',weight:2.5,fillOpacity:.95}):Object.assign(base,{stroke:false})}
+ const v=polyVal[id],t=isN(v)?(v-lo)/((hi-lo)||1):null,s=st.sel===id,rev=IND.find(i=>i.k===st.ind).kind==='good';
+ return s?{stroke:true,color:'#ffffff',weight:2.5,fillColor:ramp(isN(t)&&rev?1-t:t),fillOpacity:.92}
+         :{stroke:false,fillColor:ramp(isN(t)&&rev?1-t:t),fillOpacity:.82}}
+function tipFor(id){
+ if(st.mode==='unm'){const r=polyMargin(id,st.per);if(!r)return 'ID '+id+' · No data';
+  const per=PERIODS.map((p,j)=>{const q=polyMargin(id,j);return p[0]+'–'+String(p[1]).slice(2)+': <b>'+(q?(q.unmet>0?q.unmet.toFixed(0)+'% unmet':'ok'):'–')+'</b>'}).join(' · ');
+  const head=r.unmet>DEC.unmetTol?'<b style="color:#d33a4a">Not suitable · '+r.unmet.toFixed(0)+'% of AET unmet</b> ('+fmt(r.mm)+' mm)':r.unmet>0?'<b>High potential</b> · small unmet '+r.unmet.toFixed(1)+'% of AET (≤ '+DEC.unmetTol+'%)':'<b style="color:#138a52">High potential</b> · headroom +'+r.m.toFixed(0)+'% of AET';
+  return 'ID '+id+' · '+head+'<br><span style="font-weight:500">'+per+'</span>'}
+ if(st.mode==='cls'){const c=polyClass(id,st.per),r=polyMargin(id,st.per);
+  const per=PERIODS.map((p,j)=>{const q=polyClass(id,j);return p[0]+'–'+String(p[1]).slice(2)+': <b>'+(q||'–')+'</b>'}).join(' · ');
+  return 'ID '+id+' · <b>'+(c?'Class '+c+' – '+XP[c].name:'No data')+'</b>'+(r&&r.unmet>0?'<br>Unmet Blue ET: '+r.unmet.toFixed(0)+'% of AET':'')+'<br><span style="font-weight:500">'+per+'</span>'}
+ return 'ID '+id+(isN(polyVal[id])?' · '+(st.mode==='chg'?sgn(polyVal[id])+'%':fmt(polyVal[id])+' mm/yr'):'')}
+if(FEATS.length){
+ layer=L.geoJSON(AET_crop,{style:styleFor,onEachFeature:(f,l)=>{const id=String(f.properties.id);
+  l.on('click',()=>{select(id);l.bringToFront()});
+  l.on('mouseover',()=>l.bindTooltip(tipFor(id),{sticky:true}).openTooltip())}}).addTo(map);
+ try{map.fitBounds(layer.getBounds())}catch(e){}
+}else{$('#mapSub').textContent='AET_crop polygons not loaded'}
+function clsStats(j){const a={A:0,B:0,C:0,N:0},n={A:0,B:0,C:0,N:0};let tot=0;
+ unitIds().ids.forEach(id=>{const c=polyClass(id,j)||'N',w=AREA.get(String(id))>0?AREA.get(String(id)):1;a[c]+=w;n[c]++;tot+=w});
+ return{a,n,tot}}
+function renderClsLegend(){
+ const C=clsStats(st.per),box=$('#lgCls'),pc=k=>C.tot?(100*C.a[k]/C.tot):0,haveC=C.n.A+C.n.B+C.n.C>0;
+ box.innerHTML=['A','B','C'].map(k=>`<button class="lgItem ${st.clsHide.has(k)?'off':''}" data-k="${k}" style="--c:${XP[k].c}" title="Click to show / hide class ${k}"><span class="sw"></span><b>${k} · ${XP[k].name}</b><em>${pc(k).toFixed(0)}% of area · ${C.n[k].toLocaleString('en-US')} polygons</em></button>`).join('')+(C.n.N?`<div class="lgItem nd"><span class="sw"></span><b>No data</b><em>${C.n.N.toLocaleString('en-US')} polygons</em></div>`:'');
+ box.querySelectorAll('button.lgItem').forEach(b=>b.onclick=()=>{const k=b.dataset.k;st.clsHide.has(k)?st.clsHide.delete(k):st.clsHide.add(k);b.classList.toggle('off',st.clsHide.has(k));if(layer)layer.setStyle(styleFor)});
+ return{C,haveC,pc}}
+function fitToUnit(){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;
+ unitIds().ids.forEach(id=>{const b=BB[id];if(!b)return;n++;if(b[0]<x0)x0=b[0];if(b[1]<y0)y0=b[1];if(b[2]>x1)x1=b[2];if(b[3]>y1)y1=b[3]});
+ if(n)try{map.fitBounds([[y0,x0],[y1,x1]],{padding:[12,12]})}catch(e){}}
+function recolor(){
+ const U0=unitIds();UNITSET=U0.set;
+ $('.legend').classList.toggle('cls',st.mode==='cls');
+ if(st.mode==='cls'){polyVal={};const r=renderClsLegend();
+  let dk='A',best=-1;['A','B','C'].forEach(k=>{if(r.C.a[k]>best){best=r.C.a[k];dk=k}});
+  $('#chgLbl').textContent='DOMINANT CLASS (BY AREA)';
+  $('#change').innerHTML=r.haveC?'<span style="color:'+XP[dk].c+'">'+dk+' · '+r.pc(dk).toFixed(0)+'%</span>':'–';
+  $('#nPoly').textContent=U0.ids.length.toLocaleString('en-US')+' polygons in selection · hover for class by period · click legend to show/hide';
+  if(layer)layer.setStyle(styleFor);return}
+ if(st.mode==='unm'){polyVal={};const ms=[];U0.ids.forEach(id=>{const r=polyMargin(id,st.per);if(r&&r.m>0)ms.push(r.m)});ms.sort((a,b)=>a-b);
+  UNM_HEAD=ms.length?Math.max(DEC.headMax,ms[Math.min(ms.length-1,Math.floor(.95*ms.length))]):DEC.headMax;
+  const u=unmStats(st.per);
+  $('.bar').style.background=unmGradient();
+  $('#lgLo').textContent='≥'+DEC.unmetMax+'% unmet';$('#lgMid').textContent='≤'+DEC.unmetTol+'% unmet = still high potential';$('#lgHi').textContent='+'+Math.round(UNM_HEAD)+'% headroom';
+  $('#chgLbl').textContent='NOT SUITABLE (>'+DEC.unmetTol+'% UNMET)';
+  $('#change').innerHTML=u.share===null?'–':'<span style="color:'+(u.share>0?'#d33a4a':'#138a52')+'">'+u.share.toFixed(0)+'% of area</span>';
+  $('#nPoly').textContent=(u.share===null?'No data':'Mean unmet Blue ET '+u.mean.toFixed(1)+'% of AET')+' · '+U0.ids.length.toLocaleString('en-US')+' polygons · hover for detail';
+  if(layer)layer.setStyle(styleFor);return}
+ $('#chgLbl').textContent='AREA-WEIGHTED CHANGE';
+ polyVal={};const per=PERIODS[st.per],k=st.ind,U=unitIds();UNITSET=U.set;
+ U.ids.forEach(id=>{if(!(IDX[k].hist.has(id)||IDX[k].proj.has(id)))return;const s=stats(series(k,id),per);polyVal[id]=st.mode==='chg'?s.ch:s.f});
+ const vals=Object.values(polyVal).filter(isN).sort((a,b)=>a-b);
+ if(vals.length){lo=vals[Math.floor(.03*(vals.length-1))];hi=vals[Math.ceil(.97*(vals.length-1))];if(st.mode==='chg'&&lo<0&&hi>0){const m=Math.max(-lo,hi);lo=-m;hi=m}if(lo===hi){lo-=1;hi+=1}}
+ const u=st.mode==='chg'?'%':' mm';$('#lgLo').textContent=(st.mode==='chg'?sgn(lo):fmt(lo))+u;$('#lgHi').textContent=(st.mode==='chg'?sgn(hi):fmt(hi))+u;
+ $('#lgMid').textContent=st.mode==='chg'?'change vs 2001–2020 (SSP585)':'projected mean (mm/yr)';
+ const rev=IND.find(i=>i.k===st.ind).kind==='good';$('.bar').style.background='linear-gradient(90deg,'+(rev?[...RAMP].reverse():RAMP).join(',')+')';
+ $('#nPoly').textContent=U.ids.length.toLocaleString('en-US')+' polygons in selection · click one to analyse';
+ if(layer)layer.setStyle(styleFor)}
+
+/* ================= SMALL CHARTS (separate panels) ================= */
+const multi=$('#multi');IND.forEach(i=>{const d=document.createElement('div');d.className='smallChart';d.dataset.k=i.k;d.innerHTML=`<div class="ct"><span>${i.name}<i></i></span><b>–</b></div><canvas></canvas>`;d.onclick=()=>{if(!have(i.k))return;st.ind=i.k;selInd.value=i.k;update()};multi.appendChild(d)});
+function drawSmall(cv,s,color,per){
+ const dpr=window.devicePixelRatio||1,w=cv.clientWidth||210,h=cv.clientHeight||85;cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);
+ const L_=30,R=5,T=5,B=13,pw=w-L_-R,ph=h-T-B;
+ const vals=s.filter(isN);if(!vals.length){x.fillStyle='#8a97a6';x.font='9px sans-serif';x.fillText('No data in selection',L_+6,h/2);return}
+ const ma=s.map((_,i)=>{const a=s.slice(Math.max(0,i-9),i+1).filter(isN);return a.length>=5?mean(a):null});
+ const sdv=s.map((_,i)=>{const a=s.slice(Math.max(0,i-9),i+1).filter(isN);return a.length>=5?sd(a):null});
+ let mn=Infinity,mx=-Infinity;s.forEach(v=>{if(isN(v)){mn=Math.min(mn,v);mx=Math.max(mx,v)}});ma.forEach((m,i)=>{if(isN(m)){mn=Math.min(mn,m-(sdv[i]||0));mx=Math.max(mx,m+(sdv[i]||0))}});
+ const pad=(mx-mn)*.08||1;mn-=pad;mx+=pad;
+ const X=i=>L_+i/(YEARS.length-1)*pw,Yv=v=>T+(mx-v)/(mx-mn)*ph;
+ x.strokeStyle='#e3e9f0';x.lineWidth=1;[0,.5,1].forEach(t=>{const yy=T+t*ph;x.beginPath();x.moveTo(L_,yy);x.lineTo(w-R,yy);x.stroke()});
+ x.fillStyle='#6b7a8c';x.font='7px sans-serif';x.textAlign='right';x.fillText(fmt(mx),L_-3,T+6);x.fillText(fmt(mn),L_-3,T+ph);
+ [[2001,'2001'],[2020,'2020'],[2060,'2060'],[2100,'2100']].forEach(([y,t])=>{const xx=X(y-Y0);x.textAlign=y===2100?'right':y===2001?'left':'center';x.fillText(t,xx,h-3)});x.textAlign='left';
+ x.fillStyle='rgba(11,92,138,.10)';x.fillRect(X(per[0]-Y0),T,X(per[1]-Y0)-X(per[0]-Y0),ph);
+ const bm=mean(slice(s,...BASE));if(isN(bm)){x.setLineDash([3,3]);x.strokeStyle='#5b6b7d';x.lineWidth=1;x.beginPath();x.moveTo(L_,Yv(bm));x.lineTo(w-R,Yv(bm));x.stroke();x.setLineDash([])}
+ x.setLineDash([2,3]);x.strokeStyle='#9aa7b5';x.lineWidth=1;const dx=X(LASTH-Y0+.5);x.beginPath();x.moveTo(dx,T);x.lineTo(dx,T+ph);x.stroke();x.setLineDash([]);
+ let run=[];const flush=()=>{if(run.length>1){x.beginPath();run.forEach((i,j)=>{const yy=Yv(ma[i]+sdv[i]);j?x.lineTo(X(i),yy):x.moveTo(X(i),yy)});[...run].reverse().forEach(i=>x.lineTo(X(i),Yv(ma[i]-sdv[i])));x.closePath();x.fillStyle=color+'26';x.fill()}run=[]};
+ ma.forEach((m,i)=>{if(isN(m)&&isN(sdv[i]))run.push(i);else flush()});flush();
+ const line=(arr,lw,col)=>{x.beginPath();let pen=false;arr.forEach((v,i)=>{if(!isN(v)){pen=false;return}pen?x.lineTo(X(i),Yv(v)):x.moveTo(X(i),Yv(v));pen=true});x.lineWidth=lw;x.strokeStyle=col;x.stroke()};
+ line(s,.8,color+'77');line(ma,2,color)}
+
+/* ================= INTEGRATED VIEW (all indicators in one chart) ================= */
+document.querySelectorAll('#viewSeg button').forEach(b=>b.onclick=()=>{st.view=b.dataset.v;document.querySelectorAll('#viewSeg button').forEach(x=>x.classList.toggle('on',x===b));
+ $('#chartCard').classList.toggle('combo',st.view==='combo');$('#cmodeSeg').style.display=st.view==='combo'?'':'none';st.hov=null;update()});
+document.querySelectorAll('#cmodeSeg button').forEach(b=>b.onclick=()=>{st.cmode=b.dataset.c;document.querySelectorAll('#cmodeSeg button').forEach(x=>x.classList.toggle('on',x===b));drawCombo()});
+let COMBO={S:null,per:null,geo:null};
+function niceTicks(mn,mx,n){const span=mx-mn||1,raw=span/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p,s_=(f<1.5?1:f<3?2:f<7?5:10)*p,a=Math.ceil(mn/s_)*s_,o=[];for(let v=a;v<=mx+1e-9;v+=s_)o.push(+v.toFixed(6));return o}
+function drawCombo(){
+ if(st.view!=='combo'||!COMBO.S)return;
+ const S=COMBO.S,per=COMBO.per,cv=$('#comboCv'),box=$('#comboBox'),dpr=window.devicePixelRatio||1,w=box.clientWidth,h=box.clientHeight;if(!w||!h)return;
+ cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);x.clearRect(0,0,w,h);
+ const pct=st.cmode==='pct',all=IND.filter(i=>have(i.k)),vars=all.filter(i=>!st.hidden.has(i.k));
+ $('#cchips').innerHTML='<span class="lbl">Show</span>'+all.map(i=>{const tt=stats(S[i.k],per);return `<button class="cchip ${st.hidden.has(i.k)?'off':''}" data-k="${i.k}" style="--c:${i.color}"><i></i>${i.name}<em>${isN(tt.ch)?sgn(tt.ch)+'%':''}</em></button>`}).join('');
+ document.querySelectorAll('#cchips .cchip').forEach(b=>b.onclick=()=>{const k=b.dataset.k;st.hidden.has(k)?st.hidden.delete(k):st.hidden.add(k);st.hov=null;drawCombo()});
+ const L_=42,R=96,T=16,B=18,pw=w-L_-R,ph=h-T-B;
+ if(!vars.length){x.fillStyle='#8a97a6';x.font='11px sans-serif';x.fillText('Select at least one indicator',L_+10,h/2);COMBO.geo=null;return}
+ const D=vars.map(i=>{const s=S[i.k];let b=mean(slice(s,...BASE));if(!isN(b))b=mean(slice(s,...PERIODS[0]));
+  const cvt=v=>!isN(v)?null:(pct?(b?100*(v-b)/Math.abs(b):null):v);
+  const ma=s.map((_,j)=>{const a=s.slice(Math.max(0,j-9),j+1).filter(isN);return a.length>=5?mean(a):null});
+  return{i,raw:s.map(cvt),ma:ma.map(cvt),b}});
+ let mn=Infinity,mx=-Infinity;D.forEach(d=>d.raw.forEach(v=>{if(isN(v)){mn=Math.min(mn,v);mx=Math.max(mx,v)}}));
+ if(pct){mn=Math.min(mn,0);mx=Math.max(mx,0)}else mn=Math.min(mn,0);
+ const pad=(mx-mn)*.05||1;mx+=pad;if(pct)mn-=pad;
+ const X=j=>L_+j/(YEARS.length-1)*pw,Yv=v=>T+(mx-v)/(mx-mn)*ph;
+ x.font='9px sans-serif';x.textAlign='right';x.textBaseline='middle';
+ niceTicks(mn,mx,5).forEach(v=>{const yy=Yv(v),z=pct&&v===0;x.strokeStyle=z?'#8a97a6':'#e3e9f0';x.lineWidth=z?1.2:1;x.beginPath();x.moveTo(L_,yy);x.lineTo(L_+pw,yy);x.stroke();x.fillStyle='#6b7a8c';x.fillText(pct?(v>0?'+':v<0?'−':'')+Math.abs(v)+'%':fmt(v),L_-5,yy)});
+ x.textAlign='left';x.textBaseline='alphabetic';x.fillStyle='#6b7a8c';x.font='8px sans-serif';x.fillText(pct?'Change vs 2001–2020 mean':'mm / year',4,10);
+ x.font='9px sans-serif';[2001,2020,2040,2060,2080,2100].forEach(y=>{const xx=X(y-Y0);x.textAlign=y===2001?'left':y===2100?'right':'center';x.fillStyle='#6b7a8c';x.fillText(y,xx,h-5)});
+ x.fillStyle='rgba(11,92,138,.09)';x.fillRect(X(per[0]-Y0),T,X(per[1]-Y0)-X(per[0]-Y0),ph);
+ x.fillStyle='rgba(11,92,138,.6)';x.font='700 8px sans-serif';x.textAlign='center';x.fillText(per[0]+'–'+per[1],(X(per[0]-Y0)+X(per[1]-Y0))/2,T-4);
+ const dx=X(LASTH-Y0+.5);x.setLineDash([3,3]);x.strokeStyle='#9aa7b5';x.lineWidth=1;x.beginPath();x.moveTo(dx,T);x.lineTo(dx,T+ph);x.stroke();x.setLineDash([]);
+ x.fillStyle='#8a97a6';x.font='8px sans-serif';x.textAlign='right';x.fillText('Historical',dx-4,T+9);x.textAlign='left';x.fillText('Projection',dx+4,T+9);
+ if(!pct)D.forEach(d=>{if(isN(d.b)){x.setLineDash([2,4]);x.strokeStyle=d.i.color+'88';x.lineWidth=1;x.beginPath();x.moveTo(L_,Yv(d.b));x.lineTo(L_+pw,Yv(d.b));x.stroke();x.setLineDash([])}});
+ const line=(arr,lw,col)=>{x.beginPath();let pen=false;arr.forEach((v,j)=>{if(!isN(v)){pen=false;return}pen?x.lineTo(X(j),Yv(v)):x.moveTo(X(j),Yv(v));pen=true});x.lineWidth=lw;x.strokeStyle=col;x.lineJoin='round';x.stroke()};
+ D.forEach(d=>line(d.raw,.8,d.i.color+'55'));D.forEach(d=>line(d.ma,2.4,d.i.color));
+ const ends=D.map(d=>{let j=YEARS.length-1;while(j>0&&!isN(d.ma[j]))j--;return{d,y:Yv(d.ma[j]),yy:Yv(d.ma[j]),v:d.ma[j]}}).sort((a,b)=>a.y-b.y);
+ for(let k=1;k<ends.length;k++)if(ends[k].y-ends[k-1].y<12)ends[k].y=ends[k-1].y+12;
+ x.font='700 9px sans-serif';x.textAlign='left';x.textBaseline='middle';
+ ends.forEach(e=>{x.fillStyle=e.d.i.color;x.beginPath();x.arc(L_+pw+3,e.yy,2.5,0,7);x.fill();x.fillText(e.d.i.name+' '+(pct?sgn(e.v,0)+'%':fmt(e.v)),L_+pw+9,e.y)});x.textBaseline='alphabetic';
+ COMBO.geo={L_,pw,n:YEARS.length};
+ if(st.hov!==null){const j=st.hov,xx=X(j),yr=YEARS[j];x.strokeStyle='rgba(27,42,58,.45)';x.lineWidth=1;x.beginPath();x.moveTo(xx,T);x.lineTo(xx,T+ph);x.stroke();
+  D.forEach(d=>{const v=d.raw[j];if(isN(v)){x.fillStyle=d.i.color;x.beginPath();x.arc(xx,Yv(v),3.2,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=1;x.stroke()}});
+  const rows=D.map(d=>[d.i.name,d.i.color,d.raw[j]]).filter(r=>isN(r[2])),bw=pct?138:150,bh=20+rows.length*13;let bx=xx+10;if(bx+bw>L_+pw)bx=xx-bw-10;const by=T+14;
+  x.fillStyle='rgba(255,255,255,.97)';x.strokeStyle='#cfd9e3';x.lineWidth=1;x.beginPath();if(x.roundRect)x.roundRect(bx,by,bw,bh,6);else x.rect(bx,by,bw,bh);x.fill();x.stroke();
+  x.fillStyle='#08425f';x.font='700 9px sans-serif';x.textAlign='left';x.fillText(yr+(yr>LASTH?' · SSP585':' · historical'),bx+8,by+12);
+  rows.forEach((r,q)=>{const yy=by+26+q*13;x.fillStyle=r[1];x.beginPath();x.arc(bx+11,yy-3,3,0,7);x.fill();x.fillStyle='#1b2a3a';x.font='600 9px sans-serif';x.textAlign='left';x.fillText(r[0],bx+19,yy);x.textAlign='right';x.fillText(pct?sgn(r[2])+'%':fmt(r[2])+' mm',bx+bw-8,yy)});x.textAlign='left'}}
+(function(){const cv=$('#comboCv'),at=px=>{const g=COMBO.geo;if(!g)return null;const j=Math.round((px-g.L_)/g.pw*(g.n-1));return(j>=0&&j<g.n)?j:null};
+ cv.addEventListener('mousemove',e=>{st.hov=at(e.clientX-cv.getBoundingClientRect().left);drawCombo()});
+ cv.addEventListener('mouseleave',()=>{st.hov=null;drawCombo()});
+ cv.addEventListener('touchmove',e=>{st.hov=at(e.touches[0].clientX-cv.getBoundingClientRect().left);drawCombo()},{passive:true})})();
+
+/* =====================================================================
+   CROP-EXPANSION SUSTAINABILITY  (3 cases)
+   Gr = Green ET (FGETEData)   Av = AET (FAETData)
+   B  = Blue ET (FBETData)     B0 = baseline Blue ET = 2001-2020 mean of HBETData
+   A  Rainfed-sustainable                    Gr >= Av
+   B  Sustainable with existing irrigation   Gr < Av, Gr + B >= Av, and B <= B0
+   C  Not sustainable                        Gr + B < Av, or B > B0
+   ===================================================================== */
+const XP={
+ A:{c:'#138a52',name:'Rainfed-sustainable',ans:'Yes – rainfall alone can support it, and there is potential to grow higher-CWR crops than today.'},
+ B:{c:'#0e8fb3',name:'Sustainable with existing irrigation',ans:'Yes – the shortfall is covered without taking more irrigation water than today.'},
+ C:{c:'#d33a4a',name:'Not sustainable',ans:'No – expansion would need extra blue water, or still leaves a deficit. Consider lower-CWR crops that match Green ET + baseline Blue ET.'}};
+function classify(gr,av,b,b0){if(!isN(gr)||!isN(av))return null;if(gr>=av)return 'A';if(!isN(b)||!isN(b0))return null;return(gr+b>=av&&b<=b0)?'B':'C'}
+const clsCache={};
+function polyClass(id,j){const key=id+'|'+j;if(key in clsCache)return clsCache[key];let c=null;
+ if(have('GET')&&have('AET')){const per=PERIODS[j],gr=stats(series('GET',id),per).f,av=stats(series('AET',id),per).f;
+  if(isN(gr)&&isN(av)){if(gr>=av)c='A';else if(have('BET')){const sb=stats(series('BET',id),per);c=classify(gr,av,sb.f,polyBase(id,'BET',per))}}}
+ return clsCache[key]=c}
+function classShares(j){const ids=st.sel?[st.sel]:unitIds().ids,a={A:0,B:0,C:0};let tot=0;
+ ids.forEach(id=>{const c=polyClass(id,j);if(!c)return;const w=AREA.get(String(id))>0?AREA.get(String(id)):1;a[c]+=w;tot+=w});
+ return tot?{A:100*a.A/tot,B:100*a.B/tot,C:100*a.C/tot}:null}
+const periodStats=(S,k,j)=>S[k]&&have(k)?stats(S[k],PERIODS[j]):null;
+function unitClass(S,j){const gr=periodStats(S,'GET',j),av=periodStats(S,'AET',j),b=periodStats(S,'BET',j);return classify(gr&&gr.f,av&&av.f,b&&b.f,b&&b.b)}
+/* crops (FAO CWR ranges) whose mid-range seasonal need fits a water budget (mm), highest demand first */
+function fitCrops(budget){return CROPS.map(([n,lo,hi])=>({n,lo,hi,mid:(lo+hi)/2})).filter(c=>c.mid<=budget).sort((a,b)=>b.mid-a.mid)}
+const cropTxt=c=>c.n+' ('+c.lo+'–'+c.hi+')';
+function cropAdvice(cl,gr,av,b0){
+ if(!cl||!isN(gr))return null;
+ if(cl==='A'){const f=fitCrops(gr).slice(0,3);return{s:'good',x:'<b>Higher-CWR crops possible.</b> Green ET exceeds AET by '+fmt(gr-av)+' mm, so crops with a higher water need than today still fit: '+(f.length?f.map(cropTxt).join(', ')+' mm/season.':'none of the listed crops fit yet.')}}
+ const bud=gr+b0;
+ if(cl==='B'){const f=fitCrops(bud).slice(0,3);return{s:'neu',x:'<b>Keep the current crop mix.</b> Stay within Green ET + baseline Blue ET ('+fmt(bud)+' mm); crops that fit: '+(f.length?f.map(cropTxt).join(', ')+' mm/season.':'none of the listed crops.')}}
+ const f=fitCrops(bud).slice(0,3),mg=CROPS.filter(c=>(c[1]+c[2])/2>bud&&c[1]<=bud).slice(0,2).map(c=>c[0]);
+ return{s:'neu',x:'<b>Shift to lower-CWR crops.</b> Match Green ET + baseline Blue ET ('+fmt(bud)+' mm): '+(f.length?f.map(cropTxt).join(', ')+' mm/season'+(mg.length?'; marginal: '+mg.join(', '):'')+'.':'no listed crop fits within this budget.')}}
+function renderXP(S,T,unit){
+ const per=PERIODS[st.per],pl=per[0]+'–'+per[1];
+ $('#xpSub').textContent=unit+' · '+pl+' · SSP585';
+ const gr=T.GET&&T.GET.f,av=T.AET&&T.AET.f,b=T.BET&&T.BET.f,b0=T.BET&&T.BET.b,cl=classify(gr,av,b,b0),body=$('#xpBody');
+ const missing=[];if(!have('GET'))missing.push('Green ET (FGETEData)');if(!have('AET'))missing.push('AET (FAETData)');if(!have('BET'))missing.push('Blue ET (FBETData)');
+ if(!cl){body.innerHTML='<div class="xpMiss">'+(missing.length?'Needs '+missing.join(', ')+' to apply the rules.':'Not enough Green ET, AET or Blue ET values for this selection.')+'</div>';return}
+ const X=XP[cl],yes=v=>v===null?'<i class="xq">–</i>':v?'<i class="xy">✓</i>':'<i class="xn">✗</i>';
+ const tA=gr>=av,tB1=gr+b>=av,tB2=b<=b0;
+ let why='';
+ if(cl==='A')why=`Green ET (<b>${fmt(gr)} mm</b>) is <b>${fmt(gr-av)} mm</b> above AET (<b>${fmt(av)} mm</b>).`;
+ else if(cl==='B')why=`Green ET is <b>${fmt(av-gr)} mm/yr</b> short of AET (<b>${fmt(av)} mm</b>); Blue ET (<b>${fmt(b)} mm</b>) covers it and stays within today’s <b>${fmt(b0)} mm</b>.`;
+ else{const w=[];if(!tB1)w.push(`Green + Blue ET is <b>${fmt(av-gr-b)} mm/yr</b> short of AET (${fmt(av)} mm)`);if(!tB2)w.push(`Blue ET would have to rise to <b>${fmt(b)} mm</b>, <b>${fmt(b-b0)} mm</b> (${sgn(100*(b-b0)/b0,0)}%) above today’s ${fmt(b0)} mm`);why=w.join('; ')+'.';
+  const um=Math.max(0,av-gr-b0);if(um>0)why+=` Unmet even with today’s Blue ET: <b>${fmt(um)} mm</b> (${(100*um/av).toFixed(0)}% of AET).`}
+ const ca=cropAdvice(cl,gr,av,b0);
+ const rule=(k,name,det)=>`<div class="xpRule ${cl===k?'on':''}" style="--c:${XP[k].c}"><span class="l">${k}</span><div><div class="t">${name}</div><div class="d">${det}</div></div></div>`;
+ const sh=classShares(st.per);
+ const strip=PERIODS.map((p,j)=>{const c=unitClass(S,j);return `<button data-j="${j}" class="${j===st.per?'on':''}"><span>${p[0]}–${String(p[1]).slice(2)}</span><b style="background:${c?XP[c].c:'#8a97a6'}">${c||'–'}</b></button>`}).join('');
+ body.innerHTML=`<div class="xpHead"><div class="xpBadge" style="background:${X.c}">${cl}</div><div><h2 style="color:${X.c}">${X.name}</h2><div class="xpAns">${X.ans}</div></div></div>
+ <div class="xpWhy">${why}</div>${ca?`<div class="xpCrop">${ca.x}</div>`:''}
+ <div class="xpRules">
+  ${rule('A','Rainfed-sustainable',`Green ET ≥ AET · ${fmt(gr)} vs ${fmt(av)} ${yes(tA)}`)}
+  ${rule('B','Sustainable with existing irrigation',`Green + Blue ≥ AET · ${fmt(gr+b)} vs ${fmt(av)} ${yes(tB1)} &nbsp;·&nbsp; Blue ≤ 2001–2020 baseline · ${fmt(b)} vs ${fmt(b0)} ${yes(tB2)}`)}
+  ${rule('C','Not sustainable','Green + Blue &lt; AET, or Blue ET above baseline')}
+ </div>
+ ${sh?`<div class="xpShare"><div class="xpBar"><i style="width:${sh.A}%;background:${XP.A.c}"></i><i style="width:${sh.B}%;background:${XP.B.c}"></i><i style="width:${sh.C}%;background:${XP.C.c}"></i></div><div class="xpShareTxt"><span>Cropland area${st.sel?' (this polygon)':''}</span><span><b style="color:${XP.A.c}">A ${sh.A.toFixed(0)}%</b> · <b style="color:${XP.B.c}">B ${sh.B.toFixed(0)}%</b> · <b style="color:${XP.C.c}">C ${sh.C.toFixed(0)}%</b></span></div></div>`:''}
+ <div class="xpPer">${strip}</div>
+ ${T.BET&&T.BET.ref?'<div class="footnote" style="color:#9a5b0c">No 2001–2020 Blue ET found for this selection (HBETData), so baseline Blue ET = 2021–2040 mean.</div>':''}`;
+ body.querySelectorAll('.xpPer button').forEach(bt=>bt.onclick=()=>{st.per=+bt.dataset.j;$('#period').selectedIndex=st.per;update()})}
+
+/* ================= DECISION TAB (4 tests + verdict) ================= */
+const VERDICTS=[['Expand','#138a52'],['Maintain & monitor','#c9a400'],['Adapt','#e08a1e'],['Restructure','#d33a4a']];
+function decide(T,S,pl,ai0,ai1){
+ const B=T.BET,Gr=T.GET,Av=T.AET,P=T.P,eff=DEC.eff,effTxt=Math.round(eff[0]*100)+'–'+Math.round(eff[1]*100)+'%';
+ let t1={s:'na',h:'Irrigation',x:'Blue ET is not available for this selection.'},act1='';
+ if(B&&isN(B.f)&&isN(B.b)&&!isN(B.ch)){t1.x='Select a later period: the Blue ET baseline is '+B.bl+', so the first period has nothing to compare with.'}
+ else if(B&&isN(B.ch)){
+  const d=B.f-B.b,area=selArea('BET'),tot=isN(area)?d*10*area/1e6:null,
+   vol=`${sgnF(d)} mm/yr, ${sgnF(d*10)} m³/ha`+(isN(tot)?`, ${sgn(tot,Math.abs(tot)<10?2:0)} Mm³/yr over the selected cropland`:'');
+  if(B.ch>DEC.blueBand){
+   const hit=PERIODS.find(p=>{const q=stats(S.BET,p);return isN(q.ch)&&q.ch>DEC.bluePlan});
+   t1={s:'bad',h:'Irrigation',x:`<b>Irrigation demand will outgrow today's supply.</b> Blue ET ${sgn(B.ch)}% vs ${B.bl}: ${vol}. `+(hit?`Plan from ${hit[0]}–${hit[1]} (rise passes +${DEC.bluePlan}%).`:`Rise stays below +${DEC.bluePlan}% in every period.`)};
+   act1=`Plan for ${sgnF(d)} mm/yr (${sgnF(d*10)} m³/ha) more irrigation water`+(hit?` from ${hit[0]}–${hit[1]}`:'')+'.'}
+  else if(B.ch<-DEC.blueBand)t1={s:'good',h:'Irrigation',x:`<b>Irrigation pressure easing.</b> Blue ET ${sgn(B.ch)}% vs ${B.bl}: ${vol}.`};
+  else t1={s:'neu',h:'Irrigation',x:`<b>Irrigation stable.</b> Blue ET ${sgn(B.ch)}% vs ${B.bl} (within ±${DEC.blueBand}%): ${sgnF(d)} mm/yr.`}}
+ let t2={s:'na',h:'Water supply',x:'Green ET or AET is not available for this selection.'},act2='',gap=null,irrTxt='';
+ if(Gr&&Av&&isN(Gr.f)&&isN(Av.f)){gap=Gr.f-Av.f;
+  if(gap<0){const def=-gap,a=def/eff[1],b=def/eff[0];
+   t2={s:'bad',h:'Water supply',x:`<b>Green ET falls short of AET.</b> Green ET ${fmt(Gr.f)} mm vs AET ${fmt(Av.f)} mm: <b>${fmt(def)} mm short</b>. Supplemental irrigation ≈ <b>${fmt(a)}–${fmt(b)} mm/yr</b> (assumes ${effTxt} field efficiency).`};
+   irrTxt=`${fmt(a)}–${fmt(b)} mm/yr of supplemental irrigation`;
+   act2=`Cover the ${fmt(def)} mm Green ET shortfall with about ${fmt(a)}–${fmt(b)} mm/yr of supplemental irrigation.`}
+  else t2={s:'good',h:'Water supply',x:`<b>Green ET meets AET, room to expand.</b> Green ET ${fmt(Gr.f)} mm vs AET ${fmt(Av.f)} mm: <b>${fmt(gap)} mm surplus</b>.`}}
+ let t3={s:'na',h:'Crops',x:'Needs Green ET, AET and Blue ET for this selection.'};
+ const cl=classify(Gr&&Gr.f,Av&&Av.f,B&&B.f,B&&B.b),ca=cropAdvice(cl,Gr&&Gr.f,Av&&Av.f,B&&B.b);if(ca)t3={s:ca.s,h:'Crops',x:ca.x};
+ let t4={s:'na',h:'Rainfall',x:'Rainfall or PET is not available for this selection.'},act4='';
+ if(P&&isN(P.f)&&isN(P.b)&&isN(P.ch)&&isN(ai0)&&isN(ai1)){
+  const d=P.f-P.b,c0=aridity(ai0),c1=aridity(ai1),shift=c0!==c1,txt=`Rainfall ${sgn(P.ch)}% (${sgnF(d)} mm/yr); aridity ${shift?c0+' → '+c1:c0+' (unchanged)'}, P/PET ${ai0.toFixed(2)} → ${ai1.toFixed(2)}.`;
+  if(P.ch<=-DEC.rainDrop&&shift){t4={s:'bad',h:'Rainfall',x:'<b>Rainfed farming becomes risky.</b> '+txt};act4='Treat rainfed production as high risk: add water storage and drought-tolerant options.'}
+  else if(P.ch<=-DEC.rainDrop)t4={s:'neu',h:'Rainfall',x:'<b>Rainfall falling, aridity class unchanged.</b> '+txt}
+  else t4={s:'good',h:'Rainfall',x:'<b>Rainfall reliability holds.</b> '+txt}}
+ const bad=[t1,t2,t4].filter(t=>t.s==='bad').length;let v;
+ if(t1.s==='bad'&&t2.s==='bad'&&t4.s==='bad')v='Restructure';
+ else if((t1.s==='good'||t1.s==='neu')&&t2.s==='good'&&t4.s!=='bad')v='Expand';
+ else if(bad>=1)v='Adapt';else v='Maintain & monitor';
+ const nm={t1:'irrigation demand rising',t2:'Green ET below AET',t4:'rainfed farming risky'},why=[];
+ if(t1.s==='bad')why.push(nm.t1);if(t2.s==='bad')why.push(nm.t2);if(t4.s==='bad')why.push(nm.t4);
+ let head,action;
+ if(v==='Restructure'){head='Restructure: '+why.join(', ');action='Combine a shift to lower-CWR crops with '+(irrTxt||'more irrigation water')+(act1?', plan the extra Blue ET supply':'')+', and treat rainfed-only production as high risk.'}
+ else if(v==='Adapt'){head='Adapt: '+why.join(', ');action=act2||act1||act4}
+ else if(v==='Expand'){head='Expand: Green ET meets AET and irrigation demand is stable or easing';action=`Room to expand cropland or add higher-CWR crops: Green ET is ${fmt(gap)} mm/yr above AET.`}
+ else{head='Maintain & monitor: no major pressure signal for '+pl;action='Keep seasonal monitoring and flexible planting dates; recheck each future period.'}
+ return{v,head,action,tests:[t1,t2,t3,t4],na:[t1,t2,t4].filter(t=>t.s==='na').length}}
+function renderDecision(T,S,pl,ai0,ai1){
+ const D=decide(T,S,pl,ai0,ai1),col=VERDICTS.find(x=>x[0]===D.v)[1];
+ $('#decBody').style.setProperty('--vc',col);$('#dVerdict').textContent=D.v;$('#dHead').textContent=D.head;
+ $('#dLamps').innerHTML=VERDICTS.map(([n,c])=>`<i class="${n===D.v?'on':''}" style="--lc:${c}" title="${n}"></i>`).join('');
+ $('#dAction').innerHTML='<b>Key action:</b> '+D.action;
+ $('#dList').innerHTML=D.tests.map(t=>`<li class="${t.s}"><i></i><div>${t.x.startsWith('<b>')?'':'<b>'+t.h+':</b> '}${t.x}</div></li>`).join('');
+ $('#dNote').textContent='Screening guide, not a planting recommendation. Thresholds (Blue ±'+DEC.blueBand+'% / +'+DEC.bluePlan+'%, rainfall −'+DEC.rainDrop+'%), '+Math.round(DEC.eff[0]*100)+'–'+Math.round(DEC.eff[1]*100)+'% efficiency and FAO crop ranges are assumptions; crop water need is per season, Green ET and AET are annual. Totals = mean change × polygon area.'+(D.na?' Some tests unavailable here.':'')}
+function setXpTab(t){st.xpTab=t;$('#xpCard').classList.toggle('tabDec',t==='dec');
+ document.querySelectorAll('#xpTabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ $('#xpEy').textContent=t==='dec'?'Decision card':'Crop-expansion sustainability';$('#xpFoot').style.display=t==='dec'?'none':''}
+document.querySelectorAll('#xpTabs button').forEach(b=>b.onclick=()=>setXpTab(b.dataset.t));
+
+/* ================= UPDATE ================= */
+function update(){
+ const per=PERIODS[st.per],pl=per[0]+'–'+per[1],I=IND.find(i=>i.k===st.ind);
+ const S={};IND.forEach(i=>S[i.k]=unitSeries(i.k));const T={};IND.forEach(i=>T[i.k]=have(i.k)?stats(S[i.k],per):null);
+ const t=T[st.ind];
+ $('#kBaseL').textContent='Historical baseline · '+(t&&t.ref?'2021–2040 (ref.)':'2001–2020 ('+I.hist+')');
+ $('#base').textContent=t?fmt(t.b):'–';$('#baseU').textContent=I.name+' · mm/year';
+ $('#future').textContent=t?fmt(t.f):'–';$('#periodLabel').textContent=pl+' · mm/year';
+ $('#range').textContent=t&&isN(t.sd)?fmt(t.f-t.sd)+'–'+fmt(t.f+t.sd):'–';
+ $('#agree').textContent=t&&isN(t.cons)?Math.round(t.cons)+'%':'–';
+ let risk='–',riskSub='Aridity P/PET',ai0=null,ai1=null,dAI=null;
+ if(T.P&&T.PET&&isN(T.P.b)&&isN(T.PET.b)&&isN(T.P.f)&&isN(T.PET.f)){ai0=T.P.b/T.PET.b;ai1=T.P.f/T.PET.f;dAI=100*(ai1-ai0)/ai0;risk=dAI<=-15?'High':dAI<=-5?'Moderate':dAI>=5?'Easing':'Low';riskSub='Aridity '+ai0.toFixed(2)+' → '+ai1.toFixed(2)+' ('+aridity(ai1)+')'}
+ else if(t&&isN(t.ch)){const u=I.kind==='good'?-t.ch:I.kind==='bad'?t.ch:Math.abs(t.ch);risk=u>12?'High':u>6?'Moderate':'Low';riskSub='Based on '+I.name+' change'}
+ $('#risk').textContent=risk;$('#riskSub').textContent=riskSub;
+ if(st.mode!=='cls'&&st.mode!=='unm')$('#change').textContent=t&&isN(t.ch)?sgn(t.ch)+'%':'–';
+ $('#mapTitle').textContent=st.mode==='cls'?'Crop-expansion class (A / B / C) by cropland polygon':st.mode==='unm'?'Unmet Blue ET (% of AET) by cropland polygon':I.name+(st.mode==='chg'?' change':' projection')+' by cropland polygon';
+ $('#mapSub').textContent=[unitName(),'SSP585',pl,st.mode==='cls'?'Green ET vs AET + Blue ET rules':st.mode==='unm'?'(AET − Green ET − baseline Blue ET) ÷ AET':'vs 2001–2020'].join(' · ');
+ const chip=$('#polyChip');if(st.sel){chip.style.display='inline-block';chip.textContent='Polygon '+st.sel+(AREA.has(st.sel)?' · '+AREA.get(st.sel).toLocaleString('en-US',{maximumFractionDigits:1})+' ha':'')+'  ✕'}else chip.style.display='none';
+ if(st.view==='sep')IND.forEach(i=>{const box=multi.querySelector(`[data-k="${i.k}"]`),b=box.querySelector('b'),em=box.querySelector('i'),tt=T[i.k];box.classList.toggle('on',i.k===st.ind);
+  if(tt&&isN(tt.f)){b.textContent=isN(tt.ch)?sgn(tt.ch)+'%':'ref.';b.style.color=favClass(i.kind,tt.ch);em.textContent=fmt(tt.b)+'→'+fmt(tt.f)}else{b.textContent='n/a';b.style.color='#8a97a6';em.textContent=''}
+  drawSmall(box.querySelector('canvas'),S[i.k],i.color,per)});
+ COMBO.S=S;COMBO.per=per;
+ $('#chartSub').textContent=st.view==='combo'?'Integrated climate–water view · hover for values · click a chip to hide or show · thin = annual, bold = 10-yr average · shaded = selected period':'Annual (thin) · 10-yr average (bold) · ±1 SD band · dashed = 2001–2020 baseline · shaded = selected period';
+ drawCombo();
+ $('#periodCards').innerHTML=PERIODS.map((p,j)=>{const tt=have(st.ind)?stats(S[st.ind],p):null;return `<button data-j="${j}" class="${j===st.per?'on':''}"><span>${p[0]}–${p[1]}</span><b style="color:${tt?favClass(I.kind,tt.ch):'#1b2a3a'}">${tt&&isN(tt.ch)?sgn(tt.ch)+'%':'ref.'}</b></button>`}).join('');
+ document.querySelectorAll('#periodCards button').forEach(b=>b.onclick=()=>{st.per=+b.dataset.j;$('#period').selectedIndex=st.per;update()});
+ $('#trajTitle').textContent=I.name+' · baseline vs future periods (mm/yr)';
+ const rows=[['Baseline',t?t.b:null,false]];PERIODS.forEach((p,j)=>rows.push([p[0]+'–'+p[1],have(st.ind)?stats(S[st.ind],p).f:null,j===st.per]));
+ const mxv=Math.max(...rows.map(r=>isN(r[1])?r[1]:0))||1;
+ $('#trajBars').innerHTML=rows.map(r=>`<div class="row ${r[2]?'sel':''}"><span>${r[0]}</span><div class="track"><div class="fill" style="width:${isN(r[1])?Math.max(3,100*r[1]/mxv):0}%;background:${r[0]==='Baseline'?'#8aa0b6':I.color}"></div></div><b>${fmt(r[1])}</b></div>`).join('');
+ $('#gapPer').textContent=pl;
+ const gT=T.GET,rT=T.AET;let gh='';   /* gT = Green ET (supply), rT = AET (demand) */
+ if(gT&&rT&&isN(gT.f)&&isN(rT.f)){const mxg=Math.max(gT.f,rT.f,1),gap=gT.f-rT.f;
+  gh=`<div class="row"><span>Green ET</span><div class="track"><div class="fill" style="width:${100*gT.f/mxg}%;background:#27AE60"></div></div><b>${fmt(gT.f)}</b></div>
+  <div class="row"><span>AET</span><div class="track"><div class="fill" style="width:${100*rT.f/mxg}%;background:#EB5757"></div></div><b>${fmt(rT.f)}</b></div>
+  <div class="row"><span>${gap<0?'Deficit':'Surplus'}</span><div class="track"><div class="fill" style="width:${Math.min(100,100*Math.abs(gap)/mxg*3)}%;background:${gap<0?'#d33a4a':'#27AE60'}"></div></div><b>${sgn(gap,0)}</b></div>`}
+ else if(T.PET&&T.AET&&isN(T.PET.f)&&isN(T.AET.f)){const mxg=Math.max(T.PET.f,1),gp=T.PET.f-T.AET.f;
+  gh=`<div class="row"><span>PET</span><div class="track"><div class="fill" style="width:${100*T.PET.f/mxg}%;background:#F2994A"></div></div><b>${fmt(T.PET.f)}</b></div><div class="row"><span>AET</span><div class="track"><div class="fill" style="width:${100*T.AET.f/mxg}%;background:#EB5757"></div></div><b>${fmt(T.AET.f)}</b></div><div class="row"><span>Unmet demand</span><div class="track"><div class="fill" style="width:${Math.min(100,100*gp/mxg)}%;background:#d33a4a"></div></div><b>${fmt(gp)}</b></div>`}
+ $('#gapBars').innerHTML=gh||'<div class="row" style="grid-template-columns:1fr">Green ET / AET not available for this selection</div>';
+ renderXP(S,T,st.sel?'Polygon '+st.sel:unitName());
+ renderDecision(T,S,pl,ai0,ai1);
+ /* recommendation */
+ let adapt='',conf='LOW';
+ if(t&&isN(t.f)){
+  const c=k=>T[k]&&isN(T[k].ch)?T[k].ch:null,dP=c('P'),dPET=c('PET'),dB=c('BET'),late=have('P')?stats(S.P,PERIODS[3]).ch:null,pts=[];
+  const cl=classify(gT&&gT.f,rT&&rT.f,T.BET&&T.BET.f,T.BET&&T.BET.b);
+  if(cl==='A')pts.push(`<b>Crop expansion:</b> Green ET meets AET in ${pl}, so rainfall alone supports it; expand, and consider higher-CWR crops (see Expansion tab) with soil-moisture conservation.`);
+  else if(cl==='B')pts.push(`<b>Crop expansion:</b> expand only where irrigation already exists and cap Blue ET at today’s level (${fmt(T.BET.b)} mm/yr).`);
+  else if(cl==='C')pts.push(`<b>Crop expansion:</b> not sustainable in ${pl} – avoid new cropland unless extra water is secured and environmental flows are protected; move to lower-CWR crops that match Green ET + baseline Blue ET.`);
+  if(isN(dP)&&dP<=-5)pts.push(`<b>Protect rainfed production:</b> rainfall falls ${Math.abs(dP).toFixed(1)}% in ${pl}. Prioritise soil-moisture conservation (mulching, conservation tillage), rainwater harvesting and drought-tolerant, shorter-cycle varieties.`);
+  else if(isN(dP)&&dP>=5)pts.push(`<b>Use the extra rainfall:</b> rainfall rises ${dP.toFixed(1)}%. Strengthen drainage, erosion control and storage so surplus water supports dry-season crops.`);
+  else pts.push(`<b>Rainfall is broadly stable</b> (${sgn(dP)}%). Keep seasonal monitoring and flexible planting dates.`);
+  if(isN(dPET)&&dPET>=4)pts.push(`<b>Manage rising demand:</b> PET increases ${dPET.toFixed(1)}%, so crops need more water even if rain holds. Improve water-use efficiency (drip, scheduling, residue cover).`);
+  if(gT&&rT&&isN(gT.f)&&isN(rT.f)&&gT.f<rT.f*0.97)pts.push(`<b>Close the Green ET–AET gap:</b> plan supplemental irrigation of roughly ${fmt(rT.f-gT.f)} mm/yr in ${pl}, starting where the gap is largest on the map.`);
+  else if(isN(dB)&&dB>=5)pts.push(`<b>Plan irrigation supply:</b> Blue ET rises ${dB.toFixed(1)}%, so abstraction and storage must be sized for higher irrigation demand.`);
+  if(isN(late))pts.push(`<b>Long-term:</b> by 2081–2100 rainfall is ${sgn(late)}% vs baseline under SSP585 – design infrastructure and land-use plans for this end-of-century signal.`);
+  adapt='<ul>'+pts.map(p=>`<li>${p}</li>`).join('')+'</ul>';
+  conf=!isN(t.cons)?'LOW':(t.cons>=85&&Math.abs(t.ch)>=3)?'HIGH':t.cons>=65?'MEDIUM':'LOW';
+ }else adapt='<p>–</p>';
+ $('#adapt').innerHTML=adapt;$('#conf').textContent=conf;
+ recolor()}
+
+/* ================= EXPORT ================= */
+$('#btnExport').onclick=()=>{const ks=IND.filter(i=>have(i.k)),cols=ks.map(i=>unitSeries(i.k));
+ let csv='Year,Period,'+ks.map(i=>i.name).join(',')+'\n';YEARS.forEach((y,j)=>{csv+=y+','+(y<=LASTH?'baseline (H layers)':'SSP585')+','+cols.map(c=>isN(c[j])?c[j]:'').join(',')+'\n'});
+ const u=URL.createObjectURL(new Blob([csv],{type:'text/csv'})),a=document.createElement('a');a.href=u;a.download='cdear_'+(st.sel?'polygon_'+st.sel:unitName().replace(/[^A-Za-z0-9]+/g,'_'))+'_ssp585.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{update();map.invalidateSize()},150)});
+refreshFilters();update();
+</script></body></html>
