@@ -61,14 +61,34 @@ aside{z-index:10;background:#f6f9fa;border-left:1px solid var(--line);overflow:a
 const PERIODS=['Month_1','Month_2','Month_3','Month_4','Month_5'];
 const LABELS=['Period 1','Period 2','Period 3','Period 4','Period 5'];
 let periodIndex=2, metric='iwr', selectedFeature=null, mode3d=false, chart=null;
-const datasets={cwr:window.cwrData,rain:window.s_ipData,iwr:window.s_iwrData,sw:window.s_usw_d_iwrData,gw:window.s_ugw_d_iwrData,rfGap:window.s_rf_dData,swS:window.s_usw_sData,gwS:window.s_ugw_sData};
+// Data files declare top-level `const` variables. Those are accessible by name in a later
+// classic <script>, but they are NOT properties of window. Use typeof so a missing optional
+// dataset does not stop the dashboard.
+const datasets={
+  cwr:   typeof cwrData !== 'undefined' ? cwrData : null,
+  rain:  typeof s_ipData !== 'undefined' ? s_ipData : null,
+  iwr:   typeof s_iwrData !== 'undefined' ? s_iwrData : null,
+  sw:    typeof s_usw_d_iwrData !== 'undefined' ? s_usw_d_iwrData : null,
+  gw:    typeof s_ugw_d_iwrData !== 'undefined' ? s_ugw_d_iwrData : null,
+  rfGap: typeof s_rf_dData !== 'undefined' ? s_rf_dData : null,
+  swS:   typeof s_usw_sData !== 'undefined' ? s_usw_sData : null,
+  gwS:   typeof s_ugw_sData !== 'undefined' ? s_ugw_sData : null
+};
 const titles={iwr:'Irrigation Water Demand',cwr:'Crop Water Demand',rain:'Rainfall Contribution',sw:'Surface-water Pressure',gw:'Groundwater Pressure'};
 function finite(v){if(v===null||v===''||v===undefined)return null;v=Number(v);return Number.isFinite(v)?v:null}
-function finder(data,p){if(!data)return null; if(data[p.adm4_name])return data[p.adm4_name]; const code=p.adm4_pcode; return code?Object.values(data).find(r=>r&&r.adm4_pcode===code)||null:null}
+function finder(data,p){
+  if(!data||!p)return null;
+  const code=p.adm4_pcode;
+  if(code){const byCode=Object.values(data).find(r=>r&&r.adm4_pcode===code);if(byCode)return byCode;}
+  if(p.adm4_name&&data[p.adm4_name])return data[p.adm4_name];
+  const name=p.adm4_ref_n||p.adm4_name;
+  return name?Object.values(data).find(r=>r&&(r.adm4_ref_n===name||r.adm4_name===name))||null:null;
+}
 function value(data,p,i=periodIndex){const r=finder(data,p);return r?finite(r[PERIODS[i]]):null}
 function quantile(sorted,q){if(!sorted.length)return 0;const pos=(sorted.length-1)*q,b=Math.floor(pos),rest=pos-b;return sorted[b+1]!==undefined?sorted[b]+rest*(sorted[b+1]-sorted[b]):sorted[b]}
 function signalStats(key,i=periodIndex){const vals=enhanced.features.map(f=>finite(f.properties['_'+key+'_'+i])).filter(v=>v!==null).sort((a,b)=>a-b);return {vals,q20:quantile(vals,.2),q40:quantile(vals,.4),q60:quantile(vals,.6),q80:quantile(vals,.8),max:vals.at(-1)||1}}
 function percentile(v,vals){if(v===null||!vals.length)return null;let lo=0,hi=vals.length;while(lo<hi){const m=(lo+hi)>>1;if(vals[m]<=v)lo=m+1;else hi=m}return Math.round(100*lo/vals.length)}
+console.table(Object.fromEntries(Object.entries(datasets).map(([k,v])=>[k,v?Object.keys(v).length:0])));
 const enhanced=JSON.parse(JSON.stringify(adminGeoJSON));
 enhanced.features.forEach(f=>{const p=f.properties;Object.keys(datasets).forEach(k=>PERIODS.forEach((_,i)=>p['_'+k+'_'+i]=value(datasets[k],p,i)));});
 function baseStyle(){return {version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-.7,'raster-opacity':.72}}]}}
@@ -76,82 +96,16 @@ const map=new maplibregl.Map({container:'map',style:baseStyle(),center:[27.8,-13
 map.on('load',()=>{map.addSource('admin',{type:'geojson',data:enhanced,promoteId:'adm4_pcode'});map.addLayer({id:'demand-fill',type:'fill',source:'admin',paint:{'fill-color':'#d6dee1','fill-opacity':.78}});map.addLayer({id:'demand-3d',type:'fill-extrusion',source:'admin',layout:{visibility:'none'},paint:{'fill-extrusion-color':'#d6dee1','fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':.88}});map.addLayer({id:'admin-line',type:'line',source:'admin',paint:{'line-color':'#334d5c','line-width':.45,'line-opacity':.7}});updateMap();fitData();});
 function fitData(){const b=new maplibregl.LngLatBounds();enhanced.features.forEach(f=>walk(f.geometry.coordinates,c=>b.extend(c)));if(!b.isEmpty())map.fitBounds(b,{padding:35,duration:0})}
 function walk(a,cb){if(typeof a[0]==='number')cb(a);else a.forEach(x=>walk(x,cb))}
-
-function colorExpression(key, i) {
-    const prop = '_' + key + '_' + i;
-    const s = signalStats(key, i);
-
-    // No valid values are available.
-    if (!s.vals.length) {
-        return '#cbd4d8';
-    }
-
-    /*
-     * Quantiles can be identical when the dataset contains
-     * many repeated values or zeros.
-     *
-     * MapLibre requires interpolation stops to be in
-     * strictly ascending order.
-     */
-    const candidates = [
-        [s.vals[0], '#43aa6b'],
-        [s.q20, '#43aa6b'],
-        [s.q40, '#f4c95d'],
-        [s.q60, '#ef8a3d'],
-        [s.q80, '#d9474f'],
-        [s.max, '#7e2430']
-    ].sort((a, b) => a[0] - b[0]);
-
-    const uniqueStops = [];
-
-    candidates.forEach(([stop, color]) => {
-        if (!Number.isFinite(stop)) {
-            return;
-        }
-
-        const last = uniqueStops[uniqueStops.length - 1];
-
-        if (!last || stop > last[0]) {
-            uniqueStops.push([stop, color]);
-        } else {
-            /*
-             * Duplicate stop value:
-             * retain the later, higher-intensity colour.
-             */
-            last[1] = color;
-        }
-    });
-
-    /*
-     * If all areas have the same value, interpolation
-     * cannot be used because there is only one unique stop.
-     */
-    if (uniqueStops.length === 1) {
-        return [
-            'case',
-            ['==', ['get', prop], null],
-            '#cbd4d8',
-            '#ef8a3d'
-        ];
-    }
-
-    const interpolation = [
-        'interpolate',
-        ['linear'],
-        ['get', prop]
-    ];
-
-    uniqueStops.forEach(([stop, color]) => {
-        interpolation.push(stop, color);
-    });
-
-    return [
-        'case',
-        ['==', ['get', prop], null],
-        '#cbd4d8',
-        interpolation
-    ];
-}function updateMap(){if(!map.getLayer('demand-fill'))return;const s=signalStats(metric);const prop='_'+metric+'_'+periodIndex;const color=colorExpression(metric,periodIndex);map.setPaintProperty('demand-fill','fill-color',color);map.setPaintProperty('demand-3d','fill-extrusion-color',color);map.setPaintProperty('demand-3d','fill-extrusion-height',['case',['==',['get',prop],null],0,['*',['/', ['max',0,['get',prop]],Math.max(s.max,1)],110000]]);document.getElementById('mapHeading').textContent=titles[metric];document.getElementById('mapSubheading').textContent=`Relative demand intensity for ${LABELS[periodIndex]}`;renderHotspots()}
+function colorExpression(key,i){
+  const s=signalStats(key,i),prop='_'+key+'_'+i;
+  if(!s.vals.length)return '#cbd4d8';
+  const candidates=[[s.vals[0],'#43aa6b'],[s.q20,'#43aa6b'],[s.q40,'#f4c95d'],[s.q60,'#ef8a3d'],[s.q80,'#d9474f'],[s.max,'#7e2430']].sort((a,b)=>a[0]-b[0]);
+  const stops=[];candidates.forEach(([v,c])=>{if(!Number.isFinite(v))return;const last=stops.at(-1);if(!last||v>last[0])stops.push([v,c]);else last[1]=c;});
+  if(stops.length<2)return ['case',['==',['get',prop],null],'#cbd4d8','#ef8a3d'];
+  const interp=['interpolate',['linear'],['get',prop]];stops.forEach(([v,c])=>interp.push(v,c));
+  return ['case',['==',['get',prop],null],'#cbd4d8',interp];
+}
+function updateMap(){if(!map.getLayer('demand-fill'))return;const s=signalStats(metric);const prop='_'+metric+'_'+periodIndex;const color=colorExpression(metric,periodIndex);map.setPaintProperty('demand-fill','fill-color',color);map.setPaintProperty('demand-3d','fill-extrusion-color',color);map.setPaintProperty('demand-3d','fill-extrusion-height',['case',['==',['get',prop],null],0,['*',['/', ['max',0,['get',prop]],Math.max(s.max,1)],110000]]);document.getElementById('mapHeading').textContent=titles[metric];document.getElementById('mapSubheading').textContent=`Relative demand intensity for ${LABELS[periodIndex]}`;renderHotspots()}
 map.on('click','demand-fill',e=>selectFeature(e.features[0]));map.on('click','demand-3d',e=>selectFeature(e.features[0]));['demand-fill','demand-3d'].forEach(id=>{map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='')});
 function fmt(v){return v===null?'No data':v.toLocaleString(undefined,{maximumFractionDigits:1})}
 function selectFeature(feature){selectedFeature=feature;const p=feature.properties;document.getElementById('areaName').textContent=p.adm4_name||p.adm4_ref_n||'Selected area';document.getElementById('areaPath').textContent=[p.adm3_name,p.adm2_name,p.adm1_name].filter(Boolean).join(' • ');renderSelection(p)}
