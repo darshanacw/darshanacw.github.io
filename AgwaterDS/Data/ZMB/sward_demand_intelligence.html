@@ -76,8 +76,82 @@ const map=new maplibregl.Map({container:'map',style:baseStyle(),center:[27.8,-13
 map.on('load',()=>{map.addSource('admin',{type:'geojson',data:enhanced,promoteId:'adm4_pcode'});map.addLayer({id:'demand-fill',type:'fill',source:'admin',paint:{'fill-color':'#d6dee1','fill-opacity':.78}});map.addLayer({id:'demand-3d',type:'fill-extrusion',source:'admin',layout:{visibility:'none'},paint:{'fill-extrusion-color':'#d6dee1','fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':.88}});map.addLayer({id:'admin-line',type:'line',source:'admin',paint:{'line-color':'#334d5c','line-width':.45,'line-opacity':.7}});updateMap();fitData();});
 function fitData(){const b=new maplibregl.LngLatBounds();enhanced.features.forEach(f=>walk(f.geometry.coordinates,c=>b.extend(c)));if(!b.isEmpty())map.fitBounds(b,{padding:35,duration:0})}
 function walk(a,cb){if(typeof a[0]==='number')cb(a);else a.forEach(x=>walk(x,cb))}
-function colorExpression(key,i){const s=signalStats(key,i),prop='_'+key+'_'+i;return ['case',['==',['get',prop],null],'#cbd4d8',['interpolate',['linear'],['get',prop],s.q20,'#43aa6b',s.q40,'#f4c95d',s.q60,'#ef8a3d',s.q80,'#d9474f',s.max,'#7e2430']]}
-function updateMap(){if(!map.getLayer('demand-fill'))return;const s=signalStats(metric);const prop='_'+metric+'_'+periodIndex;const color=colorExpression(metric,periodIndex);map.setPaintProperty('demand-fill','fill-color',color);map.setPaintProperty('demand-3d','fill-extrusion-color',color);map.setPaintProperty('demand-3d','fill-extrusion-height',['case',['==',['get',prop],null],0,['*',['/', ['max',0,['get',prop]],Math.max(s.max,1)],110000]]);document.getElementById('mapHeading').textContent=titles[metric];document.getElementById('mapSubheading').textContent=`Relative demand intensity for ${LABELS[periodIndex]}`;renderHotspots()}
+
+function colorExpression(key, i) {
+    const prop = '_' + key + '_' + i;
+    const s = signalStats(key, i);
+
+    // No valid values are available.
+    if (!s.vals.length) {
+        return '#cbd4d8';
+    }
+
+    /*
+     * Quantiles can be identical when the dataset contains
+     * many repeated values or zeros.
+     *
+     * MapLibre requires interpolation stops to be in
+     * strictly ascending order.
+     */
+    const candidates = [
+        [s.vals[0], '#43aa6b'],
+        [s.q20, '#43aa6b'],
+        [s.q40, '#f4c95d'],
+        [s.q60, '#ef8a3d'],
+        [s.q80, '#d9474f'],
+        [s.max, '#7e2430']
+    ].sort((a, b) => a[0] - b[0]);
+
+    const uniqueStops = [];
+
+    candidates.forEach(([stop, color]) => {
+        if (!Number.isFinite(stop)) {
+            return;
+        }
+
+        const last = uniqueStops[uniqueStops.length - 1];
+
+        if (!last || stop > last[0]) {
+            uniqueStops.push([stop, color]);
+        } else {
+            /*
+             * Duplicate stop value:
+             * retain the later, higher-intensity colour.
+             */
+            last[1] = color;
+        }
+    });
+
+    /*
+     * If all areas have the same value, interpolation
+     * cannot be used because there is only one unique stop.
+     */
+    if (uniqueStops.length === 1) {
+        return [
+            'case',
+            ['==', ['get', prop], null],
+            '#cbd4d8',
+            '#ef8a3d'
+        ];
+    }
+
+    const interpolation = [
+        'interpolate',
+        ['linear'],
+        ['get', prop]
+    ];
+
+    uniqueStops.forEach(([stop, color]) => {
+        interpolation.push(stop, color);
+    });
+
+    return [
+        'case',
+        ['==', ['get', prop], null],
+        '#cbd4d8',
+        interpolation
+    ];
+}function updateMap(){if(!map.getLayer('demand-fill'))return;const s=signalStats(metric);const prop='_'+metric+'_'+periodIndex;const color=colorExpression(metric,periodIndex);map.setPaintProperty('demand-fill','fill-color',color);map.setPaintProperty('demand-3d','fill-extrusion-color',color);map.setPaintProperty('demand-3d','fill-extrusion-height',['case',['==',['get',prop],null],0,['*',['/', ['max',0,['get',prop]],Math.max(s.max,1)],110000]]);document.getElementById('mapHeading').textContent=titles[metric];document.getElementById('mapSubheading').textContent=`Relative demand intensity for ${LABELS[periodIndex]}`;renderHotspots()}
 map.on('click','demand-fill',e=>selectFeature(e.features[0]));map.on('click','demand-3d',e=>selectFeature(e.features[0]));['demand-fill','demand-3d'].forEach(id=>{map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='')});
 function fmt(v){return v===null?'No data':v.toLocaleString(undefined,{maximumFractionDigits:1})}
 function selectFeature(feature){selectedFeature=feature;const p=feature.properties;document.getElementById('areaName').textContent=p.adm4_name||p.adm4_ref_n||'Selected area';document.getElementById('areaPath').textContent=[p.adm3_name,p.adm2_name,p.adm1_name].filter(Boolean).join(' • ');renderSelection(p)}
