@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgWaterDS Water Demand Intelligence</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--navy:#0d2438;--blue:#176b87;--teal:#17a398;--green:#43aa6b;--yellow:#f4c95d;--orange:#ef8a3d;--red:#d9474f;--ink:#183042;--muted:#6d7d88;--panel:#fff;--line:#dfe8ed;--bg:#eef4f6}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg);overflow:hidden}
+button,select{font:inherit}.app{height:100%;display:grid;grid-template-rows:64px 1fr}
+header{z-index:20;background:var(--navy);color:#fff;display:flex;align-items:center;padding:0 18px;gap:18px;box-shadow:0 2px 14px #0d243844}
+.brand{font-weight:800;font-size:22px;letter-spacing:.5px}.brand span{font-weight:400;color:#9fdad4;font-size:12px;display:block;letter-spacing:1.4px}.nav{display:flex;height:100%;align-items:end;gap:3px}
+.nav button{border:0;background:transparent;color:#bcd0dc;padding:22px 16px 18px;cursor:pointer;border-bottom:3px solid transparent}.nav button.active{color:#fff;border-bottom-color:#34c7bb;background:#ffffff0b}
+.controls{margin-left:auto;display:flex;gap:8px;align-items:center}.controls select{background:#173750;color:white;border:1px solid #ffffff2c;border-radius:8px;padding:8px 30px 8px 10px}.viewbtn{border:1px solid #ffffff35;background:#ffffff12;color:white;border-radius:8px;padding:8px 12px;cursor:pointer}.viewbtn.active{background:#31a99f;border-color:#31a99f}
+main{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:0}.map-wrap{position:relative;min-width:0}.map{position:absolute;inset:0}
+.map-title{position:absolute;z-index:5;left:16px;top:16px;background:#fff;padding:12px 14px;border-radius:12px;box-shadow:0 5px 20px #18304228;max-width:330px}.map-title b{display:block;font-size:15px}.map-title small{color:var(--muted)}
+.periods{position:absolute;z-index:5;left:16px;bottom:22px;background:#fff;padding:7px 9px;border-radius:14px;box-shadow:0 5px 20px #18304228;display:flex;align-items:center;gap:5px}.periods button{border:0;background:#edf3f5;height:30px;padding:0 9px;border-radius:8px;color:#53656f;cursor:pointer;font-size:10px;font-weight:700}.periods button.active{background:var(--navy);color:#fff}.periods .month{width:31px;padding:0;border-radius:50%}.periods .play{background:#17a398;color:#fff}.periods .stop{background:#d9474f;color:#fff}.timeline-title{padding:0 5px;font-size:10px;min-width:96px}.timeline-title b{display:block;font-size:11px}.timeline-title span{color:#75858e}
+.legend{position:absolute;z-index:5;right:18px;bottom:25px;background:#fff;padding:12px 14px;border-radius:12px;box-shadow:0 5px 20px #18304228;width:190px;font-size:11px}.legend-title{font-weight:700;margin-bottom:7px}.gradient{height:9px;border-radius:9px;background:linear-gradient(90deg,#43aa6b,#f4c95d,#ef8a3d,#d9474f,#7e2430)}.legend-label{display:flex;justify-content:space-between;margin-top:5px;color:var(--muted)}
+aside{z-index:10;background:#f6f9fa;border-left:1px solid var(--line);overflow:auto;padding:14px}.area-head{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}.eyebrow{font-size:10px;font-weight:800;letter-spacing:1.3px;color:var(--teal)}#areaName{font-size:20px;font-weight:800;margin:4px 0}#areaPath{font-size:11px;color:var(--muted)}
+.signal-card{background:linear-gradient(145deg,#102b40,#184c61);color:white;border-radius:16px;padding:16px;display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;box-shadow:0 10px 25px #102b4034}.gauge{width:124px;height:124px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--orange) 0deg, var(--orange) 260deg,#ffffff22 260deg);position:relative}.gauge:after{content:"";width:88px;height:88px;border-radius:50%;background:#153b50;position:absolute}.gauge-text{z-index:1;text-align:center}.gauge-text strong{display:block;font-size:31px}.gauge-text small{font-size:10px;letter-spacing:1px}.signal-copy h3{margin:0 0 4px;font-size:20px}.signal-copy p{font-size:11px;color:#c7dae3;margin:0 0 8px;line-height:1.4}.peak{font-size:11px;background:#ffffff16;padding:6px 8px;border-radius:7px;display:inline-block}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}.metric span{font-size:9px;color:var(--muted);display:block;text-transform:uppercase;letter-spacing:.5px}.metric b{font-size:17px;display:block;margin-top:3px}.metric em{font-size:9px;color:#83929b;font-style:normal}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.card h3{font-size:13px;margin:0}.card small{color:var(--muted);font-size:10px}.chartbox{height:150px}.flow{display:grid;gap:7px}.flow-row{display:grid;grid-template-columns:94px 1fr 52px;gap:7px;align-items:center;font-size:10px}.track{height:8px;background:#e8eff2;border-radius:8px;overflow:hidden}.fill{height:100%;border-radius:8px}.fill.cwr{background:#143b53}.fill.rain{background:#35a897}.fill.iwr{background:#ef8a3d}.fill.sw{background:#3f8dc4}.fill.gw{background:#7f65b5}.fill.gap{background:#d9474f}
+.hotspots{display:none}.hotspot-item{display:grid;grid-template-columns:24px 1fr 48px;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid #edf2f4;cursor:pointer}.hotspot-item:hover{background:#f4f8f9}.rank{width:23px;height:23px;border-radius:7px;background:#ffe8dc;color:#b64626;display:grid;place-items:center;font-weight:800;font-size:10px}.hot-name{font-size:11px;font-weight:700}.hot-bar{height:5px;background:#e8eef1;border-radius:5px;margin-top:4px}.hot-bar i{display:block;height:100%;background:linear-gradient(90deg,#f4c95d,#d9474f);border-radius:5px}.hot-value{text-align:right;font-size:10px;font-weight:700}
+.empty{padding:24px 10px;text-align:center;color:var(--muted);font-size:12px}.maplibregl-popup-content{border-radius:10px;padding:10px 12px;font-family:inherit}.maplibregl-ctrl-top-right{top:10px;right:10px}
+.season-map-card{position:absolute;z-index:6;left:16px;top:88px;width:250px;background:#ffffffee;border:1px solid #dfe8ed;border-radius:12px;box-shadow:0 5px 20px #18304220;padding:10px 12px}.season-map-card .smh{display:flex;justify-content:space-between;align-items:center}.season-map-card h4{margin:0;font-size:11px}.season-map-card small{font-size:9px;color:#71828c}.season-map-card .smvals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}.season-map-card .smvals div{background:#f2f7f8;border-radius:7px;padding:6px}.season-map-card span{display:block;font-size:8px;color:#71828c;text-transform:uppercase}.season-map-card b{display:block;font-size:13px;margin-top:2px}.cloud-note{position:absolute;z-index:5;right:18px;top:75px;background:#102b40e8;color:white;border-radius:9px;padding:7px 9px;font-size:9px;display:none}.cloud-note.show{display:block}
+@media(max-width:980px){main{grid-template-columns:1fr 330px}.nav button{padding-left:8px;padding-right:8px;font-size:12px}.brand{font-size:18px}}
+@media(max-width:760px){body{overflow:auto}.app{height:auto;min-height:100%}header{position:sticky;top:0;flex-wrap:wrap;height:auto;padding:10px}.nav{order:3;width:100%;overflow:auto}.nav button{padding:10px}.controls{margin-left:auto}main{grid-template-columns:1fr;grid-template-rows:60vh auto}.map-wrap{min-height:500px}aside{border-left:0}.signal-card{grid-template-columns:115px 1fr}.gauge{width:108px;height:108px}.gauge:after{width:78px;height:78px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand">AgWaterDS<span>WATER DEMAND INTELLIGENCE</span></div>
+  <div style="font-size:11px;color:#bfe2df;background:#ffffff0d;border:1px solid #ffffff20;padding:7px 10px;border-radius:8px"><b style="color:white">Tomato</b> • Dry Season</div><nav class="nav">
+    <button class="active" data-tab="demand">Demand</button><button data-tab="sources">Sources</button><button data-tab="hotspots">Hotspots</button>
+  </nav>
+  <div class="controls"><select id="metricSelect"><option value="iwr">Irrigation demand</option><option value="cwr">Crop water demand</option><option value="rain">Rainfall contribution</option><option value="sw">Surface-water pressure</option><option value="gw">Groundwater pressure</option></select><button class="viewbtn active" data-view="2d">2D</button><button class="viewbtn" data-view="3d">3D Point Cloud</button></div>
+</header>
+<main>
+<section class="map-wrap">
+  <div id="map" class="map"></div>
+  <div class="map-title"><b id="mapHeading">Irrigation Water Demand</b><small id="mapSubheading">Relative demand intensity for Month 3</small></div>
+  <div class="season-map-card" id="seasonMapCard"><div class="smh"><h4>Tomato • Dry Season</h4><small>Growing-season sum</small></div><div class="smvals"><div><span>CWR</span><b id="mapTCwr">--</b></div><div><span>Rain</span><b id="mapTRain">--</b></div><div><span>IWR</span><b id="mapTIwr">--</b></div></div></div><div class="cloud-note" id="cloudNote">3D demand cloud • particle density and spread indicate relative magnitude</div><div class="periods" id="periods"></div>
+  <div class="legend"><div class="legend-title">Relative demand signal</div><div class="gradient"></div><div class="legend-label"><span>Low</span><span>Moderate</span><span>Extreme</span></div><div style="margin-top:7px;color:#85939b">Grey = no data. Signal classes are calculated from the current national distribution.</div></div>
+</section>
+<aside>
+  <div class="area-head"><div class="eyebrow">SELECTED AREA</div><div id="areaName">Select an area</div><div id="areaPath">Click a polygon to open its demand profile</div></div>
+  <div id="detailContent">
+    <div class="signal-card"><div class="gauge" id="gauge"><div class="gauge-text"><strong id="score">--</strong><small>DEMAND INDEX</small></div></div><div class="signal-copy"><h3 id="signalLabel">Awaiting selection</h3><p id="signalText">The signal combines the selected period's irrigation requirement with its position in the national distribution.</p><span class="peak" id="peakText">Peak growing month: --</span></div></div>
+    <div class="metrics"><div class="metric"><span>Crop demand</span><b id="mCwr">--</b><em>dataset units</em></div><div class="metric"><span>Rainfall</span><b id="mRain">--</b><em>dataset units</em></div><div class="metric"><span>Irrigation demand</span><b id="mIwr">--</b><em>dataset units</em></div></div>
+    <div class="card"><div class="card-head"><h3>Growing-season demand profile</h3><small>Growing months 1-5</small></div><div class="chartbox"><canvas id="seasonChart"></canvas></div></div>
+    <div class="card source-card"><div class="card-head"><h3>Water-demand pathway</h3><small>Selected period</small></div><div id="flow" class="flow"><div class="empty">Select an area to inspect how demand develops from crop requirement, rainfall contribution and water-source pressure.</div></div></div>
+    <div class="card hotspots"><div class="card-head"><h3>Highest demand locations</h3><small id="hotLabel">Selected period</small></div><div id="hotspotList"></div></div>
+  </div>
+</aside>
+</main></div>
+<script src="admin.js"></script><script src="cwr.js"></script><script src="s_ip.js"></script><script src="s_rf_s.js"></script><script src="s_rf_d.js"></script><script src="s_iwr.js"></script><script src="s_usw_s.js"></script><script src="s_usw_d_iwr.js"></script><script src="s_ugw_s.js"></script><script src="s_ugw_d_iwr.js"></script>
+<script>
+const PERIODS=['Month_1','Month_2','Month_3','Month_4','Month_5'];
+const LABELS=['Growing Month 1','Growing Month 2','Growing Month 3','Growing Month 4','Growing Month 5'];
+let periodIndex=2, metric='iwr', selectedFeature=null, mode3d=false, chart=null;
+const datasets={
+ cwr:typeof cwrData!=='undefined'?cwrData:null,
+ rain:typeof s_ipData!=='undefined'?s_ipData:null,
+ iwr:typeof s_iwrData!=='undefined'?s_iwrData:null,
+ sw:typeof s_usw_d_iwrData!=='undefined'?s_usw_d_iwrData:null,
+ gw:typeof s_ugw_d_iwrData!=='undefined'?s_ugw_d_iwrData:null,
+ rfGap:typeof s_rf_dData!=='undefined'?s_rf_dData:null,
+ swS:typeof s_usw_sData!=='undefined'?s_usw_sData:null,
+ gwS:typeof s_ugw_sData!=='undefined'?s_ugw_sData:null
+};
+const titles={iwr:'Irrigation Water Demand',cwr:'Crop Water Demand',rain:'Rainfall Contribution',sw:'Surface-water Pressure',gw:'Groundwater Pressure'};
+function finite(v){if(v===null||v===''||v===undefined)return null;v=Number(v);return Number.isFinite(v)?v:null}
+function finder(data,p){if(!data||!p)return null;const code=p.adm4_pcode;if(code){const r=Object.values(data).find(x=>x&&x.adm4_pcode===code);if(r)return r;}if(p.adm4_name&&data[p.adm4_name])return data[p.adm4_name];const name=p.adm4_ref_n||p.adm4_name;return name?Object.values(data).find(x=>x&&(x.adm4_ref_n===name||x.adm4_name===name))||null:null}
+function value(data,p,i=periodIndex){const r=finder(data,p);return r?finite(r[PERIODS[i]]):null}
+function seasonSum(data,p){const a=PERIODS.map((_,i)=>value(data,p,i)).filter(v=>v!==null);return a.length?a.reduce((x,y)=>x+y,0):null}
+function quantile(sorted,q){if(!sorted.length)return 0;const pos=(sorted.length-1)*q,b=Math.floor(pos),rest=pos-b;return sorted[b+1]!==undefined?sorted[b]+rest*(sorted[b+1]-sorted[b]):sorted[b]}
+function signalStats(key,i=periodIndex){const suffix=i===5?'total':i;const vals=enhanced.features.map(f=>finite(f.properties['_'+key+'_'+suffix])).filter(v=>v!==null).sort((a,b)=>a-b);return {vals,q20:quantile(vals,.2),q40:quantile(vals,.4),q60:quantile(vals,.6),q80:quantile(vals,.8),max:vals.at(-1)||1}}
+function percentile(v,vals){if(v===null||!vals.length)return null;let lo=0,hi=vals.length;while(lo<hi){const m=(lo+hi)>>1;if(vals[m]<=v)lo=m+1;else hi=m}return Math.round(100*lo/vals.length)}
+const enhanced=JSON.parse(JSON.stringify(adminGeoJSON));
+enhanced.features.forEach(f=>{const p=f.properties;Object.keys(datasets).forEach(k=>{PERIODS.forEach((_,i)=>p['_'+k+'_'+i]=value(datasets[k],p,i));p['_'+k+'_total']=seasonSum(datasets[k],p);});});
+function featureCenter(f){let sx=0,sy=0,n=0;walk(f.geometry.coordinates,c=>{sx+=c[0];sy+=c[1];n++});return n?[sx/n,sy/n]:[0,0]}
+const cloudFeatures=[];enhanced.features.forEach(f=>{const c=featureCenter(f);for(let j=0;j<12;j++){const angle=j*2.3999632297,ring=.010+.010*(j%4),dx=Math.cos(angle)*ring,dy=Math.sin(angle)*ring;cloudFeatures.push({type:'Feature',properties:{...f.properties,cloudLevel:j+1},geometry:{type:'Point',coordinates:[c[0]+dx,c[1]+dy]}})}});const pointCloud={type:'FeatureCollection',features:cloudFeatures};
+function baseStyle(){return {version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm',paint:{'raster-saturation':-.7,'raster-opacity':.72}}]}}
+const map=new maplibregl.Map({container:'map',style:baseStyle(),center:[27.8,-13.2],zoom:5,pitch:0,bearing:0,antialias:true});map.addControl(new maplibregl.NavigationControl(),'top-right');
+map.on('load',()=>{map.addSource('admin',{type:'geojson',data:enhanced,promoteId:'adm4_pcode'});map.addSource('pointcloud',{type:'geojson',data:pointCloud,promoteId:'adm4_pcode'});map.addLayer({id:'demand-fill',type:'fill',source:'admin',paint:{'fill-color':'#d6dee1','fill-opacity':.78}});map.addLayer({id:'demand-3d',type:'circle',source:'pointcloud',layout:{visibility:'none'},paint:{'circle-color':'#d6dee1','circle-radius':4,'circle-opacity':0.72,'circle-blur':0.12,'circle-stroke-color':'#ffffff','circle-stroke-width':0.5}});map.addLayer({id:'admin-line',type:'line',source:'admin',paint:{'line-color':'#334d5c','line-width':.45,'line-opacity':.7}});updateMap();fitData();});
+function fitData(){const b=new maplibregl.LngLatBounds();enhanced.features.forEach(f=>walk(f.geometry.coordinates,c=>b.extend(c)));if(!b.isEmpty())map.fitBounds(b,{padding:35,duration:0})}
+function walk(a,cb){if(typeof a[0]==='number')cb(a);else a.forEach(x=>walk(x,cb))}
+function colorExpression(key,i){const suffix=i===5?'total':i;const s=signalStats(key,i),prop='_'+key+'_'+suffix;if(!s.vals.length)return '#cbd4d8';const c=[[s.vals[0],'#43aa6b'],[s.q20,'#43aa6b'],[s.q40,'#f4c95d'],[s.q60,'#ef8a3d'],[s.q80,'#d9474f'],[s.max,'#7e2430']].sort((a,b)=>a[0]-b[0]),u=[];c.forEach(([v,col])=>{if(!Number.isFinite(v))return;const last=u.at(-1);if(!last||v>last[0])u.push([v,col]);else last[1]=col});if(u.length<2)return ['case',['==',['get',prop],null],'#cbd4d8','#ef8a3d'];const x=['interpolate',['linear'],['get',prop]];u.forEach(([v,col])=>x.push(v,col));return ['case',['==',['get',prop],null],'#cbd4d8',x]}
+function updateMap(){if(!map.getLayer('demand-fill'))return;const s=signalStats(metric);const suffix=periodIndex===5?'total':periodIndex;const prop='_'+metric+'_'+suffix;const color=colorExpression(metric,periodIndex);map.setPaintProperty('demand-fill','fill-color',color);map.setPaintProperty('demand-3d','circle-color',color);map.setPaintProperty('demand-3d','circle-radius',['interpolate',['linear'],['/', ['max',0,['get',prop]],Math.max(s.max,1)],0,2.5,1,7]);map.setFilter('demand-3d',['all',['!=',['get',prop],null],['<=',['get','cloudLevel'],['+',2,['*',10,['/', ['max',0,['get',prop]],Math.max(s.max,1)]]]]]);document.getElementById('mapHeading').textContent=titles[metric];document.getElementById('mapSubheading').textContent=periodIndex===5?'Growing-season sum • Tomato • Dry Season':`Relative demand intensity for ${LABELS[periodIndex]}`;renderHotspots()}
+map.on('click','demand-fill',e=>selectFeature(e.features[0]));map.on('click','demand-3d',e=>selectFeature(e.features[0]));['demand-fill','demand-3d'].forEach(id=>{map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='')});
+function fmt(v){return v===null?'No data':v.toLocaleString(undefined,{maximumFractionDigits:1})}
+function selectFeature(feature){selectedFeature=feature;const p=feature.properties;document.getElementById('areaName').textContent=p.adm4_name||p.adm4_ref_n||'Selected area';document.getElementById('areaPath').textContent=[p.adm3_name,p.adm2_name,p.adm1_name].filter(Boolean).join(' • ');renderSelection(p);renderChart(p)}
+function renderSelection(p){const gv=d=>periodIndex===5?seasonSum(d,p):value(d,p);const ir=gv(datasets.iwr),cw=gv(datasets.cwr),rn=gv(datasets.rain);const vals=signalStats('iwr').vals,score=percentile(ir,vals);const label=score===null?'No data':score>=80?'Extreme demand':score>=60?'High demand':score>=40?'Moderate demand':score>=20?'Low demand':'Very low demand';const col=score===null?'#aab6bc':score>=80?'#7e2430':score>=60?'#d9474f':score>=40?'#ef8a3d':score>=20?'#f4c95d':'#43aa6b';document.getElementById('score').textContent=score===null?'--':score;document.getElementById('signalLabel').textContent=label;document.getElementById('signalText').textContent=score===null?'No value is available for this area and period.':'Relative position of the selected area compared with other areas that have data.';document.getElementById('gauge').style.background=`conic-gradient(${col} 0deg,${col} ${(score||0)*3.6}deg,#ffffff22 ${(score||0)*3.6}deg)`;document.getElementById('mCwr').textContent=fmt(cw);document.getElementById('mRain').textContent=fmt(rn);document.getElementById('mIwr').textContent=fmt(ir);document.getElementById('mapTCwr').textContent=fmt(seasonSum(datasets.cwr,p));document.getElementById('mapTRain').textContent=fmt(seasonSum(datasets.rain,p));document.getElementById('mapTIwr').textContent=fmt(seasonSum(datasets.iwr,p));
+const rec=finder(datasets.iwr,p),series=PERIODS.map(k=>rec?finite(rec[k]):null),peak=series.reduce((best,v,i)=>v!==null&&(best.i<0||v>best.v)?{i,v}:best,{i:-1,v:-Infinity});document.getElementById('peakText').textContent=peak.i<0?'Peak growing month: no data':`Peak growing month: ${LABELS[peak.i]} (${fmt(peak.v)})`;renderFlow(p)}
+function renderChart(p){const cwr=PERIODS.map((_,i)=>value(datasets.cwr,p,i)),rain=PERIODS.map((_,i)=>value(datasets.rain,p,i)),iwr=PERIODS.map((_,i)=>value(datasets.iwr,p,i));if(chart)chart.destroy();chart=new Chart(document.getElementById('seasonChart'),{type:'line',data:{labels:LABELS,datasets:[{label:'Crop demand',data:cwr,borderColor:'#143b53',backgroundColor:'#143b5315',tension:.3,fill:false},{label:'Rainfall',data:rain,borderColor:'#35a897',tension:.3},{label:'Irrigation demand',data:iwr,borderColor:'#ef8a3d',backgroundColor:'#ef8a3d20',tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{font:{size:9}}}}}})}
+function renderFlow(p){const gv=d=>periodIndex===5?seasonSum(d,p):value(d,p);const rows=[['Crop requirement',gv(datasets.cwr),'cwr'],['Rainfall',gv(datasets.rain),'rain'],['Irrigation demand',gv(datasets.iwr),'iwr'],['Surface pressure',gv(datasets.sw),'sw'],['Ground pressure',gv(datasets.gw),'gw']];const max=Math.max(1,...rows.map(r=>Math.abs(r[1]||0)));document.getElementById('flow').innerHTML=rows.map(([n,v,c])=>`<div class="flow-row"><span>${n}</span><div class="track"><div class="fill ${c}" style="width:${v===null?0:Math.min(100,Math.abs(v)/max*100)}%"></div></div><b>${fmt(v)}</b></div>`).join('')}
+function renderHotspots(){const items=enhanced.features.map(f=>({f,v:finite(f.properties['_'+metric+'_'+(periodIndex===5?'total':periodIndex)])})).filter(x=>x.v!==null).sort((a,b)=>b.v-a.v).slice(0,10),max=items[0]?.v||1;document.getElementById('hotLabel').textContent=`${titles[metric]} • ${LABELS[periodIndex]}`;document.getElementById('hotspotList').innerHTML=items.map((x,i)=>`<div class="hotspot-item" data-code="${x.f.properties.adm4_pcode}"><div class="rank">${i+1}</div><div><div class="hot-name">${x.f.properties.adm4_name}</div><div class="hot-bar"><i style="width:${Math.max(5,x.v/max*100)}%"></i></div></div><div class="hot-value">${fmt(x.v)}</div></div>`).join('');document.querySelectorAll('.hotspot-item').forEach(el=>el.onclick=()=>{const f=enhanced.features.find(x=>x.properties.adm4_pcode===el.dataset.code);if(f){selectFeature({properties:f.properties,geometry:f.geometry});const b=new maplibregl.LngLatBounds();walk(f.geometry.coordinates,c=>b.extend(c));map.fitBounds(b,{padding:80,duration:700})}})}
+const periodBox=document.getElementById('periods');
+const tt=document.createElement('div');tt.className='timeline-title';tt.innerHTML='<b id="gmTitle">Growing Month 3</b><span>Tomato • Dry Season</span>';periodBox.appendChild(tt);
+const monthBtns=[];LABELS.forEach((l,i)=>{const b=document.createElement('button');b.className='month'+(i===periodIndex?' active':'');b.textContent='GM'+(i+1);b.title=l;b.onclick=()=>{stopAnimation();setPeriod(i)};monthBtns.push(b);periodBox.appendChild(b)});
+const total=document.createElement('button');total.className='total';total.textContent='Season Sum';total.title='Map the sum of Growing Months 1-5';total.onclick=()=>{stopAnimation();setPeriod(5)};periodBox.appendChild(total);
+const play=document.createElement('button');play.className='play';play.textContent='▶ Play';periodBox.appendChild(play);const stop=document.createElement('button');stop.className='stop';stop.textContent='■ Stop';stop.style.display='none';periodBox.appendChild(stop);
+let animTimer=null,animNext=0;function setPeriod(i){periodIndex=i;monthBtns.forEach((b,j)=>b.classList.toggle('active',i===j));total.classList.toggle('active',i===5);document.getElementById('gmTitle').textContent=i===5?'Growing Season Sum':LABELS[i];updateMap();if(selectedFeature)renderSelection(selectedFeature.properties)}function stopAnimation(){if(animTimer){clearInterval(animTimer);animTimer=null}play.style.display='';stop.style.display='none'}function step(){if(animNext>4){stopAnimation();return}setPeriod(animNext++);}play.onclick=()=>{stopAnimation();animNext=0;play.style.display='none';stop.style.display='';step();animTimer=setInterval(step,1300)};stop.onclick=stopAnimation;
+document.getElementById('metricSelect').onchange=e=>{metric=e.target.value;updateMap()};document.querySelectorAll('.viewbtn').forEach(b=>b.onclick=()=>{mode3d=b.dataset.view==='3d';document.querySelectorAll('.viewbtn').forEach(x=>x.classList.toggle('active',x===b));map.setLayoutProperty('demand-fill','visibility','visible');map.setPaintProperty('demand-fill','fill-opacity',mode3d?0.15:0.78);map.setLayoutProperty('demand-3d','visibility',mode3d?'visible':'none');document.getElementById('cloudNote').classList.toggle('show',mode3d);map.easeTo({pitch:mode3d?52:0,bearing:mode3d?-18:0,duration:700})});
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x===b));const tab=b.dataset.tab;document.querySelector('.hotspots').style.display=tab==='hotspots'?'block':'none';document.querySelector('.source-card').style.display=tab==='hotspots'?'none':'block';if(tab==='sources')document.querySelector('.source-card').scrollIntoView({behavior:'smooth',block:'nearest'})});
+</script>
+<script>
+/* AgWaterDS v6 UI patch
+   Load AFTER the main inline dashboard script:
+   <script src="AgWaterDS_need_supply_gap_patch.js"></script>
+*/
+(() => {
+  'use strict';
+  const P=['Month_1','Month_2','Month_3','Month_4','Month_5'];
+  const val=(d,p,i)=>{ if(!d||!p)return null; const r=(typeof finder==='function'?finder(d,p):null); if(!r)return null; const v=Number(r[P[i]]); return Number.isFinite(v)?v:null; };
+  const sum=(d,p)=>{const a=P.map((_,i)=>val(d,p,i)).filter(Number.isFinite);return a.length?a.reduce((x,y)=>x+y,0):null};
+  const pos=v=>Number.isFinite(v)?Math.max(0,v):0;
+  function balance(p,i=periodIndex){
+    const total=i===5;
+    const get=d=>total?sum(d,p):val(d,p,i);
+    const need=get(datasets.iwr);
+    const swSurplus=get(datasets.swS), gwSurplus=get(datasets.gwS);
+    const swDeficit=get(datasets.sw), gwDeficit=get(datasets.gw);
+    const supply=(swSurplus===null&&gwSurplus===null)?null:pos(swSurplus)+pos(gwSurplus);
+    const gap=(need===null||supply===null)?null:Math.max(0,need-supply);
+    const surplus=(need===null||supply===null)?null:Math.max(0,supply-need);
+    return {need,supply,gap,surplus,swSurplus,gwSurplus,swDeficit,gwDeficit};
+  }
+  // Synthetic map properties and metric options.
+  if(typeof enhanced!=='undefined') enhanced.features.forEach(f=>{
+    for(let i=0;i<5;i++){const b=balance(f.properties,i);f.properties['_need_'+i]=b.need;f.properties['_supply_'+i]=b.supply;f.properties['_gap_'+i]=b.gap;}
+    const b=balance(f.properties,5);f.properties._need_total=b.need;f.properties._supply_total=b.supply;f.properties._gap_total=b.gap;
+  });
+  if(typeof titles!=='undefined') Object.assign(titles,{need:'Water Need',supply:'Available Supply Signal',gap:'Gap-Demand'});
+  const select=document.getElementById('metricSelect');
+  if(select){
+    select.innerHTML='<option value="need">Need</option><option value="supply">Supply</option><option value="gap">Gap-Demand</option><optgroup label="Diagnostic layers"><option value="iwr">Irrigation requirement</option><option value="cwr">Crop water demand</option><option value="rain">Rainfall contribution</option><option value="sw">Surface-water deficit</option><option value="gw">Groundwater deficit</option></optgroup>';
+    select.value='need'; metric='need';
+  }
+  // Remove redundant top tabs.
+  document.querySelector('.nav')?.remove();
+  // Styles.
+  const st=document.createElement('style');st.textContent=`
+    .nsg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.nsg>div{border-radius:13px;padding:11px;color:#fff;position:relative;overflow:hidden}.nsg>div:after{content:'';position:absolute;width:45px;height:45px;border-radius:50%;right:-13px;top:-13px;background:#ffffff16}.nsg small{font-size:9px;letter-spacing:.8px}.nsg b{display:block;font-size:21px;margin-top:4px}.needbox{background:#153c54}.supplybox{background:#168f87}.gapbox{background:#d85a42}.gapbox.ok{background:#43aa6b}
+    .source-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.source-chip{border:1px solid #dfe8ed;border-radius:10px;padding:8px}.source-chip span{font-size:9px;color:#72828b;display:block}.source-chip b{font-size:14px}.source-chip.def{border-left:4px solid #d9474f}.source-chip.sur{border-left:4px solid #3f8dc4}
+    .side-actions{display:flex;gap:7px;margin-bottom:9px}.side-action{flex:1;border:1px solid #dce7eb;background:#fff;border-radius:9px;padding:8px;cursor:pointer;color:#173750;font-weight:700;font-size:10px}.side-action.active{background:#173750;color:#fff}.hotspots{display:none}.scatterbox{height:210px}.method-note{font-size:9px;color:#778892;line-height:1.45;margin-top:7px}.hotspot-item{grid-template-columns:24px 1fr 52px}.hotspot-item .risk{font-size:8px;color:#d6543e;font-weight:700}
+  `;document.head.appendChild(st);
+  const detail=document.getElementById('detailContent');
+  const actions=document.createElement('div');actions.className='side-actions';actions.innerHTML='<button class="side-action active" id="profileBtn">Area profile</button><button class="side-action" id="hotspotBtn">Hotspots</button>';detail.parentNode.insertBefore(actions,detail);
+  const metrics=document.querySelector('.metrics');
+  const nsg=document.createElement('div');nsg.className='nsg';nsg.innerHTML='<div class="needbox"><small>NEED</small><b id="nsgNeed">--</b></div><div class="supplybox"><small>SUPPLY</small><b id="nsgSupply">--</b></div><div class="gapbox" id="gapBox"><small>GAP-DEMAND</small><b id="nsgGap">--</b></div>';metrics?.replaceWith(nsg);
+  const sourceCard=document.querySelector('.source-card');
+  if(sourceCard) sourceCard.innerHTML='<div class="card-head"><h3>Source balance</h3><small>Surplus and deficit signals</small></div><div class="source-grid"><div class="source-chip sur"><span>Surface-water surplus</span><b id="swSur">--</b></div><div class="source-chip def"><span>Surface-water deficit</span><b id="swDef">--</b></div><div class="source-chip sur"><span>Groundwater surplus</span><b id="gwSur">--</b></div><div class="source-chip def"><span>Groundwater deficit</span><b id="gwDef">--</b></div></div><div class="method-note">Supply signal = positive surface-water surplus + positive groundwater surplus. Gap-demand = max(0, irrigation need − supply signal). Original surplus and deficit values remain visible.</div>';
+  const scatter=document.createElement('div');scatter.className='card';scatter.innerHTML='<div class="card-head"><h3>Need–Supply decision space</h3><small>Each point = administrative unit</small></div><div class="scatterbox"><canvas id="balanceScatter"></canvas></div><div class="method-note">Points above the diagonal indicate need greater than supply. Point colour shows gap-demand.</div>';sourceCard?.after(scatter);
+  let scatterChart=null;
+  const fmt2=v=>Number.isFinite(v)?v.toLocaleString(undefined,{maximumFractionDigits:1}):'No data';
+  function renderBalance(p){const b=balance(p);document.getElementById('nsgNeed').textContent=fmt2(b.need);document.getElementById('nsgSupply').textContent=fmt2(b.supply);document.getElementById('nsgGap').textContent=fmt2(b.gap);document.getElementById('gapBox').classList.toggle('ok',b.gap===0);document.getElementById('swSur').textContent=fmt2(b.swSurplus);document.getElementById('swDef').textContent=fmt2(b.swDeficit);document.getElementById('gwSur').textContent=fmt2(b.gwSurplus);document.getElementById('gwDef').textContent=fmt2(b.gwDeficit);renderScatter(p);}
+  function renderScatter(selected){
+    const pts=enhanced.features.map(f=>{const b=balance(f.properties);return Number.isFinite(b.need)&&Number.isFinite(b.supply)?{x:b.supply,y:b.need,g:b.gap,n:f.properties.adm4_name}:null}).filter(Boolean);
+    const max=Math.max(1,...pts.flatMap(d=>[d.x,d.y]));
+    const sel=selected?balance(selected):null;
+    if(scatterChart)scatterChart.destroy();
+    scatterChart=new Chart(document.getElementById('balanceScatter'),{type:'scatter',data:{datasets:[{label:'Administrative units',data:pts,pointRadius:3,pointBackgroundColor:pts.map(d=>d.g>0?'#d9474f88':'#43aa6b88')},{label:'Selected area',data:sel&&Number.isFinite(sel.need)&&Number.isFinite(sel.supply)?[{x:sel.supply,y:sel.need}]:[],pointRadius:7,pointBackgroundColor:'#0d2438'},{label:'Need = Supply',type:'line',data:[{x:0,y:0},{x:max,y:max}],borderColor:'#7c8c94',borderDash:[5,5],pointRadius:0,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const r=c.raw;return r.n?`${r.n}: supply ${fmt2(r.x)}, need ${fmt2(r.y)}, gap ${fmt2(r.g)}`:`Supply ${fmt2(r.x)}, Need ${fmt2(r.y)}`}}}},scales:{x:{title:{display:true,text:'Supply signal'},beginAtZero:true},y:{title:{display:true,text:'Water need'},beginAtZero:true}}}});
+  }
+  const originalSelect=window.selectFeature;
+  window.selectFeature=function(feature){originalSelect(feature);renderBalance(feature.properties)};
+  const originalRender=window.renderSelection;
+  window.renderSelection=function(p){originalRender(p);renderBalance(p)};
+  const hotspot=document.querySelector('.hotspots');
+  const profileSections=[document.querySelector('.signal-card'),nsg,document.querySelector('.card:not(.hotspots)'),sourceCard,scatter].filter(Boolean);
+  function showHotspots(show){actions.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',show?i===1:i===0));hotspot.style.display=show?'block':'none';profileSections.forEach(x=>x.style.display=show?'none':'');if(show)renderHotspots();}
+  document.getElementById('profileBtn').onclick=()=>showHotspots(false);document.getElementById('hotspotBtn').onclick=()=>showHotspots(true);
+  // Replace hotspot ranking with gap-demand priority.
+  window.renderHotspots=function(){const suffix=periodIndex===5?'total':periodIndex;const items=enhanced.features.map(f=>({f,v:Number(f.properties['_gap_'+suffix])})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>b.v-a.v).slice(0,12),max=items[0]?.v||1;document.getElementById('hotLabel').textContent=(periodIndex===5?'Season Sum':LABELS[periodIndex])+' • gap-demand priority';document.getElementById('hotspotList').innerHTML=items.map((x,i)=>`<div class="hotspot-item" data-code="${x.f.properties.adm4_pcode}"><div class="rank">${i+1}</div><div><div class="hot-name">${x.f.properties.adm4_name}</div><div class="risk">Gap-demand priority</div><div class="hot-bar"><i style="width:${Math.max(4,x.v/max*100)}%"></i></div></div><div class="hot-value">${fmt2(x.v)}</div></div>`).join('');document.querySelectorAll('.hotspot-item').forEach(el=>el.onclick=()=>{const f=enhanced.features.find(x=>x.properties.adm4_pcode===el.dataset.code);if(f){selectFeature({properties:f.properties,geometry:f.geometry});showHotspots(false);const bb=new maplibregl.LngLatBounds();walk(f.geometry.coordinates,c=>bb.extend(c));map.fitBounds(bb,{padding:80,duration:700})}})};
+  // Refresh map source after synthetic properties were added.
+  if(typeof map!=='undefined') map.on('load',()=>{map.getSource('admin')?.setData(enhanced);map.getSource('pointcloud')?.setData(pointCloud);metric='need';select.value='need';updateMap();renderHotspots();});
+})();
+
+</script>
+</body></html>
