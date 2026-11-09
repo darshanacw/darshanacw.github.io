@@ -1,0 +1,6 @@
+"crop","kc_ini","kc_mid","kc_end","L_ini","L_dev","L_mid","L_late","source_note","total_days","growing_months"
+"Tomato",0.6,1.15,0.8,30,40,40,25,"FAO-56 planning default; 135 days",135,5
+"Pepper",0.6,1.05,0.9,30,35,40,20,"FAO-56 sweet pepper planning default; 125 days",125,5
+"Wheat",0.3,1.15,0.35,15,25,50,30,"FAO-56 barley/oats/wheat Central India analogue; 120 days",120,4
+"Okra",0.62,1.38,0.76,21,28,35,21,"Provisional okra planning default; validate locally; 105 days",105,4
+"Onion",0.7,1.05,0.75,15,25,70,40,"FAO-56 dry onion planning default; 150 days",150,5
