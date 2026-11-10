@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>AgWaterDS Demand Signal | Nigeria ADM2 (v6.1)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#051722;--bg2:#08202f;--card:#0d2b3f;--card2:#123850;--line:#1f4b64;--ink:#e8f4f8;--muted:#8fb2c1;--cyan:#19d3c5;--orange:#ffb347;--red:#ff6b57;--blue:#4aa3e0;--purple:#b99cff;--green:#5fd8a0;--glass:rgba(6,26,40,.88);--glassLine:rgba(70,170,200,.30)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font:13px 'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg)}
+.app{height:100%;display:grid;grid-template-rows:78px 1fr}
+/* ---------- header ---------- */
+header{position:relative;background:linear-gradient(110deg,#041320 0%,#0a2a3d 55%,#0c3a4f 100%);padding:8px 18px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #12435a}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),#4aa3e0,transparent);opacity:.75}
+.brand{font-size:24px;font-weight:850;letter-spacing:.2px;line-height:1}
+.brand b{color:var(--cyan)}
+.brand small{display:block;color:#7fe3d8;font-size:8px;letter-spacing:1.5px;margin-top:6px;font-weight:600}
+.live{display:flex;align-items:center;gap:7px;border:1px solid #1d5a73;background:#0a2e42;border-radius:20px;padding:5px 11px;font-size:8px;font-weight:800;letter-spacing:1.2px;color:#a9dbe6;white-space:nowrap}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 #19d3c588;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #19d3c599}70%{box-shadow:0 0 0 9px #19d3c500}100%{box-shadow:0 0 0 0 #19d3c500}}
+.cropBtns{display:flex;gap:5px;flex-wrap:wrap}
+.cropBtn{border:1px solid #1d5a7355;background:#0b3047;color:#e8f4f8;border-radius:11px;padding:7px 10px;cursor:pointer;font:650 11px 'Segoe UI',Arial,sans-serif;transition:.16s}
+.cropBtn:hover{background:#12435d;transform:translateY(-1px)}
+.cropBtn .ico{font-size:16px;margin-right:4px}
+.cropBtn.active{background:linear-gradient(135deg,#0fa596,#19d3c5);color:#03212b;border-color:#19d3c5;box-shadow:0 0 16px #19d3c540}
+.ctrl{margin-left:auto;display:flex;gap:16px;align-items:flex-end}
+.grp label{display:block;font-size:8px;color:#8fb8c8;letter-spacing:1px;margin-bottom:4px;font-weight:700}
+.seg{display:flex;gap:4px}
+.seg button{border:1px solid #1d5a7355;background:#0b3047;color:#e8f4f8;border-radius:10px;padding:6px 12px;cursor:pointer;font:650 11px 'Segoe UI',Arial,sans-serif;white-space:nowrap;transition:.16s}
+.seg button:hover:not(:disabled){background:#12435d}
+.seg button .ico{font-size:15px;margin-right:4px;vertical-align:-1px}
+.seg button.active{background:linear-gradient(135deg,#0fa596,#19d3c5);color:#03212b;border-color:#19d3c5;box-shadow:0 0 14px #19d3c540}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+/* ---------- layout ---------- */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 440px;min-height:0}
+.mapwrap{position:relative}
+.map{position:absolute;inset:0;background:#0a1f2c}
+.panel{overflow:auto;padding:12px;background:linear-gradient(180deg,#061b29,#08222f);border-left:1px solid #12435a;scrollbar-color:#1f4b64 transparent;scrollbar-width:thin}
+.float{position:absolute;z-index:500;background:var(--glass);border:1px solid var(--glassLine);border-radius:14px;box-shadow:0 10px 30px #00000055;backdrop-filter:blur(10px);color:var(--ink)}
+.mapTitle{left:64px;top:16px;padding:10px 14px}
+.mapTitle b{display:block;font-size:13px}.mapTitle small{color:var(--muted)}
+.ctx{left:64px;top:84px;padding:9px 13px;max-width:340px}
+.ctx b{display:block}.ctx small{color:var(--muted);display:block;margin-top:2px}
+/* ---------- map-layer dock: ALL 8 layers visible, no hidden menu ---------- */
+.dock{right:16px;top:16px;padding:8px;display:grid;grid-template-columns:repeat(4,66px);gap:5px}
+.dockHead{grid-column:1/-1;font-size:8px;letter-spacing:1.3px;font-weight:800;color:var(--muted);padding:0 2px 1px}
+.dock button{border:1px solid #1d5a7366;background:#0b3047;color:#e8f4f8;border-radius:11px;padding:6px 2px;cursor:pointer;font:700 9px 'Segoe UI',Arial,sans-serif;min-height:52px;transition:.16s}
+.dock button span{display:block;font-size:19px;line-height:1.15;margin-bottom:1px}
+.dock button:hover{border-color:var(--cyan);background:#10405a}
+.dock button.active{background:linear-gradient(145deg,#0fa596,#19d3c5);color:#03212b;border-color:#19d3c5;box-shadow:0 0 16px #19d3c555}
+.dock .gSep{grid-column:1/-1;height:1px;background:#1f4b64;margin:1px 0}
+/* ---------- time line ---------- */
+.time{left:16px;bottom:18px;padding:7px 8px;display:flex;gap:5px;align-items:center;max-width:calc(100% - 330px);flex-wrap:wrap}
+.time .tl{font-size:8px;font-weight:800;color:var(--muted);letter-spacing:1.2px;margin:0 4px}
+.time button{border:1px solid #1d5a7355;background:#0b3047;color:#e8f4f8;border-radius:9px;padding:5px 9px;min-width:48px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.15;transition:.16s}
+.time button:hover{background:#12435d}
+.time button .m{font-size:12px;font-weight:850}.time button .g{font-size:8px;color:var(--muted);font-weight:650}
+.time button.active{background:linear-gradient(145deg,#0fa596,#19d3c5);color:#03212b;border-color:#19d3c5}.time button.active .g{color:#07493f}
+/* ---------- legend ---------- */
+.legendBox{right:16px;bottom:18px;width:282px;padding:12px}
+.legendTitle{font-size:12px;font-weight:850;line-height:1.25}
+.legendSub{font-size:9px;color:var(--muted);margin:3px 0 9px;line-height:1.35}
+.grad{height:10px;border-radius:8px}
+.ticks{display:flex;justify-content:space-between;font-size:9px;font-weight:750;margin-top:4px;color:#d4e9f0}
+.classes{margin-top:9px;display:grid;gap:4px}
+.cls{display:grid;grid-template-columns:14px 62px 1fr auto;gap:6px;align-items:center;font-size:9px}
+.cls i{width:14px;height:10px;border-radius:3px;border:1px solid #ffffff33}
+.cls b{font-weight:750}.cls span{color:#cfe6ee}.cls em{font-style:normal;color:var(--muted);font-size:8px}
+.legendNote{font-size:8px;color:var(--muted);margin-top:8px;line-height:1.4;border-top:1px solid #1f4b64;padding-top:6px}
+/* ---------- cards ---------- */
+.card{background:linear-gradient(180deg,rgba(15,50,72,.92),rgba(11,38,57,.92));border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:11px;box-shadow:0 6px 22px #00000040}
+.eyebrow{color:var(--cyan);font-size:9px;font-weight:850;letter-spacing:1.3px}
+.card h2{margin:4px 0 1px;font-size:21px}
+.muted{color:var(--muted);font-size:10px}
+.miniGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+.mini{background:#0a2536;border:1px solid #1a4560;border-radius:10px;padding:8px}
+.mini span{display:block;font-size:8px;color:var(--muted);letter-spacing:.4px}.mini b{font-size:15px}
+.secLabel{font-size:8px;letter-spacing:1.3px;color:var(--muted);font-weight:800;margin:11px 0 5px}
+/* water balance flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;background:#0a2536;border:1px solid #1a4560;border-radius:12px;padding:8px}
+.flow .st{border-radius:8px;padding:5px 7px;min-width:52px;text-align:center;background:#0f3249;border-top:3px solid var(--c,#4aa3e0)}
+.flow .st span{display:block;font-size:7px;color:var(--muted);letter-spacing:.3px;line-height:1.2}
+.flow .st b{font-size:12px}
+.flow .op{align-self:center;color:#6f9bb0;font-weight:800;font-size:13px;padding:0 1px}
+.drivers{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dcard{background:#0a2536;border:1px solid #1a4560;border-left:4px solid var(--c);border-radius:10px;padding:8px 9px}
+.dcard span{display:block;font-size:8px;color:var(--muted);letter-spacing:.4px;font-weight:700}
+.dcard b{font-size:17px;display:block;margin:2px 0}
+.dcard small{font-size:8px;color:#9fc3d1;line-height:1.3;display:block}
+.nsg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.nsg>div{color:#fff;border-radius:13px;padding:10px 9px;position:relative;overflow:hidden}
+.nsg>div::after{content:"";position:absolute;right:-14px;top:-14px;width:54px;height:54px;border-radius:50%;background:#ffffff14}
+.nsg .need{background:linear-gradient(140deg,#1f5f90,#3a8fc7)}
+.nsg .supply{background:linear-gradient(140deg,#0b8a7e,#19c4b4)}
+.nsg .gap{background:linear-gradient(140deg,#c2392b,#ff6b57)}
+.nsg span{font-size:8px;font-weight:800;letter-spacing:.4px;display:block}
+.nsg b{display:block;font-size:19px;margin:4px 0 2px}
+.nsg small{font-size:8px;color:#ffffffcc;display:block;line-height:1.3}
+.nsg .unc{margin-top:3px;font-size:7.5px;color:#ffffffa8}
+.cover{display:flex;align-items:center;gap:11px;margin-top:9px;background:#0a2536;border:1px solid #1a4560;border-radius:12px;padding:8px 10px}
+.ring{--p:0;width:58px;height:58px;border-radius:50%;background:conic-gradient(var(--cyan) calc(var(--p)*1%),#1b4259 0);display:grid;place-items:center;flex:none}
+.ring b{width:44px;height:44px;border-radius:50%;background:#0a2536;display:grid;place-items:center;font-size:12px}
+.cover div.t b{display:block;font-size:11px}.cover div.t small{font-size:9px;color:var(--muted)}
+.fixNote{display:none;margin-top:9px;background:#3a2f0b;border:1px solid #8a6b16;color:#ffd882;border-radius:9px;padding:7px 9px;font-size:9px;line-height:1.4}
+.noCrop{display:none;background:#0a2536;border:1px dashed #4a7388;border-radius:10px;padding:11px;margin-top:10px;font-weight:700;color:#9fc3d1}
+details.gl{margin-top:10px;border-top:1px solid #1f4b64;padding-top:8px}
+details.gl summary{cursor:pointer;font-size:10px;font-weight:800;color:#bfe4ee}
+.gl dl{margin:8px 0 0;display:grid;gap:6px}
+.gl dt{font-size:10px;font-weight:800;display:flex;align-items:center;gap:6px}
+.gl dt i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.gl dd{margin:1px 0 0 15px;font-size:9px;color:#a9cbd8;line-height:1.45}
+.gl code{background:#0a2536;border:1px solid #1a4560;border-radius:5px;padding:1px 5px;color:#d9f3f8}
+/* chart */
+.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.head h3{margin:0;font-size:12px}.head small,.note{font-size:9px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;align-items:center}
+.chips .sep{font-size:8px;letter-spacing:1px;color:var(--muted);font-weight:800;margin:0 2px 0 5px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid #1d5a73;background:#0a2536;color:#7fa3b3;border-radius:16px;padding:4px 9px;font:650 9.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;transition:.15s}
+.chip i{width:14px;height:3px;border-radius:2px;background:var(--c);opacity:.45}
+.chip.dash i{background:repeating-linear-gradient(90deg,var(--c) 0 4px,transparent 4px 7px)}
+.chip.on{color:#fff;border-color:var(--c);background:#0f3249;box-shadow:0 0 10px color-mix(in srgb,var(--c) 35%,transparent)}
+.chip.on i{opacity:1}
+.chip:hover{border-color:var(--c)}
+.chart{height:245px}
+.emptyChart{display:none;height:245px;place-items:center;text-align:center;color:#8fb2c1;background:repeating-linear-gradient(135deg,#0a2536,#0a2536 8px,#0c2c40 8px,#0c2c40 16px);border-radius:10px}
+.sources{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.src{background:#0a2536;border:1px solid #1a4560;border-left:4px solid;border-radius:10px;padding:8px}
+.src span{display:block;font-size:8px;color:var(--muted)}.src b{font-size:15px}
+.src.wide{grid-column:span 2}
+.btnRow{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.hotBtn{padding:10px;border:1px solid #1d5a73;background:#0b3047;color:#e8f4f8;border-radius:11px;font-weight:700;cursor:pointer;transition:.16s}
+.hotBtn:hover{border-color:var(--cyan);background:#10405a}
+.hotList{display:none}
+.hotrow{display:grid;grid-template-columns:24px 110px 1fr 54px;gap:6px;align-items:center;margin:7px 0;font-size:10px}
+.rank{height:22px;background:#4a2018;color:#ff9a89;border-radius:6px;display:grid;place-items:center;font-weight:800}
+.track{height:9px;background:#14384d;border-radius:8px;overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,#ffb347,#ff6b57)}
+.leaflet-top.leaflet-left{top:54px}.leaflet-control-layers{font-size:11px}
+.leaflet-tooltip{background:#061a28ee;border:1px solid #1f6a86;color:#e8f4f8;box-shadow:0 6px 18px #0008}
+.leaflet-tooltip-top:before{border-top-color:#1f6a86}
+.status{position:absolute;inset:0;z-index:900;background:#051722f0;display:grid;place-items:center;text-align:center}
+.status.hide{display:none}
+@media(max-width:1250px){.dock{grid-template-columns:repeat(4,58px)}.dock button{font-size:8px}}
+@media(max-width:1000px){.app{height:auto}.main{grid-template-columns:1fr;grid-template-rows:62vh auto}.mapwrap{min-height:540px}.panel{overflow:visible}header{height:auto;flex-wrap:wrap}.ctrl{margin-left:0;flex-wrap:wrap}.legendBox{width:230px}}
+
+/* ===================== v6.1 : compact panel + collapsible sections ===================== */
+.main{grid-template-columns:minmax(0,1fr) 410px}
+.panel{--ps:.86;padding:9px;font-size:calc(13px*var(--ps))}
+.tools{display:flex;align-items:center;gap:4px;margin-bottom:6px;flex-wrap:nowrap}
+.tools .tl2{font-size:8px;letter-spacing:1.2px;color:var(--muted);font-weight:800;margin-right:auto}
+.tools button{border:1px solid #1d5a73;background:#0b3047;color:#cfe6ee;border-radius:8px;padding:3px 7px;white-space:nowrap;font:650 9px 'Segoe UI',Arial,sans-serif;cursor:pointer;transition:.15s}
+.tools button:hover{border-color:var(--cyan)}
+.tools button.on{background:linear-gradient(135deg,#0fa596,#19d3c5);color:#03212b;border-color:#19d3c5}
+.card{padding:calc(10px*var(--ps));margin-bottom:7px;border-radius:14px}
+.hd{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.hd .muted{white-space:nowrap}
+.eyebrow{font-size:calc(8.5px*var(--ps))}
+.card h2{font-size:calc(21px*var(--ps));margin:2px 0 0}
+.muted{font-size:calc(10px*var(--ps))}
+.miniGrid{gap:5px;margin-top:6px}
+.mini{padding:calc(6px*var(--ps)) calc(8px*var(--ps))}
+.mini span{font-size:calc(8px*var(--ps))}.mini b{font-size:calc(14px*var(--ps))}
+.showing{font-size:calc(8.5px*var(--ps));color:#7fe3d8;font-weight:750;letter-spacing:.3px;margin:6px 0 4px}
+.drivers{gap:5px}
+.dcard{padding:calc(6px*var(--ps)) calc(8px*var(--ps))}
+.dcard span{font-size:calc(7.5px*var(--ps))}.dcard b{font-size:calc(15px*var(--ps));margin:1px 0}.dcard small{font-size:calc(7.5px*var(--ps))}
+.nsg{gap:5px;margin-top:5px}
+.nsg>div{padding:calc(8px*var(--ps));border-radius:11px}
+.nsg span{font-size:calc(7.5px*var(--ps))}.nsg b{font-size:calc(18px*var(--ps));margin:2px 0}.nsg small{font-size:calc(7.5px*var(--ps))}.nsg .unc{font-size:calc(7px*var(--ps))}
+.cover{display:block;padding:calc(7px*var(--ps)) calc(9px*var(--ps));margin-top:6px;gap:0}
+.cvT{display:flex;justify-content:space-between;align-items:baseline;font-size:calc(10px*var(--ps))}
+.cvT b:last-child{color:var(--cyan);font-size:calc(14px*var(--ps))}
+.bar{height:7px;background:#1b4259;border-radius:6px;overflow:hidden;margin:5px 0 3px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#0fa596,#19d3c5);border-radius:6px;transition:width .35s}
+.cover small{font-size:calc(8px*var(--ps));color:var(--muted);display:block}
+.fixNote{font-size:calc(8.5px*var(--ps));padding:6px 8px}
+/* accordion sections */
+.acc{background:linear-gradient(180deg,rgba(15,50,72,.92),rgba(11,38,57,.92));border:1px solid var(--line);border-radius:14px;margin-bottom:6px;overflow:hidden;box-shadow:0 4px 16px #00000035}
+.acc.open{border-color:#2a6a86}
+.accH{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:1fr auto;column-gap:8px;align-items:center;padding:calc(6.5px*var(--ps)) calc(11px*var(--ps));cursor:pointer}
+.accH:hover{background:#ffffff08}
+.accH:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+.accH .ttl{font-size:calc(11.5px*var(--ps));font-weight:800;color:#e8f4f8}
+.accH .sum{grid-column:1;font-size:calc(8.5px*var(--ps));color:#8fb2c1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.accH .chev{grid-row:1/3;grid-column:2;width:20px;height:20px;border-radius:50%;background:#0a2536;border:1px solid #1d5a73;display:grid;place-items:center;font-style:normal;color:var(--cyan);font-size:13px;line-height:1;transition:transform .2s}
+.acc.open .chev{transform:rotate(90deg)}
+.acc.open .accH .sum{display:none}
+.accB{padding:0 calc(11px*var(--ps)) calc(10px*var(--ps))}
+.acc:not(.open) .accB{display:none}
+.accB .head{margin-bottom:5px}
+/* inner parts */
+.flow{padding:6px;gap:3px}
+.flow .st{min-width:44px;padding:calc(4px*var(--ps)) 5px}
+.flow .st span{font-size:calc(7px*var(--ps))}.flow .st b{font-size:calc(11px*var(--ps))}
+.flow .op{font-size:calc(12px*var(--ps))}
+.chips{gap:3px;margin-bottom:4px}
+.chip{padding:calc(2px*var(--ps)) calc(7px*var(--ps));font-size:calc(9px*var(--ps));gap:4px}
+.chips .sep{font-size:calc(7.5px*var(--ps))}
+.chart{height:calc(198px*var(--ps))}
+.emptyChart{height:calc(198px*var(--ps))}
+.note{font-size:calc(8.5px*var(--ps))}
+.sources{gap:5px}
+.src{padding:calc(6px*var(--ps)) calc(8px*var(--ps))}
+.src span{font-size:calc(8px*var(--ps))}.src b{font-size:calc(13px*var(--ps))}
+.gl dl{margin:2px 0 0;gap:5px}
+.gl dt{font-size:calc(10px*var(--ps))}.gl dd{font-size:calc(9px*var(--ps));margin-left:15px}
+.btnRow{gap:5px;margin-bottom:6px}
+.hotBtn{padding:calc(7px*var(--ps));font-size:calc(11px*var(--ps))}
+.hotrow{font-size:calc(10px*var(--ps));margin:5px 0}
+@media(max-width:1000px){.main{grid-template-columns:1fr}}
+</style></head><body><div class="app">
+<header>
+  <div class="brand">Ag<b>Water</b>DS<small>AGRICULTURAL WATER DEMAND &amp; SUPPLY | NIGERIA ADM2</small></div>
+  <div class="live"><i></i>DEMAND SIGNAL MONITOR</div>
+  <div id="cropBtns" class="cropBtns"></div>
+  <div class="ctrl">
+    <div class="grp"><label>SEASON</label><div id="seasonBtns" class="seg"></div></div>
+    <div class="grp"><label>UNIT</label><div class="seg"><button id="mm" class="active" title="Average depth over the ADM2 crop area">mm</button><button id="mcm" title="Total volume in the ADM2 (million m³)">MCM</button></div></div>
+  </div>
+</header>
+<div class="main">
+<section class="mapwrap">
+  <div id="map" class="map"></div>
+  <div id="status" class="status"><div><b>Load AgWaterDS scenarios</b><br><br><input id="files" type="file" multiple accept=".js"><div class="note" style="margin-top:8px">Select all scenario JS files when opening locally. GitHub Pages loads them automatically.</div></div></div>
+  <div class="float mapTitle"><b id="mapTitle">Gap-Demand</b><small id="mapSub">Season sum</small></div>
+  <div class="float ctx"><b id="ctxTitle">Crop • Season</b><small id="ctxKc"></small><small id="ctxStart"></small></div>
+  <div id="dock" class="float dock"></div>
+  <div id="time" class="float time"></div>
+  <div class="float legendBox">
+    <div id="legendTitle" class="legendTitle">Gap-Demand</div>
+    <div id="legendSub" class="legendSub"></div>
+    <div id="grad" class="grad"></div>
+    <div id="ticks" class="ticks"></div>
+    <div id="classes" class="classes"></div>
+    <div class="legendNote">Classes are quartiles of all ADM2 areas with a mapped crop extent. Grey dashed = no mapped crop extent.</div>
+  </div>
+</section>
+<aside class="panel" id="panel">
+  <div class="tools">
+    <span class="tl2">PANEL</span>
+    <button id="szDown" title="Smaller text (whole panel scales proportionally)">A−</button>
+    <button id="szUp" title="Larger text">A+</button>
+    <button id="multiBtn" title="Allow several sections to stay open at the same time">Multi-open</button>
+    <button id="collapseAll" title="Collapse every section">Collapse all</button>
+    <button id="expandAll" title="Expand every section">Expand all</button>
+  </div>
+
+  <div class="card top">
+    <div class="hd"><div><div class="eyebrow">SELECTED ADM2 AREA</div><h2 id="area">Select an area</h2></div><div id="code" class="muted">Click a polygon on the map</div></div>
+    <div class="miniGrid">
+      <div class="mini"><span>CROP AREA</span><b id="cropArea">-- km²</b></div>
+      <div class="mini"><span>SEASON START (RANGE)</span><b id="seasonRange">--</b></div>
+    </div>
+    <div id="noCrop" class="noCrop">No mapped crop extent. Crop water requirement, irrigation need, supply and gap are not applicable for this crop in this ADM2.</div>
+    <div id="water">
+      <div class="showing">SHOWING <span id="period"></span></div>
+      <div class="drivers">
+        <div class="dcard" style="--c:#ffb347"><span>CROP WATER REQUIREMENT (CWR)</span><b id="cwr">--</b><small>What the crop needs: ETo × Kc</small></div>
+        <div class="dcard" style="--c:#5fd8a0"><span>EFFECTIVE RAINFALL USED</span><b id="rainTop">--</b><small>Rain counted toward the CWR</small></div>
+      </div>
+      <div class="nsg">
+        <div class="need"><span>IRRIGATION NEED</span><b id="need">--</b><small>(CWR − rain) × factor</small><small id="needUnc" class="unc"></small></div>
+        <div class="supply"><span>IRRIGATION SUPPLY</span><b id="supply">--</b><small>SW + GW (total supply)</small><small id="supplyUnc" class="unc"></small></div>
+        <div class="gap"><span>GAP-DEMAND</span><b id="gap">--</b><small>Unmet: need − supply</small><small id="gapUnc" class="unc"></small></div>
+      </div>
+      <div class="cover"><div class="cvT"><b id="coverTitle">Supply coverage of irrigation need</b><b id="ringTxt">--</b></div><div class="bar"><i id="cbar"></i></div><small id="coverSub"></small></div>
+      <div id="fixNote" class="fixNote"></div>
+    </div>
+  </div>
+
+  <section class="acc" data-acc="chart">
+    <button class="accH" aria-expanded="false"><span class="ttl">Growing-season demand signal</span><span class="sum" id="sumChart">--</span><i class="chev">›</i></button>
+    <div class="accB">
+      <span id="chartUnit" hidden>mm</span>
+      <div id="chips" class="chips"></div>
+      <div id="chartBox" class="chart"><canvas id="profile"></canvas></div>
+      <div id="emptyChart" class="emptyChart"><div><b>No crop extent</b><br><small>No water-balance profile is shown for this ADM2.</small></div></div>
+      <div class="note" style="margin-top:5px">Click a point to select that growing month. Use the optional lines to investigate the signal (see Definitions).</div>
+    </div>
+  </section>
+
+  <section class="acc" data-acc="balance">
+    <button class="accH" aria-expanded="false"><span class="ttl">Water-balance details</span><span class="sum" id="sumBalance">--</span><i class="chev">›</i></button>
+    <div class="accB">
+      <div class="note" style="margin-bottom:5px">Step by step: CWR − effective rainfall = net need; × efficiency factor = irrigation need; − supply = gap.</div>
+      <div id="flow" class="flow"></div>
+    </div>
+  </section>
+
+  <section class="acc" data-acc="sources">
+    <button class="accH" aria-expanded="false"><span class="ttl">Water-source composition</span><span class="sum" id="sumSources">--</span><i class="chev">›</i></button>
+    <div class="accB">
+      <div class="head"><small>Where the water comes from</small><small id="period2">Season Sum</small></div>
+      <div class="sources">
+        <div class="src wide" style="border-color:#ffb347"><span>Crop water requirement (CWR)</span><b id="cwr2">--</b></div>
+        <div class="src" style="border-color:#5fd8a0"><span>Rainfall contribution</span><b id="rain">--</b></div>
+        <div class="src" style="border-color:#7db8ff"><span>Surface-water supply</span><b id="sw">--</b></div>
+        <div class="src" style="border-color:#b99cff"><span>Groundwater supply</span><b id="gw">--</b></div>
+        <div class="src" style="border-color:#ff6b57"><span>Remaining gap</span><b id="gapSrc">--</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="acc" data-acc="defs">
+    <button class="accH" aria-expanded="false"><span class="ttl">Definitions &amp; method</span><span class="sum">CWR · Irrigation need · Irrigation supply · Gap-Demand · mm / MCM</span><i class="chev">›</i></button>
+    <div class="accB gl"><dl>
+      <dt><i style="background:#ffb347"></i>Crop Water Requirement (CWR)</dt><dd>Water the crop uses to grow well, <code>ETo × Kc</code>. It stays above 0 while the crop is growing.</dd>
+      <dt><i style="background:#5fd8a0"></i>Effective rainfall</dt><dd>Share of rainfall the crop can use (80% of rain, never more than the CWR).</dd>
+      <dt><i style="background:#4aa3e0"></i>Irrigation need</dt><dd><code>(CWR − effective rainfall) × efficiency factor</code>. It is 0 in months when rain already meets the CWR. It is the gross amount that irrigation must deliver.</dd>
+      <dt><i style="background:#19d3c5"></i>Irrigation supply (total supply)</dt><dd>Usable <b>surface water first</b>, then <b>groundwater</b>, never more than the irrigation need.</dd>
+      <dt><i style="background:#ff6b57"></i>Gap-Demand</dt><dd><code>Irrigation need − irrigation supply</code>. Water that is needed but not available.</dd>
+      <dt><i style="background:#8fb2c1"></i>GM (Growing Month)</dt><dd>GM1 starts in the most common season-start month of the ADM2 (shown as a calendar month). Each GM is a successive 30-day crop period; the last GM can be shorter.</dd>
+      <dt><i style="background:#8fb2c1"></i>Chart lines</dt><dd>Core lines: irrigation need, irrigation supply, gap. Optional lines: CWR, effective rainfall, surface water, groundwater, for investigating why the signal rises or falls.</dd>
+      <dt><i style="background:#8fb2c1"></i>mm and MCM</dt><dd>mm is the average depth over the crop area of the ADM2. MCM is the total volume in million m³.</dd>
+    </dl></div>
+  </section>
+
+  <div class="btnRow"><button id="hotBtn" class="hotBtn">⚡ Show Gap-Demand hotspots</button><button id="downloadBtn" class="hotBtn">⇩ Download selected data</button></div>
+  <div id="hotList" class="card hotList"></div>
+</aside>
+</div></div>
+<script src="admin_data.js"></script>
+<script>
+const FILES=['AgWaterDS_tomato__dry.js','AgWaterDS_tomato__wet.js','AgWaterDS_pepper__dry.js','AgWaterDS_pepper__wet.js','AgWaterDS_wheat__dry.js','AgWaterDS_wheat__wet.js','AgWaterDS_okra__dry.js','AgWaterDS_okra__wet.js','AgWaterDS_onion__dry.js','AgWaterDS_onion__wet.js'];
+const $=id=>document.getElementById(id),S={},setT=(id,t)=>{$(id).textContent=t};
+const ICONS={Tomato:'🍅',Pepper:'🌶️',Wheat:'🌾',Okra:'🌱',Onion:'🧅'},SEAS={Dry:'☀️',Wet:'🌧️'};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* map layers: ALL visible in the dock (no hidden menu) */
+const MET={
+ GapDemand:{label:'Gap-Demand',short:'Gap',ico:'⚠️',desc:'Unmet irrigation demand (need − supply)'},
+ IrrigationNeed:{label:'Irrigation Need',short:'Need',ico:'💧',desc:'Water irrigation must provide after rainfall'},
+ Supply:{label:'Irrigation Supply',short:'Supply',ico:'🚰',desc:'Usable surface water + groundwater (total supply)'},
+ CropNeed:{label:'Crop Water Requirement (CWR)',short:'CWR',ico:'🌿',desc:'Crop water use, ETo × Kc'},
+ RainfallSupply:{label:'Effective Rainfall',short:'Rain',ico:'🌧️',desc:'Rainfall counted toward the crop water requirement'},
+ SWSupply:{label:'Surface-Water Supply',short:'SW',ico:'🏞️',desc:'Usable surface water used for irrigation'},
+ GWSupply:{label:'Groundwater Supply',short:'GW',ico:'⛲',desc:'Usable groundwater used for irrigation'},
+ CropArea:{label:'Crop Area',short:'Area',ico:'🗺️',desc:'Mapped crop area in the ADM2'}};
+const ORDER=['GapDemand','IrrigationNeed','Supply','CropNeed','RainfallSupply','SWSupply','GWSupply','CropArea'];
+const COLORS={GapDemand:['#fff1e6','#f6b26b','#d95743','#8f2d40'],IrrigationNeed:['#edf6ff','#91c5e8','#347fb3','#144c73'],Supply:['#e6f7f4','#8bd4c7','#239d8f','#096b63'],CropNeed:['#fff5d6','#f7c95d','#ec933d','#a75222'],RainfallSupply:['#e6faf4','#80d6bd','#2cab84','#146947'],SWSupply:['#edf6ff','#9bcae8','#4a91c0','#24577a'],GWSupply:['#f3effa','#c3afe0','#8168ad','#4a356e'],CropArea:['#f0f7e8','#b8d98c','#6fab4b','#34692a']};
+
+/* chart lines: core + optional (dig deeper) */
+const KEYS={
+ IrrigationNeed:{label:'Irrigation need',color:'#4aa3e0',core:true,fill:'30',order:2},
+ Supply:{label:'Irrigation supply (SW+GW)',color:'#19d3c5',core:true,order:1},
+ GapDemand:{label:'Gap-Demand (unmet)',color:'#ff6b57',core:true,fill:'80',order:0},
+ CropNeed:{label:'CWR',color:'#ffb347',order:3},
+ RainfallSupply:{label:'Effective rainfall',color:'#5fd8a0',dash:[6,4],order:4},
+ SWSupply:{label:'Surface water',color:'#7db8ff',dash:[6,4],order:5},
+ GWSupply:{label:'Groundwater',color:'#b99cff',dash:[6,4],order:6}};
+const VIS={IrrigationNeed:true,Supply:true,GapDemand:true,CropNeed:false,RainfallSupply:false,SWSupply:false,GWSupply:false};
+
+let cur=null,crop=null,season=null,metric='GapDemand',gm=1,total=true,unit='mm',sel=null,map,lyr,chart=null;
+
+/* ---------- loading ---------- */
+function parse(t){return JSON.parse(t.trim().replace(/^\s*const\s+AgWaterDSScenario\s*=\s*/,'').replace(/;\s*$/,''))}
+async function load(){let a=(await Promise.all(FILES.map(async f=>{try{let r=await fetch(f,{cache:'no-store'});return r.ok?parse(await r.text()):null}catch(e){return null}}))).filter(Boolean);if(a.length)ready(a)}
+function ready(a){a.forEach(x=>S[x.metadata.scenario_id]=x);buildCrops();buildDock();buildChips();setScenario(a[0]);$('status').classList.add('hide')}
+
+/* ---------- controls ---------- */
+function buildCrops(){let cs=[...new Set(Object.values(S).map(x=>x.metadata.crop))];$('cropBtns').innerHTML=cs.map(c=>`<button class="cropBtn" data-crop="${c}"><span class="ico">${ICONS[c]||'🌿'}</span>${c}</button>`).join('');document.querySelectorAll('.cropBtn').forEach(b=>b.onclick=()=>{crop=b.dataset.crop;choose()})}
+function seasonsOf(c){return [...new Set(Object.values(S).filter(x=>x.metadata.crop===c).map(x=>x.metadata.season))]}
+function buildSeasons(){let ss=[...new Set(Object.values(S).map(x=>x.metadata.season))],ok=seasonsOf(crop);$('seasonBtns').innerHTML=ss.map(s=>`<button data-s="${s}" ${ok.includes(s)?'':'disabled'} title="${s} season"><span class="ico">${SEAS[s]||'📅'}</span>${s}</button>`).join('');document.querySelectorAll('#seasonBtns button').forEach(b=>{b.classList.toggle('active',b.dataset.s===season);b.onclick=()=>{season=b.dataset.s;choose()}});document.querySelectorAll('.cropBtn').forEach(b=>b.classList.toggle('active',b.dataset.crop===crop))}
+function choose(){let s=Object.values(S).find(x=>x.metadata.crop===crop&&x.metadata.season===season)||Object.values(S).find(x=>x.metadata.crop===crop);if(s)setScenario(s)}
+function buildDock(){
+  const btn=m=>`<button data-m="${m}" title="${MET[m].label}: ${MET[m].desc}" class="${m===metric?'active':''}"><span>${MET[m].ico}</span>${MET[m].short}</button>`;
+  $('dock').innerHTML='<div class="dockHead">MAP LAYER</div>'+ORDER.slice(0,4).map(btn).join('')+'<div class="gSep"></div>'+ORDER.slice(4).map(btn).join('');
+  $('dock').querySelectorAll('button[data-m]').forEach(b=>b.onclick=e=>{e.stopPropagation();setMetric(b.dataset.m)});
+  L.DomEvent.disableClickPropagation($('dock'));L.DomEvent.disableScrollPropagation($('dock'))}
+function setMetric(m){metric=m;$('dock').querySelectorAll('button[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===m));const ca=m==='CropArea';$('mm').disabled=ca;$('mcm').disabled=ca;redraw()}
+function buildChips(){
+  const chip=k=>`<button class="chip ${VIS[k]?'on':''} ${KEYS[k].dash?'dash':''}" data-k="${k}" style="--c:${KEYS[k].color}" title="Show / hide ${KEYS[k].label}"><i></i>${KEYS[k].label}</button>`;
+  const core=Object.keys(KEYS).filter(k=>KEYS[k].core),opt=Object.keys(KEYS).filter(k=>!KEYS[k].core);
+  $('chips').innerHTML=core.map(chip).join('')+'<span class="sep">OPTIONAL LINES</span>'+opt.map(chip).join('');
+  $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const k=b.dataset.k;VIS[k]=!VIS[k];b.classList.toggle('on',VIS[k]);const r=selRec();if(r&&present(r))draw(r)})}
+function setScenario(s){cur=s;crop=s.metadata.crop;season=s.metadata.season;let n=s.metadata.growing_months;if(gm>n)gm=n;let k=s.metadata.kc;buildSeasons();
+  setT('ctxTitle',`${s.metadata.crop} • ${s.metadata.season} Season • ${s.metadata.total_days} days`);
+  setT('ctxKc',`Kc ${k.kc_ini} → ${k.kc_mid} → ${k.kc_end} • ${n} growing months`);
+  timeline();redraw()}
+
+/* ---------- record helpers ---------- */
+function code(p){return p.adm2_pcode||p.ADM2_PCODE}function name(p){return p.adm2_name||p.ADM2_NAME}
+function rec(p){return cur&&(cur.records[code(p)]||Object.values(cur.records).find(r=>r.adm2_name===name(p)))}
+function present(r){return r&&r.CropPresent!==false&&Number(r.CropArea_km2)>0}
+function fld(m){return m+'_'+(total?'SeasonSum':'GM'+gm)}
+/* JSON null must NOT become 0 */
+const num=v=>(v===null||v===undefined||v==='')?NaN:Number(v);
+function raw(r,m){let f=fld(m);return num(unit==='mm'?r[f]:r[f+'_MCM'])}
+/* files made before generator v5.1: Need exists but Supply is null -> supply layers were missing, treat as 0 */
+function repaired(r){return !!(present(r)&&Number.isFinite(raw(r,'IrrigationNeed'))&&!Number.isFinite(raw(r,'Supply')))}
+function val(r,m){
+  if(!present(r))return NaN;
+  if(m==='CropArea')return num(r.CropArea_km2);
+  let x=raw(r,m);if(Number.isFinite(x))return x;
+  let need=raw(r,'IrrigationNeed');if(!Number.isFinite(need))return NaN;
+  if(m==='SWSupply'||m==='GWSupply')return 0;
+  if(m==='Supply'){let sw=raw(r,'SWSupply'),gw=raw(r,'GWSupply');return (Number.isFinite(sw)?sw:0)+(Number.isFinite(gw)?gw:0)}
+  if(m==='GapDemand')return Math.max(need-val(r,'Supply'),0);
+  return NaN}
+function u(mn=null){return mn==='CropArea'?'km²':unit==='mm'?'mm':'MCM'}
+function fmt(x){if(!Number.isFinite(x))return'--';const a=Math.abs(x);return x.toLocaleString(undefined,{maximumFractionDigits:a>=1?1:a>=0.1?2:3})}
+function q(a,p){let z=(a.length-1)*p,b=Math.floor(z),f=z-b;return a[b+1]==null?a[b]:a[b]+f*(a[b+1]-a[b])}
+function col(v,a,m){if(!Number.isFinite(v))return'#bcc4c7';let c=COLORS[m];return v<=q(a,.25)?c[0]:v<=q(a,.5)?c[1]:v<=q(a,.75)?c[2]:c[3]}
+function selRec(){return sel?rec(sel.properties):null}
+
+/* ---------- calendar ---------- */
+function startMonth(r){if(!r||!cur)return null;let s=cur.metadata.season,v=num(r[s+'Start_Mode']);if(!(v>=1&&v<=12))v=num(r[s+'Start_Median']);if(!(v>=1&&v<=12)){let i=MON.indexOf(r[s+'Start_Mode_Name']||r[s+'Start_Median_Name']);return i>=0?i+1:null}return Math.round(v)}
+function calMonth(sm,i){return MON[(sm-1+i-1)%12]}
+function timing(r){let s=cur.metadata.season,sm=startMonth(r);if(!sm)return'--';let rg=r[s+'Start_Range']||[r[s+'Start_P10_Name'],r[s+'Start_P90_Name']].filter(Boolean).join(' - ');return MON[sm-1]+(rg&&rg!==MON[sm-1]?` (${rg})`:'')}
+function periodText(r){const sm=present(r)?startMonth(r):null,n=cur.metadata.growing_months;return total?'Season sum'+(sm?` (${MON[sm-1]} → ${calMonth(sm,n)})`:''):('GM'+gm+(sm?' · '+calMonth(sm,gm):''))}
+
+/* ---------- map + legend ---------- */
+function redraw(){if(!cur||!lyr)return;const m=metric,a=Object.values(cur.records).map(r=>val(r,m)).filter(Number.isFinite).sort((x,y)=>x-y);
+  lyr.setStyle(f=>{let r=rec(f.properties),ok=present(r),isSel=sel&&code(sel.properties)===code(f.properties);return{fillColor:ok?col(val(r,m),a,m):'#b8c0c4',fillOpacity:ok?.8:.4,color:isSel?'#19d3c5':ok?'#ffffffcc':'#899399',weight:isSel?3:ok?.6:1,dashArray:ok?null:'4 3'}});
+  const r=selRec();setT('mapTitle',MET[m].label);
+  setT('mapSub',`${periodText(r)} • ${u(m)}`);
+  legend(a,r);
+  if(sel)show(sel.properties);hotspots()}
+function legend(a,r){const m=metric,M=MET[m],c=COLORS[m];
+  setT('legendTitle',`${M.label} · ${periodText(r)}`);
+  const ut=m==='CropArea'?'km²':unit==='mm'?'average depth over the crop area (mm)':'total volume (million m³, MCM)';
+  setT('legendSub',`${M.desc} — ${ut}`);
+  $('grad').style.background=`linear-gradient(90deg,${c.join(',')})`;
+  if(!a.length){$('ticks').innerHTML='';$('classes').innerHTML='<div class="muted">No data for this selection</div>';return}
+  const t=[a[0],q(a,.25),q(a,.5),q(a,.75),a[a.length-1]],names=['Low','Moderate','High','Very high'],cnt=[0,0,0,0];
+  a.forEach(v=>cnt[v<=t[1]?0:v<=t[2]?1:v<=t[3]?2:3]++);
+  $('ticks').innerHTML=t.map(x=>`<span>${fmt(x)}</span>`).join('');
+  $('classes').innerHTML=names.map((nm,i)=>`<div class="cls"><i style="background:${c[i]}"></i><b>${nm}</b><span>${fmt(t[i])} – ${fmt(t[i+1])} ${u(m)}</span><em>${cnt[i]} ADM2</em></div>`).join('')}
+
+function unc(r,m){let f=fld(m),lo=num(r[f+'_P10']),hi=num(r[f+'_P90']);if(unit!=='mm')return 'Total over crop area';return Number.isFinite(lo)&&Number.isFinite(hi)?`Spatial P10–P90 ${fmt(lo)}–${fmt(hi)}`:'Average over crop area'}
+
+/* ---------- side panel ---------- */
+function clearProfile(){if(chart){chart.destroy();chart=null}$('chartBox').style.display='none';$('emptyChart').style.display='grid';setT('chartUnit','Not applicable')}
+function step(label,v,c){return `<div class="st" style="--c:${c}"><span>${label}</span><b>${fmt(v)}</b></div>`}
+function flow(r){const cw=val(r,'CropNeed'),rn=val(r,'RainfallSupply'),nd=val(r,'IrrigationNeed'),sp=val(r,'Supply'),gp=val(r,'GapDemand'),net=cw-rn;
+  let f=cur.metadata.assumptions&&cur.metadata.assumptions.gross_need_factor;if(!Number.isFinite(f))f=(net>0&&Number.isFinite(nd))?nd/net:NaN;
+  const op=t=>`<div class="op">${t}</div>`;
+  $('flow').innerHTML=step('CWR',cw,'#ffb347')+op('−')+step('Eff. rain',rn,'#5fd8a0')+op('=')+step('Net need',net,'#8fb2c1')+op('×')+`<div class="st" style="--c:#6f9bb0"><span>Factor</span><b>${Number.isFinite(f)?f.toFixed(2):'--'}</b></div>`+op('=')+step('Irrig. need',nd,'#4aa3e0')+op('−')+step('Supply',sp,'#19d3c5')+op('=')+step('Gap',gp,'#ff6b57')}
+function coverage(r){const nd=val(r,'IrrigationNeed'),sp=val(r,'Supply'),bar=$('cbar');
+  if(!Number.isFinite(nd)||!Number.isFinite(sp)){bar.style.width='0%';setT('ringTxt','--');setT('coverSub','');return}
+  if(nd<=0){bar.style.width='100%';setT('ringTxt','n/a');setT('coverSub','No irrigation need in this period (rainfall meets the CWR).');return}
+  const pct=Math.max(0,Math.min(100,Math.round(100*sp/nd)));bar.style.width=pct+'%';setT('ringTxt',pct+'%');
+  setT('coverSub',`Irrigation supply covers ${pct}% of irrigation need; ${100-pct}% is unmet (gap).`)}
+function show(p){sel={properties:p};const r=rec(p);setT('area',name(p)||(r&&r.adm2_name)||'ADM2');setT('code',code(p)||'');
+  if(!r){clearProfile();timeline();setT('ctxStart','');return}
+  setT('cropArea',fmt(Number(r.CropArea_km2))+' km²');setT('seasonRange',timing(r));
+  const ok=present(r);$('noCrop').style.display=ok?'none':'block';$('water').style.display=ok?'block':'none';
+  const sm=ok?startMonth(r):null,n=cur.metadata.growing_months;
+  setT('ctxStart',sm?`${name(p)}: GM1 = ${MON[sm-1]} → GM${n} = ${calMonth(sm,n)}`:'');
+  timeline();
+  if(!ok){['cwr','cwr2','rainTop','rain','sw','gw','gapSrc'].forEach(id=>setT(id,'Not applicable'));['sumChart','sumBalance','sumSources'].forEach(id=>setT(id,'No mapped crop extent'));$('flow').innerHTML='';clearProfile();return}
+  $('chartBox').style.display='block';$('emptyChart').style.display='none';
+  [['IrrigationNeed','need','needUnc'],['Supply','supply','supplyUnc'],['GapDemand','gap','gapUnc']].forEach(([m,id,ui])=>{setT(id,fmt(val(r,m))+' '+u(m));setT(ui,unc(r,m))});
+  [['CropNeed','cwr'],['CropNeed','cwr2'],['RainfallSupply','rainTop'],['RainfallSupply','rain'],['SWSupply','sw'],['GWSupply','gw'],['GapDemand','gapSrc']].forEach(([m,id])=>setT(id,fmt(val(r,m))+' '+u(m)));
+  const per=total?'Season sum':'GM'+gm+(sm?' · '+calMonth(sm,gm):'');setT('period','· '+per+' · '+u('CropNeed'));setT('period2',per);
+  flow(r);coverage(r);
+  const fx=$('fixNote'),fixed=repaired(r)||Array.from({length:n},(_,i)=>i).some(i=>{let ot=total,og=gm;total=false;gm=i+1;let b=repaired(r);total=ot;gm=og;return b});
+  fx.style.display=fixed?'block':'none';
+  if(fixed)fx.textContent='Supply data (surface water / groundwater) are missing in this scenario file for this ADM2. They are treated as 0, so Supply = 0 and Gap-Demand = Irrigation Need. Re-run generator v5.1 to store exact values.';
+  const U=u('IrrigationNeed');
+  setT('sumChart',`Need ${fmt(val(r,'IrrigationNeed'))} · Supply ${fmt(val(r,'Supply'))} · Gap ${fmt(val(r,'GapDemand'))} ${U}`);
+  setT('sumBalance',`CWR ${fmt(val(r,'CropNeed'))} − rain ${fmt(val(r,'RainfallSupply'))} → need ${fmt(val(r,'IrrigationNeed'))} ${U}`);
+  setT('sumSources',`Rain ${fmt(val(r,'RainfallSupply'))} · SW ${fmt(val(r,'SWSupply'))} · GW ${fmt(val(r,'GWSupply'))} ${U}`);
+  if(accOpen('chart'))draw(r)}
+
+/* ---------- collapsible sections + panel scale (v6.1) ---------- */
+const PANEL={multi:false,ps:.86,open:['chart']};
+function accEl(id){return document.querySelector('.acc[data-acc="'+id+'"]')}
+function accOpen(id){const e=accEl(id);return !!e&&e.classList.contains('open')}
+function savePanel(){try{PANEL.open=[...document.querySelectorAll('.acc.open')].map(e=>e.dataset.acc);localStorage.setItem('agwds_panel',JSON.stringify(PANEL))}catch(e){}}
+function setAcc(id,open,quiet){const e=accEl(id);if(!e)return;e.classList.toggle('open',open);const b=e.querySelector('.accH');if(b)b.setAttribute('aria-expanded',open?'true':'false');
+  if(open&&id==='chart'){const r=selRec();if(r&&present(r))requestAnimationFrame(()=>draw(r))}if(!quiet)savePanel()}
+function toggleAcc(id){const o=accOpen(id);if(!o&&!PANEL.multi)document.querySelectorAll('.acc.open').forEach(x=>{if(x.dataset.acc!==id)setAcc(x.dataset.acc,false,true)});setAcc(id,!o)}
+function setScale(v){PANEL.ps=Math.max(.74,Math.min(1.1,Math.round(v*100)/100));$('panel').style.setProperty('--ps',PANEL.ps);if(chart)chart.resize();savePanel()}
+function setMulti(v){PANEL.multi=v;$('multiBtn').classList.toggle('on',v);savePanel()}
+function initPanel(){try{const s=JSON.parse(localStorage.getItem('agwds_panel')||'null');if(s){PANEL.multi=!!s.multi;PANEL.ps=s.ps||PANEL.ps;PANEL.open=Array.isArray(s.open)?s.open:PANEL.open}}catch(e){}
+  $('panel').style.setProperty('--ps',PANEL.ps);$('multiBtn').classList.toggle('on',PANEL.multi);
+  document.querySelectorAll('.acc').forEach(e=>{const id=e.dataset.acc;setAcc(id,PANEL.open.includes(id),true);e.querySelector('.accH').onclick=()=>toggleAcc(id)});
+  if(!PANEL.multi){const o=[...document.querySelectorAll('.acc.open')];o.slice(1).forEach(x=>setAcc(x.dataset.acc,false,true))}
+  $('szDown').onclick=()=>setScale(PANEL.ps-.06);$('szUp').onclick=()=>setScale(PANEL.ps+.06);
+  $('multiBtn').onclick=()=>setMulti(!PANEL.multi);
+  $('collapseAll').onclick=()=>{document.querySelectorAll('.acc').forEach(e=>setAcc(e.dataset.acc,false,true));savePanel()};
+  $('expandAll').onclick=()=>{setMulti(true);document.querySelectorAll('.acc').forEach(e=>setAcc(e.dataset.acc,true,true));savePanel()}}
+
+/* ---------- line chart ---------- */
+function series(r,m){let ot=total,og=gm;total=false;let a=Array.from({length:cur.metadata.growing_months},(_,i)=>{gm=i+1;return val(r,m)});total=ot;gm=og;return a}
+function grad(c,color,a1){const ar=c.chart.chartArea;if(!ar)return color+a1;const g=c.chart.ctx.createLinearGradient(0,ar.top,0,ar.bottom);g.addColorStop(0,color+a1);g.addColorStop(1,color+'03');return g}
+const guide={id:'guide',
+ beforeDatasetsDraw(c){const a=c.chartArea;if(!a||total)return;const n=c.data.labels.length,w=(a.right-a.left)/n,px=a.left+w*(gm-1)+w/2;const x=c.ctx;x.save();x.fillStyle='rgba(25,211,197,.10)';x.fillRect(px-w/2,a.top,w,a.bottom-a.top);x.restore()},
+ afterDatasetsDraw(c){const t=c.tooltip;if(!t||!t.getActiveElements().length)return;const a=c.chartArea,px=t.getActiveElements()[0].element.x,x=c.ctx;x.save();x.strokeStyle='rgba(180,230,240,.45)';x.setLineDash([4,4]);x.lineWidth=1;x.beginPath();x.moveTo(px,a.top);x.lineTo(px,a.bottom);x.stroke();x.restore()}};
+function draw(r){if(chart)chart.destroy();const n=cur.metadata.growing_months,days=cur.metadata.kc.growing_month_days||[],sm=startMonth(r),
+  labels=Array.from({length:n},(_,i)=>`${sm?calMonth(sm,i+1)+' · ':''}GM${i+1}${days[i]?` (${days[i]}d)`:''}`),
+  keys=Object.keys(KEYS).filter(k=>VIS[k]),
+  datasets=keys.map(k=>{const K=KEYS[k];return{label:K.label,data:series(r,k),borderColor:K.color,backgroundColor:K.fill?(c=>grad(c,K.color,K.fill)):K.color,fill:K.fill?'origin':false,borderWidth:K.core?3:2.2,borderDash:K.dash||[],tension:.38,order:K.order,
+    pointBackgroundColor:'#061a28',pointBorderColor:K.color,pointBorderWidth:2,pointRadius:c=>(!total&&c.dataIndex===gm-1)?7:4,pointHoverRadius:8}});
+  chart=new Chart($('profile'),{type:'line',data:{labels,datasets},plugins:[guide],options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+   onClick:(e,els)=>{if(els.length){gm=els[0].index+1;total=false;timeline();redraw()}},
+   onHover:(e,els)=>{if(e.native&&e.native.target)e.native.target.style.cursor=els.length?'pointer':'default'},
+   plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(3,17,27,.96)',borderColor:'#1f6a86',borderWidth:1,padding:10,titleColor:'#e8f4f8',bodyColor:'#cfe6ee',usePointStyle:true,
+     callbacks:{title:x=>`Growing Month ${x[0].dataIndex+1}${sm?' · '+calMonth(sm,x[0].dataIndex+1):''}`,label:c=>`${c.dataset.label}: ${Number.isFinite(c.parsed.y)?c.parsed.y.toFixed(1):'--'} ${u('IrrigationNeed')}`}}},
+   scales:{x:{grid:{display:false},ticks:{color:'#9fc3d1',font:{size:9}},border:{color:'#1f4b64'}},
+           y:{beginAtZero:true,grid:{color:'rgba(150,200,220,.10)'},border:{display:false},ticks:{color:'#9fc3d1',font:{size:9}},title:{display:true,text:u('IrrigationNeed'),color:'#9fc3d1'}}}}});
+  setT('chartUnit',u('IrrigationNeed'))}
+
+/* ---------- timeline ---------- */
+function timeline(){let e=$('time'),r=selRec(),sm=present(r)?startMonth(r):null,n=cur?cur.metadata.growing_months:5,days=(cur&&cur.metadata.kc&&cur.metadata.kc.growing_month_days)||[];
+  e.innerHTML='<span class="tl">TIME</span>';
+  for(let i=1;i<=n;i++){let d=days[i-1]||30,b=document.createElement('button');
+    b.innerHTML=`<span class="m">${sm?calMonth(sm,i):'GM'+i}</span><span class="g">${sm?'GM'+i:d+'d'}</span>`;
+    b.title=`Growing Month ${i}${sm?' = '+calMonth(sm,i):''}: crop-season days ${(i-1)*30+1}–${(i-1)*30+d}`;
+    b.className=!total&&gm===i?'active':'';b.onclick=()=>{gm=i;total=false;timeline();redraw()};e.appendChild(b)}
+  let b=document.createElement('button');b.innerHTML=`<span class="m">Σ</span><span class="g">${sm?MON[sm-1]+'→'+calMonth(sm,n):'Season'}</span>`;
+  b.title='Season sum (all growing months)';b.className=total?'active':'';b.onclick=()=>{total=true;timeline();redraw()};e.appendChild(b)}
+
+/* ---------- hotspots + download ---------- */
+function hotspots(){if(!cur)return;let a=Object.values(cur.records).filter(present).map(r=>({r,v:val(r,'GapDemand')})).filter(x=>Number.isFinite(x.v)).sort((x,y)=>y.v-x.v).slice(0,10),mx=a[0]?a[0].v:1;
+  $('hotList').innerHTML='<div class="head"><h3>Gap-Demand hotspots</h3><small>'+u('GapDemand')+'</small></div>'+a.map((x,i)=>`<div class="hotrow"><div class="rank">${i+1}</div><div>${x.r.adm2_name}</div><div class="track"><i style="width:${100*x.v/mx}%"></i></div><b>${fmt(x.v)}</b></div>`).join('')}
+function download(){if(!sel||!cur){alert('Select an ADM2 area first.');return}let r=rec(sel.properties);if(!r)return;
+  let out={scenario_id:cur.metadata.scenario_id,crop:cur.metadata.crop,season:cur.metadata.season,adm2_pcode:r.adm2_pcode,adm2_name:r.adm2_name,CropArea_km2:r.CropArea_km2,CropPresent:r.CropPresent};
+  Object.keys(r).filter(k=>/^(CropNeed|RainfallSupply|IrrigationNeed|SWSupply|GWSupply|Supply|GapDemand)_/.test(k)||/(Start_|P10|P90|_SD|Start_Range)/.test(k)).forEach(k=>out[k]=r[k]);
+  let esc=v=>'"'+String(v==null?'':v).replaceAll('"','""')+'"',csv='Field,Value\n'+Object.entries(out).map(([k,v])=>esc(k)+','+esc(v)).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`AgWaterDS_${cur.metadata.crop}_${cur.metadata.season}_${r.adm2_pcode}.csv`;a.click()}
+
+/* ---------- events + map init ---------- */
+$('files').onchange=e=>Promise.all([...e.target.files].map(f=>f.text().then(parse))).then(ready);
+$('mm').onclick=()=>{unit='mm';$('mm').classList.add('active');$('mcm').classList.remove('active');redraw()};
+$('mcm').onclick=()=>{unit='mcm';$('mcm').classList.add('active');$('mm').classList.remove('active');redraw()};
+$('hotBtn').onclick=()=>{let x=$('hotList');x.style.display=x.style.display==='block'?'none':'block'};
+$('downloadBtn').onclick=download;
+
+const A=typeof AgWaterDSAdmin!=='undefined'?AgWaterDSAdmin:null;
+map=L.map('map',{attributionControl:true}).setView([9,8],6);
+const imagery=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18,attribution:'Tiles © Esri'}).addTo(map);
+const blank=L.layerGroup();L.control.layers({'Satellite':imagery,'No basemap':blank},null,{position:'topleft'}).addTo(map);
+if(A){lyr=L.geoJSON(A,{style:{fillColor:'#ccd5d8',fillOpacity:.65,color:'#fff',weight:.6},onEachFeature:(f,l)=>{
+  l.bindTooltip(()=>{let r=rec(f.properties),t='<b>'+(name(f.properties)||'ADM2')+'</b>';if(present(r)){let sm=startMonth(r);if(sm){t+='<br>Start: '+MON[sm-1];if(!total)t+=' • GM'+gm+' = '+calMonth(sm,gm)}}return t});
+  l.on('click',()=>{show(f.properties);redraw()})}}).addTo(map);map.fitBounds(lyr.getBounds(),{padding:[15,15]})}
+initPanel();
+load();
+</script></body></html>
