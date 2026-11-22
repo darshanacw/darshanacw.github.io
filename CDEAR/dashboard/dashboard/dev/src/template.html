@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CDEAR · Climate Data Engine for Agricultural Resilience</title>
+<link rel="preconnect" href="https://unpkg.com" crossorigin><link rel="preconnect" href="https://server.arcgisonline.com" crossorigin>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+/*@@STYLE@@*/
+</style></head><body>
+<div id="boot"><div class="bx"><b>CDEAR</b><div class="bt"><i id="bootBar"></i></div><small id="bootTxt">Loading…</small></div></div>
+<div class="app">
+<header class="top"><div class="brand"><div class="logo">C</div><div><b>CDEAR · Climate Data Engine for Agricultural Resilience</b><small id="subTitle">Cropland water outlook</small></div></div>
+<div class="righthead"><span class="tag" id="baseTag">Baseline</span><span class="tag hot" id="scnTag">–</span><button class="export" id="btnExport" title="Download the annual series of the selected unit as CSV">⇩ <span>Export series</span></button></div></header>
+<main>
+<section class="filters" id="filters">
+<div class="f"><label>Region</label><select id="fRegion" class="key"></select></div>
+<div class="f"><label>Show units</label><select id="fLevel" class="key"></select></div>
+<div class="f"><label id="lbUnit">Unit</label><select id="fUnit"></select></div>
+<div class="f"><label>Crop type</label><div class="seg wide" id="fCrop"><button data-c="0" class="on">Rainfed</button><button data-c="1">Irrigated</button></div></div>
+<div class="f"><label>Scenario</label><select id="fScn"></select></div>
+<div class="f" id="fGcmBox"><label>Climate model</label><select id="fGcm"></select></div>
+<div class="f"><label>Future period</label><select id="fPer"></select></div>
+<div class="f"><label>Basemap</label><select id="fBase"><option value="sat">Satellite + labels</option><option value="light">Light gray</option><option value="osm">Streets</option></select></div>
+</section>
+<section class="kpis">
+<div class="kpi" style="--c:#0b5c8a"><small id="k1l">Crop area</small><strong id="k1">–</strong><em id="k1s"></em></div>
+<div class="kpi" style="--c:#2F80ED"><small id="k2l">Rainfall</small><strong id="k2">–</strong><em id="k2s"></em></div>
+<div class="kpi" style="--c:#27AE60"><small id="k3l">Green ET (available)</small><strong id="k3">–</strong><em id="k3s"></em></div>
+<div class="kpi" style="--c:#00A8C6"><small id="k4l">Blue ET (required)</small><strong id="k4">–</strong><em id="k4s"></em></div>
+<div class="kpi" style="--c:#e0463f"><small id="k5l">Crop area at risk</small><strong id="k5">–</strong><em id="k5s"></em></div>
+</section>
+<section class="layout">
+<article class="card mapcard"><div class="hd"><div><div class="ey" id="mapEy">Spatial outlook</div><h2 id="mapTitle">–</h2><div class="sub" id="mapSub"></div></div>
+<div class="hdr"><button class="chip" id="chipBack" hidden>‹ Africa</button><button class="chip" id="chipOpen" hidden>Open ›</button><button class="chip" id="chipClear" hidden>✕ Clear selection</button>
+<div class="seg" id="mapMode"><button data-m="grid" class="on" title="Every 1-km crop cell, coloured by its risk class">1-km crop grid</button><button data-m="units" title="One colour per unit (country, admin unit, basin …)">Unit summary</button></div>
+<select id="fMetric" title="What the unit colours show"></select></div></div>
+<div class="maparea"><div id="map"></div><div class="busy" id="busy">Loading…</div><div class="mapinfo" id="mapInfo"></div><div class="legend" id="legend"></div></div></article>
+<article class="card panel"><div class="tabs" id="tabs"><button data-t="trend" class="on">Trends</button><button data-t="risk">Risk &amp; thresholds</button><button data-t="units">Units</button></div>
+<div class="pane" id="pTrend"><div class="tool"><div class="seg" id="tf"><button data-t="a" class="on">Annual</button><button data-t="m">Monthly</button></div>
+<div class="seg" id="mm" style="display:none"><button data-m="cycle" class="on">Seasonal cycle</button><button data-m="series">Full series</button></div>
+<label class="chk" id="smWrap"><input type="checkbox" id="smooth" checked> 10-year mean</label></div>
+<div class="chips" id="varChips"></div>
+<div class="chartwrap"><canvas id="chart"></canvas><div class="ctip" id="ctip"></div></div>
+<div class="note" id="chartNote"></div>
+<div class="tblwrap" style="flex:none;min-height:0"><table class="tbl" id="sumTbl"></table></div></div>
+<div class="pane" id="pRisk" hidden><div class="thrRow"><div class="note"><b>Risk thresholds</b> (rainfed: blue ET need in mm · irrigated: blue ET ratio future / baseline). Changes apply immediately to the map, KPIs and tables.</div><button class="chip" id="thrReset" style="display:inline-block">Reset</button></div>
+<div class="thr" id="thr">
+<div><label>t1 · Low &lt; (mm)</label><input type="number" id="t1" min="0" max="600" step="5"></div>
+<div><label>t2 · Moderate &lt; (mm)</label><input type="number" id="t2" min="0" max="600" step="5"></div>
+<div><label>t3 · High &lt; (mm)</label><input type="number" id="t3" min="0" max="600" step="5"></div>
+<div><label>t4 · Low &lt; (ratio)</label><input type="number" id="t4" min="1" max="2" step="0.01"></div>
+<div><label>t5 · Moderate &lt; (ratio)</label><input type="number" id="t5" min="1" max="2" step="0.01"></div></div>
+<div class="note" id="thrNote"></div><div id="riskBars"></div><div class="tblwrap" style="flex:none;min-height:0"><table class="tbl" id="riskTbl"></table></div><div class="note" id="riskDef"></div></div>
+<div class="pane" id="pUnits" hidden><div class="tool"><span class="note" id="uCount"></span><button class="chip" id="btnTbl" style="display:inline-block;margin-left:auto">⇩ Table CSV</button></div><div class="tblwrap"><table class="tbl" id="uTbl"></table></div></div>
+</article></section></main></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/*@@DATAJS@@*/
+</script>
+<script>
+/*@@APPJS@@*/
+</script></body></html>
